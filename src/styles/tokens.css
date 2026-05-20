@@ -1,0 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --bg: #f7f4ec;
+  --surface: #ffffff;
+  --surface-soft: #efeadf;
+  --text: #151713;
+  --text-muted: rgba(21, 23, 19, 0.66);
+  --border: rgba(21, 23, 19, 0.13);
+  --brand: #123d2a;
+  --brand-text: #f7f4ec;
+  --support: #d8a900;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+}
+
+[data-theme="dark"] {
+  --bg: #0f1110;
+  --surface: #151713;
+  --surface-soft: #1b1e1a;
+  --text: #f7f4ec;
+  --text-muted: rgba(247, 244, 236, 0.68);
+  --border: rgba(247, 244, 236, 0.12);
+  --brand: #7fbf9a;
+  --brand-text: #0f1110;
+  --support: #d8a900;
+}
