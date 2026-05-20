@@ -76,9 +76,9 @@ export function ReferralSection() {
       {/* Apply referral code */}
       {!codeAlreadySet && (
         <form onSubmit={handleApply} className="space-y-2">
-          <p className="text-sm text-[var(--text-muted)]">Código de quem te indicou</p>
           <div className="flex gap-2">
             <Input
+              label="Código de quem te indicou"
               value={inputCode}
               onChange={e => { setInputCode(e.target.value); setApplyError('') }}
               placeholder="Ex: ABC12345"

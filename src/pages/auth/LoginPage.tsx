@@ -48,48 +48,66 @@ export function LoginPage() {
 
   return (
     <AuthForm title="Bolão da Copa" subtitle="Entre na sua conta para apostar">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-[var(--text)]">
-            E-mail
-          </label>
           <Input
             id="email"
+            label="E-mail"
             type="email"
             autoComplete="email"
             value={values.email}
             onChange={handleChange('email')}
             aria-invalid={!!errors.email}
+            aria-describedby="email-error"
           />
-          {errors.email && (
-            <span className="text-xs text-[var(--danger)]">{errors.email}</span>
-          )}
+          <div id="email-error" className="min-h-5" aria-live="polite">
+            <span
+              className={`block text-xs text-[var(--danger)] transition duration-200 ${
+                errors.email ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
+              {errors.email}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm font-medium text-[var(--text)]">
-            Senha
-          </label>
           <Input
             id="password"
+            label="Senha"
             type="password"
             autoComplete="current-password"
             value={values.password}
             onChange={handleChange('password')}
             aria-invalid={!!errors.password}
+            aria-describedby="password-error"
           />
-          {errors.password && (
-            <span className="text-xs text-[var(--danger)]">{errors.password}</span>
-          )}
+          <div id="password-error" className="min-h-5" aria-live="polite">
+            <span
+              className={`block text-xs text-[var(--danger)] transition duration-200 ${
+                errors.password ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
+              {errors.password}
+            </span>
+          </div>
         </div>
 
-        {serverError && (
-          <p className="text-sm text-[var(--danger)]">{serverError}</p>
-        )}
+        <div className="flex flex-col gap-2">
+          <div className="min-h-5" aria-live="polite">
+            <p
+              className={`text-sm text-[var(--danger)] transition duration-200 ${
+                serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
+              {serverError}
+            </p>
+          </div>
 
-        <Button type="submit" disabled={isSubmitting} className="mt-1 w-full">
-          {isSubmitting ? 'Entrando…' : 'Entrar'}
-        </Button>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? 'Entrando…' : 'Entrar'}
+          </Button>
+        </div>
       </form>
 
       <p className="mt-4 text-center text-sm text-[var(--text-muted)]">

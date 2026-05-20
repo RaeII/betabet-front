@@ -55,9 +55,9 @@ export function BetForm({ matchId, groupId, existingBet, isLocked, userGroupCoun
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex items-center justify-center gap-4">
         <div className="flex flex-col items-center gap-1">
-          <label htmlFor="homeScore" className="text-xs text-[var(--text-muted)]">Casa</label>
           <Input
             id="homeScore"
+            label="Casa"
             type="number"
             min={0}
             max={20}
@@ -69,9 +69,9 @@ export function BetForm({ matchId, groupId, existingBet, isLocked, userGroupCoun
         </div>
         <span className="text-2xl font-bold text-[var(--text-muted)]">×</span>
         <div className="flex flex-col items-center gap-1">
-          <label htmlFor="awayScore" className="text-xs text-[var(--text-muted)]">Fora</label>
           <Input
             id="awayScore"
+            label="Fora"
             type="number"
             min={0}
             max={20}

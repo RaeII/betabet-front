@@ -24,14 +24,13 @@ export function GroupSettings({ group }: GroupSettingsProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-[var(--text)]">Nome do grupo</label>
-        <Input value={name} onChange={e => setName(e.target.value)} required minLength={3} />
+        <Input label="Nome do grupo" value={name} onChange={e => setName(e.target.value)} required minLength={3} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-[var(--text)]">Pontos por resultado</label>
           <Input
+            label="Pontos por resultado"
             type="number"
             min={1}
             max={10}
@@ -40,8 +39,8 @@ export function GroupSettings({ group }: GroupSettingsProps) {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-[var(--text)]">Pontos pelo placar</label>
           <Input
+            label="Pontos pelo placar"
             type="number"
             min={1}
             max={20}

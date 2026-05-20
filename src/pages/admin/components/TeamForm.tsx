@@ -36,16 +36,13 @@ export function TeamForm({ onSuccess }: TeamFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-[var(--text)]">Nome</label>
-        <Input value={name} onChange={e => setName(e.target.value)} placeholder="Brasil" required />
+        <Input label="Nome" value={name} onChange={e => setName(e.target.value)} placeholder="Brasil" required />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-[var(--text)]">URL da bandeira</label>
-        <Input value={flagUrl} onChange={e => setFlagUrl(e.target.value)} placeholder="/flags/br.svg" required />
+        <Input label="URL da bandeira" value={flagUrl} onChange={e => setFlagUrl(e.target.value)} placeholder="/flags/br.svg" required />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-[var(--text)]">Grupo (opcional)</label>
-        <Input value={group} onChange={e => setGroup(e.target.value)} placeholder="A" maxLength={1} />
+        <Input label="Grupo (opcional)" value={group} onChange={e => setGroup(e.target.value)} placeholder="A" maxLength={1} />
       </div>
       {error && <p className="text-xs text-[var(--danger)]">{error}</p>}
       <Button type="submit" disabled={isSubmitting} className="w-full">

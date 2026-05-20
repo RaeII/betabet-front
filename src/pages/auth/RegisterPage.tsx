@@ -59,44 +59,131 @@ export function RegisterPage() {
 
   return (
     <AuthForm title="Criar conta" subtitle="Participe do Bolão da Copa">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
         <div className="flex flex-col gap-1">
-          <label htmlFor="name" className="text-sm font-medium text-[var(--text)]">Nome</label>
-          <Input id="name" autoComplete="name" value={values.name} onChange={handleChange('name')} aria-invalid={!!errors.name} />
-          {errors.name && <span className="text-xs text-[var(--danger)]">{errors.name}</span>}
+          <Input
+            id="name"
+            label="Nome"
+            autoComplete="name"
+            value={values.name}
+            onChange={handleChange('name')}
+            aria-invalid={!!errors.name}
+            aria-describedby="name-error"
+          />
+          <div id="name-error" className="min-h-5" aria-live="polite">
+            <span
+              className={`block text-xs text-[var(--danger)] transition duration-200 ${
+                errors.name ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
+              {errors.name}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-[var(--text)]">E-mail</label>
-          <Input id="email" type="email" autoComplete="email" value={values.email} onChange={handleChange('email')} aria-invalid={!!errors.email} />
-          {errors.email && <span className="text-xs text-[var(--danger)]">{errors.email}</span>}
+          <Input
+            id="email"
+            label="E-mail"
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={handleChange('email')}
+            aria-invalid={!!errors.email}
+            aria-describedby="email-error"
+          />
+          <div id="email-error" className="min-h-5" aria-live="polite">
+            <span
+              className={`block text-xs text-[var(--danger)] transition duration-200 ${
+                errors.email ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
+              {errors.email}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm font-medium text-[var(--text)]">Senha</label>
-          <Input id="password" type="password" autoComplete="new-password" value={values.password} onChange={handleChange('password')} aria-invalid={!!errors.password} />
-          {errors.password && <span className="text-xs text-[var(--danger)]">{errors.password}</span>}
+          <Input
+            id="password"
+            label="Senha"
+            type="password"
+            autoComplete="new-password"
+            value={values.password}
+            onChange={handleChange('password')}
+            aria-invalid={!!errors.password}
+            aria-describedby="password-error"
+          />
+          <div id="password-error" className="min-h-5" aria-live="polite">
+            <span
+              className={`block text-xs text-[var(--danger)] transition duration-200 ${
+                errors.password ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
+              {errors.password}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="confirmPassword" className="text-sm font-medium text-[var(--text)]">Confirmar senha</label>
-          <Input id="confirmPassword" type="password" autoComplete="new-password" value={values.confirmPassword} onChange={handleChange('confirmPassword')} aria-invalid={!!errors.confirmPassword} />
-          {errors.confirmPassword && <span className="text-xs text-[var(--danger)]">{errors.confirmPassword}</span>}
+          <Input
+            id="confirmPassword"
+            label="Confirmar senha"
+            type="password"
+            autoComplete="new-password"
+            value={values.confirmPassword}
+            onChange={handleChange('confirmPassword')}
+            aria-invalid={!!errors.confirmPassword}
+            aria-describedby="confirm-password-error"
+          />
+          <div id="confirm-password-error" className="min-h-5" aria-live="polite">
+            <span
+              className={`block text-xs text-[var(--danger)] transition duration-200 ${
+                errors.confirmPassword ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
+              {errors.confirmPassword}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="referralCode" className="text-sm font-medium text-[var(--text)]">
-            Código de indicação <span className="text-[var(--text-muted)]">(opcional)</span>
-          </label>
-          <Input id="referralCode" autoComplete="off" value={values.referralCode} onChange={handleChange('referralCode')} placeholder="Ex: ABC123" />
-          {errors.referralCode && <span className="text-xs text-[var(--danger)]">{errors.referralCode}</span>}
+          <Input
+            id="referralCode"
+            label={<>Código de indicação <span className="text-[var(--text-muted)]">(opcional)</span></>}
+            autoComplete="off"
+            value={values.referralCode}
+            onChange={handleChange('referralCode')}
+            placeholder="Ex: ABC123"
+            aria-invalid={!!errors.referralCode}
+            aria-describedby="referral-code-error"
+          />
+          <div id="referral-code-error" className="min-h-5" aria-live="polite">
+            <span
+              className={`block text-xs text-[var(--danger)] transition duration-200 ${
+                errors.referralCode ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
+              {errors.referralCode}
+            </span>
+          </div>
         </div>
 
-        {serverError && <p className="text-sm text-[var(--danger)]">{serverError}</p>}
+        <div className="flex flex-col gap-2">
+          <div className="min-h-5" aria-live="polite">
+            <p
+              className={`text-sm text-[var(--danger)] transition duration-200 ${
+                serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
+              {serverError}
+            </p>
+          </div>
 
-        <Button type="submit" disabled={isSubmitting} className="mt-1 w-full">
-          {isSubmitting ? 'Criando conta…' : 'Criar conta'}
-        </Button>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? 'Criando conta…' : 'Criar conta'}
+          </Button>
+        </div>
       </form>
 
       <p className="mt-4 text-center text-sm text-[var(--text-muted)]">

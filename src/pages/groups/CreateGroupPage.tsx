@@ -32,8 +32,8 @@ export function CreateGroupPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-[var(--text)]">Nome do grupo</label>
           <Input
+            label="Nome do grupo"
             value={name}
             onChange={e => { setName(e.target.value); setNameError('') }}
             placeholder="Bolão dos Amigos"
@@ -45,12 +45,10 @@ export function CreateGroupPage() {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-[var(--text)]">Pontos por resultado</label>
-            <Input type="number" min={1} max={10} value={resultPoints} onChange={e => setResultPoints(Number(e.target.value))} />
+            <Input label="Pontos por resultado" type="number" min={1} max={10} value={resultPoints} onChange={e => setResultPoints(Number(e.target.value))} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-[var(--text)]">Pontos pelo placar</label>
-            <Input type="number" min={1} max={20} value={exactScorePoints} onChange={e => setExactScorePoints(Number(e.target.value))} />
+            <Input label="Pontos pelo placar" type="number" min={1} max={20} value={exactScorePoints} onChange={e => setExactScorePoints(Number(e.target.value))} />
           </div>
         </div>
 

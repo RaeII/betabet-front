@@ -1,0 +1,4 @@
+interface:
+  display_name: "Betabet UI Implementation"
+  short_description: "Regras locais de UI do Betabet"
+  default_prompt: "Use $betabet-ui-implementation para implementar UI no Betabet seguindo o layout local."

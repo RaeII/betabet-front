@@ -38,13 +38,11 @@ export function MatchResultForm({ matchId, onSuccess }: MatchResultFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-[var(--text)]">Casa</label>
-          <Input type="number" min={0} value={homeScore} onChange={e => setHomeScore(Number(e.target.value))} className="w-20 text-center" />
+          <Input label="Casa" type="number" min={0} value={homeScore} onChange={e => setHomeScore(Number(e.target.value))} className="w-20 text-center" />
         </div>
         <span className="text-lg text-[var(--text-muted)]">×</span>
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-[var(--text)]">Fora</label>
-          <Input type="number" min={0} value={awayScore} onChange={e => setAwayScore(Number(e.target.value))} className="w-20 text-center" />
+          <Input label="Fora" type="number" min={0} value={awayScore} onChange={e => setAwayScore(Number(e.target.value))} className="w-20 text-center" />
         </div>
       </div>
       {error && <p className="text-xs text-[var(--danger)]">{error}</p>}
