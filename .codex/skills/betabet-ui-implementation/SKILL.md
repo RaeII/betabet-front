@@ -88,29 +88,77 @@ Informacoes que aparecem depois da interacao, como erro de input, validacao, aju
 
 Use um destes padroes:
 
-- Em formularios com inputs empilhados, reserve espaco fixo para cada mensagem desde o render inicial, normalmente com um slot `min-h-5` logo abaixo do input.
+- Em formularios de auth ou formularios densos com `Input` empilhado, preferir um wrapper reutilizavel como `AuthField`: o input fica no fluxo normal e a mensagem fica em camada absoluta logo abaixo dele, dentro de um slot compacto reservado pelo wrapper (`pb-4`, `top-full`, `h-4`). Isso evita salto de layout sem criar espacos grandes entre os campos.
+- Em formularios comuns ou menos densos, reserve espaco fixo para cada mensagem desde o render inicial, normalmente com um slot `min-h-4` ou `min-h-5` logo abaixo do input, conforme o ritmo visual da tela.
 - Para mensagens temporarias, use camada absoluta/overlay dentro de um container `relative`, sem afetar o fluxo.
-- Anime entrada e saida de forma suave com opacidade e pequeno deslocamento; evite mudar altura do layout durante a transicao.
-- Preserve acessibilidade com `aria-invalid`, `aria-describedby` e `aria-live="polite"` quando fizer sentido.
+- Anime entrada e saida de forma suave com opacidade e pequeno deslocamento (`transition duration-150` ou `duration-200`); evite mudar altura do layout durante a transicao.
+- Preserve acessibilidade com `aria-invalid`, `aria-describedby`, `aria-live="polite"` e `aria-atomic="true"` quando fizer sentido.
 - Em formularios com botao principal, nao deixar mensagens globais/status criarem distancia excessiva entre o ultimo input e o botao. Agrupe mensagem global e botao no mesmo bloco (`flex flex-col gap-2`) e evite `mt-*` extra no botao.
 - O botao de envio deve ficar visualmente conectado aos inputs: use o gap do formulario como ritmo principal e remova margem adicional no botao, salvo quando houver um motivo claro de layout.
 - Evite renderizar erro somente com `{error && <span ...>}` entre inputs empilhados; isso deixa os campos proximos demais quando nao ha erro e pode causar salto visual quando a mensagem aparece.
+- Evite aumentar o `gap` do formulario para compensar mensagens de erro. O espaco da mensagem pertence ao campo, nao ao ritmo global do formulario.
 
-Exemplo de slot estavel:
+Exemplo recomendado para auth denso:
 
 ```tsx
-<div id="email-error" className="min-h-5" aria-live="polite">
-  <span
-    className={`block text-xs text-[var(--danger)] transition duration-200 ${
-      error ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-    }`}
-  >
-    {error}
-  </span>
-</div>
+import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
+
+interface AuthFieldProps {
+  children: ReactNode
+  error?: string
+  errorId: string
+  className?: string
+}
+
+export function AuthField({ children, error, errorId, className }: AuthFieldProps) {
+  const hasError = Boolean(error)
+
+  return (
+    <div className={cn('pb-4', className)}>
+      <div className="relative">
+        {children}
+        <div
+          id={errorId}
+          className="pointer-events-none absolute inset-x-0 top-full mt-0.5 h-4 overflow-hidden"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span
+            className={cn(
+              'block truncate text-xs font-medium leading-4 text-[var(--danger)] transition duration-150',
+              hasError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0',
+            )}
+          >
+            {error}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
 ```
 
-Exemplo de campo com label flutuante e erro reservado:
+Exemplo de uso em auth:
+
+```tsx
+<form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
+  <AuthField errorId="email-error" error={errors.email}>
+    <Input
+      id="email"
+      label="E-mail"
+      type="email"
+      autoComplete="email"
+      value={values.email}
+      onChange={handleChange('email')}
+      aria-invalid={!!errors.email}
+      aria-describedby="email-error"
+    />
+  </AuthField>
+</form>
+```
+
+Exemplo de slot estavel para formularios menos densos:
 
 ```tsx
 <div className="flex flex-col gap-1">
@@ -123,9 +171,9 @@ Exemplo de campo com label flutuante e erro reservado:
     aria-invalid={!!errors.password}
     aria-describedby="password-error"
   />
-  <div id="password-error" className="min-h-5" aria-live="polite">
+  <div id="password-error" className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
     <span
-      className={`block text-xs text-[var(--danger)] transition duration-200 ${
+      className={`block text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
         errors.password ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
       }`}
     >
@@ -139,9 +187,9 @@ Exemplo de mensagem global proxima do botao:
 
 ```tsx
 <div className="flex flex-col gap-2">
-  <div className="min-h-5" aria-live="polite">
+  <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
     <p
-      className={`text-sm text-[var(--danger)] transition duration-200 ${
+      className={`text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
         serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
       }`}
     >
@@ -163,7 +211,8 @@ Seguir `doc/ui.md` com estas prioridades:
 
 - Neutros dominam a tela; verde e amarelo sao pontuais. Amarelo e detalhe de suporte, nao cor de foco/formulario.
 - Plus Jakarta Sans, pesos 400-700 na maior parte da UI, line-height confortavel e tracking normal fora de titulos grandes.
-- Em formularios de auth ou formularios empilhados semelhantes, usar `flex flex-col gap-3` no form e `flex flex-col gap-1` por campo, com slot `min-h-5` para a mensagem. Nao compensar espacamento com labels externas.
+- Em formularios de auth, usar `flex flex-col gap-2` no form e um wrapper de campo compacto como `AuthField` para reservar a area da mensagem com `pb-4`. Nao usar `gap-3` ou `min-h-5` em todos os campos como compensacao para erro, pois isso deixa a tela artificialmente espacada.
+- Em formularios empilhados fora de auth, ajustar o ritmo conforme densidade da tela: `gap-2` ou `gap-3` no form e slot estavel `min-h-4` ou `min-h-5` por campo. Nao compensar espacamento com labels externas.
 - Cards usam `border: 1px solid var(--border)`, superficie solida e sombra discreta apenas quando houver motivo.
 - Nao colocar card dentro de card nem transformar secoes inteiras em cards flutuantes.
 - Evitar gradientes, botoes azuis, card amarelo solido, varias cores fortes competindo e texto amarelo pequeno em fundo claro.
@@ -175,7 +224,8 @@ Antes de finalizar uma alteracao de UI:
 
 - `rtk rg -n -e ":focus-visible|focus-visible|focus:.*support|216,169,0|216, 169, 0" src`
 - Confirmar que erros/status nao empurram layout ao aparecer.
-- Confirmar que inputs empilhados nao ficam proximos demais quando nao ha erro; cada campo deve reservar o slot da mensagem quando o formulario puder validar o campo.
+- Confirmar que inputs empilhados nao ficam proximos demais quando nao ha erro; cada campo deve reservar o slot da mensagem quando o formulario puder validar o campo, mas em auth esse slot deve ser compacto (`AuthField`, `pb-4`, `h-4`).
+- Confirmar que o espaco entre inputs nao foi inflado artificialmente para acomodar erros; o erro deve pertencer ao campo.
 - Confirmar que mensagens globais/status nao afastam demais o botao principal dos inputs.
 - Confirmar que inputs com label usam a prop `label` do `Input` e mantem label flutuante dentro do campo, no estilo Material UI.
 - Confirmar que foco de input esta visivel, minimalista e sem amarelo.

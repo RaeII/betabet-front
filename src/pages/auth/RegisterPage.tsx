@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { AuthField } from './components/AuthField'
 import { AuthForm } from './components/AuthForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,8 +60,8 @@ export function RegisterPage() {
 
   return (
     <AuthForm title="Criar conta" subtitle="Participe do Bolão da Copa">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
-        <div className="flex flex-col gap-1">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
+        <AuthField errorId="name-error" error={errors.name}>
           <Input
             id="name"
             label="Nome"
@@ -70,18 +71,9 @@ export function RegisterPage() {
             aria-invalid={!!errors.name}
             aria-describedby="name-error"
           />
-          <div id="name-error" className="min-h-5" aria-live="polite">
-            <span
-              className={`block text-xs text-[var(--danger)] transition duration-200 ${
-                errors.name ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-              }`}
-            >
-              {errors.name}
-            </span>
-          </div>
-        </div>
+        </AuthField>
 
-        <div className="flex flex-col gap-1">
+        <AuthField errorId="email-error" error={errors.email}>
           <Input
             id="email"
             label="E-mail"
@@ -92,18 +84,9 @@ export function RegisterPage() {
             aria-invalid={!!errors.email}
             aria-describedby="email-error"
           />
-          <div id="email-error" className="min-h-5" aria-live="polite">
-            <span
-              className={`block text-xs text-[var(--danger)] transition duration-200 ${
-                errors.email ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-              }`}
-            >
-              {errors.email}
-            </span>
-          </div>
-        </div>
+        </AuthField>
 
-        <div className="flex flex-col gap-1">
+        <AuthField errorId="password-error" error={errors.password}>
           <Input
             id="password"
             label="Senha"
@@ -114,18 +97,9 @@ export function RegisterPage() {
             aria-invalid={!!errors.password}
             aria-describedby="password-error"
           />
-          <div id="password-error" className="min-h-5" aria-live="polite">
-            <span
-              className={`block text-xs text-[var(--danger)] transition duration-200 ${
-                errors.password ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-              }`}
-            >
-              {errors.password}
-            </span>
-          </div>
-        </div>
+        </AuthField>
 
-        <div className="flex flex-col gap-1">
+        <AuthField errorId="confirm-password-error" error={errors.confirmPassword}>
           <Input
             id="confirmPassword"
             label="Confirmar senha"
@@ -136,18 +110,9 @@ export function RegisterPage() {
             aria-invalid={!!errors.confirmPassword}
             aria-describedby="confirm-password-error"
           />
-          <div id="confirm-password-error" className="min-h-5" aria-live="polite">
-            <span
-              className={`block text-xs text-[var(--danger)] transition duration-200 ${
-                errors.confirmPassword ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-              }`}
-            >
-              {errors.confirmPassword}
-            </span>
-          </div>
-        </div>
+        </AuthField>
 
-        <div className="flex flex-col gap-1">
+        <AuthField errorId="referral-code-error" error={errors.referralCode}>
           <Input
             id="referralCode"
             label={<>Código de indicação <span className="text-[var(--text-muted)]">(opcional)</span></>}
@@ -158,21 +123,12 @@ export function RegisterPage() {
             aria-invalid={!!errors.referralCode}
             aria-describedby="referral-code-error"
           />
-          <div id="referral-code-error" className="min-h-5" aria-live="polite">
-            <span
-              className={`block text-xs text-[var(--danger)] transition duration-200 ${
-                errors.referralCode ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-              }`}
-            >
-              {errors.referralCode}
-            </span>
-          </div>
-        </div>
+        </AuthField>
 
         <div className="flex flex-col gap-2">
-          <div className="min-h-5" aria-live="polite">
+          <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
             <p
-              className={`text-sm text-[var(--danger)] transition duration-200 ${
+              className={`text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
                 serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
               }`}
             >

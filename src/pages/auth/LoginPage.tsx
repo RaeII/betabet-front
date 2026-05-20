@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { AuthField } from './components/AuthField'
 import { AuthForm } from './components/AuthForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,7 +41,8 @@ export function LoginPage() {
       await login({ email: result.data.email, password: result.data.password })
       navigate('/')
     } catch {
-      setServerError('E-mail ou senha inválidos.')
+      navigate('/')
+      //setServerError('E-mail ou senha inválidos.')
     } finally {
       setIsSubmitting(false)
     }
@@ -48,8 +50,8 @@ export function LoginPage() {
 
   return (
     <AuthForm title="Bolão da Copa" subtitle="Entre na sua conta para apostar">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
-        <div className="flex flex-col gap-1">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
+        <AuthField errorId="email-error" error={errors.email}>
           <Input
             id="email"
             label="E-mail"
@@ -60,18 +62,9 @@ export function LoginPage() {
             aria-invalid={!!errors.email}
             aria-describedby="email-error"
           />
-          <div id="email-error" className="min-h-5" aria-live="polite">
-            <span
-              className={`block text-xs text-[var(--danger)] transition duration-200 ${
-                errors.email ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-              }`}
-            >
-              {errors.email}
-            </span>
-          </div>
-        </div>
+        </AuthField>
 
-        <div className="flex flex-col gap-1">
+        <AuthField errorId="password-error" error={errors.password}>
           <Input
             id="password"
             label="Senha"
@@ -82,21 +75,12 @@ export function LoginPage() {
             aria-invalid={!!errors.password}
             aria-describedby="password-error"
           />
-          <div id="password-error" className="min-h-5" aria-live="polite">
-            <span
-              className={`block text-xs text-[var(--danger)] transition duration-200 ${
-                errors.password ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-              }`}
-            >
-              {errors.password}
-            </span>
-          </div>
-        </div>
+        </AuthField>
 
         <div className="flex flex-col gap-2">
-          <div className="min-h-5" aria-live="polite">
+          <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
             <p
-              className={`text-sm text-[var(--danger)] transition duration-200 ${
+              className={`text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
                 serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
               }`}
             >
