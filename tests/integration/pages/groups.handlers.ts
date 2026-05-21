@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import type { BettingGroup, GroupMembership, RankingEntry } from '@/types/group.types'
 
-const mockGroup: BettingGroup = {
+const makeGroup = (overrides: Partial<BettingGroup>): BettingGroup => ({
   id: 'group-1',
   name: 'Bolão dos Amigos',
   coverUrl: null,
@@ -13,7 +13,19 @@ const mockGroup: BettingGroup = {
   memberCount: 3,
   inviteCode: 'ABC12345',
   createdAt: new Date().toISOString(),
-}
+  ...overrides,
+})
+
+const mockGroups: BettingGroup[] = [
+  makeGroup({ id: 'group-1', name: 'Bolão dos Amigos', inviteCode: 'ABC12345' }),
+  makeGroup({ id: 'group-2', name: 'Liga da Firma', memberCount: 8, inviteCode: 'FIRMA123' }),
+  makeGroup({
+    id: 'group-3',
+    name: 'Super Grupo dos Palpiteiros com Nome Muito Longo',
+    memberCount: 15,
+    inviteCode: 'LONG1234',
+  }),
+]
 
 const mockMembership: GroupMembership = {
   groupId: 'group-1',
@@ -30,21 +42,23 @@ const mockRanking: RankingEntry[] = [
 
 export const groupsHandlers = [
   http.get('/api/groups', () => {
-    return HttpResponse.json({ groups: [mockGroup] })
+    return HttpResponse.json({ groups: mockGroups })
   }),
 
   http.post('/api/groups', async ({ request }) => {
     const body = await request.json() as Partial<BettingGroup>
-    return HttpResponse.json({ group: { ...mockGroup, ...body, id: 'new-group-1' } })
+    return HttpResponse.json({ group: { ...mockGroups[0], ...body, id: 'new-group-1' } })
   }),
 
   http.get('/api/groups/:groupId', ({ params }) => {
-    return HttpResponse.json({ group: { ...mockGroup, id: params.groupId as string }, role: 'admin' })
+    const groupId = params.groupId as string
+    const group = mockGroups.find(item => item.id === groupId) ?? mockGroups[0]
+    return HttpResponse.json({ group, role: 'admin' })
   }),
 
   http.put('/api/groups/:groupId', async ({ params, request }) => {
     const body = await request.json() as Partial<BettingGroup>
-    return HttpResponse.json({ group: { ...mockGroup, id: params.groupId as string, ...body } })
+    return HttpResponse.json({ group: { ...mockGroups[0], id: params.groupId as string, ...body } })
   }),
 
   http.get('/api/groups/:groupId/members', () => {
@@ -63,7 +77,7 @@ export const groupsHandlers = [
     return HttpResponse.json({ bets: [], canView: false })
   }),
 
-  http.get('/api/groups/:groupId/join-requests', () => {
+  http.get('/api/groups/:groupId/requests', () => {
     return HttpResponse.json({ requests: [] })
   }),
 
@@ -72,6 +86,6 @@ export const groupsHandlers = [
   }),
 
   http.get('/api/invite/:code', () => {
-    return HttpResponse.json({ group: mockGroup })
+    return HttpResponse.json({ group: mockGroups[0] })
   }),
 ]

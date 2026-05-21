@@ -1,25 +1,30 @@
 import { Link } from 'react-router-dom'
 import { Users } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { GroupAvatar } from './GroupAvatar'
 import type { BettingGroup } from '@/types/group.types'
 
 interface GroupCardProps {
   group: BettingGroup
   userRank?: number | null
+  isActive?: boolean
+  compact?: boolean
+  className?: string
 }
 
-export function GroupCard({ group, userRank }: GroupCardProps) {
+export function GroupCard({ group, userRank, isActive = false, compact = false, className }: GroupCardProps) {
   return (
     <Link
       to={`/groups/${group.id}`}
-      className="flex items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:border-[var(--brand)]/30 hover:bg-[var(--surface-soft)]"
+      aria-current={isActive ? 'page' : undefined}
+      className={cn(
+        'flex min-w-0 items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 transition duration-200 hover:border-[var(--brand)] hover:bg-[var(--surface-soft)]',
+        isActive && 'border-[var(--brand)] bg-[var(--surface-soft)]',
+        compact && 'p-3',
+        className,
+      )}
     >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius)] bg-[var(--surface-soft)]">
-        {group.coverUrl ? (
-          <img src={group.coverUrl} alt={group.name} className="h-full w-full object-cover" />
-        ) : (
-          <span className="text-2xl">🏆</span>
-        )}
-      </div>
+      <GroupAvatar name={group.name} coverUrl={group.coverUrl} size={compact ? 'sm' : 'md'} />
 
       <div className="flex-1 min-w-0">
         <p className="truncate font-semibold text-[var(--text)]">{group.name}</p>
@@ -30,7 +35,7 @@ export function GroupCard({ group, userRank }: GroupCardProps) {
       </div>
 
       {userRank !== undefined && userRank !== null && (
-        <div className="flex flex-col items-center">
+        <div className="flex shrink-0 flex-col items-center">
           <span className="text-lg font-bold text-[var(--brand)]">#{userRank}</span>
           <span className="text-xs text-[var(--text-muted)]">rank</span>
         </div>
