@@ -1,13 +1,19 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { BarChart2, Trophy, Users, LogOut, Sun, Moon } from 'lucide-react'
+import { BarChart2, Trophy, Users, Download, LogOut, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { useTheme } from '@/hooks/useTheme'
+import { ToastProvider } from '@/context/toast.context'
 
 const adminNav = [
   { to: '/admin', end: true, icon: BarChart2, label: 'Dashboard' },
   { to: '/admin/matches', icon: Trophy, label: 'Partidas' },
   { to: '/admin/teams', icon: Users, label: 'Seleções' },
+]
+
+const importNav = [
+  { to: '/admin/import/teams', icon: Download, label: 'Importar Seleções' },
+  { to: '/admin/import/matches', icon: Download, label: 'Importar Partidas' },
 ]
 
 export function AdminShell() {
@@ -21,6 +27,7 @@ export function AdminShell() {
   }
 
   return (
+    <ToastProvider>
     <div className="flex min-h-screen bg-[var(--bg)]">
       <aside className="flex w-56 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="mb-6 text-lg font-bold text-[var(--brand)]">Admin Panel</div>
@@ -44,6 +51,30 @@ export function AdminShell() {
             </NavLink>
           ))}
         </nav>
+        <div className="mt-4 pt-4 border-t border-[var(--border)]">
+          <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            Importar
+          </p>
+          <nav className="flex flex-col gap-1">
+            {importNav.map(({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-[var(--brand)]/10 text-[var(--brand)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text)]',
+                  )
+                }
+              >
+                <Icon size={16} />
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
         <div className="mt-auto flex flex-col gap-1">
           <button
             onClick={toggleTheme}
@@ -66,5 +97,6 @@ export function AdminShell() {
         <Outlet />
       </main>
     </div>
+    </ToastProvider>
   )
 }
