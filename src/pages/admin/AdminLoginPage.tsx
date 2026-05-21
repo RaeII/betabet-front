@@ -1,16 +1,16 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { AuthField } from './components/AuthField'
-import { AuthForm } from './components/AuthForm'
+import { useNavigate } from 'react-router-dom'
+import { AuthField } from '@/pages/auth/components/AuthField'
+import { AuthForm } from '@/pages/auth/components/AuthForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useAuth } from '@/hooks/useAuth'
+import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { LoginSchema } from '@/lib/schemas'
 import type { LoginCredentials } from '@/types/auth.types'
 
-export function LoginPage() {
+export function AdminLoginPage() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { adminLogin } = useAdminAuth()
   const [values, setValues] = useState<LoginCredentials>({ email: '', password: '' })
   const [errors, setErrors] = useState<Partial<LoginCredentials>>({})
   const [serverError, setServerError] = useState('')
@@ -38,8 +38,8 @@ export function LoginPage() {
     setIsSubmitting(true)
     setServerError('')
     try {
-      await login({ email: result.data.email, password: result.data.password })
-      navigate('/')
+      await adminLogin(result.data.email, result.data.password)
+      navigate('/admin')
     } catch {
       setServerError('E-mail ou senha inválidos.')
     } finally {
@@ -48,7 +48,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthForm title="Bolão da Copa" subtitle="Entre na sua conta para apostar">
+    <AuthForm title="Admin Panel" subtitle="Acesso restrito ao painel administrativo">
       <form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
         <AuthField errorId="email-error" error={errors.email}>
           <Input
@@ -92,13 +92,6 @@ export function LoginPage() {
           </Button>
         </div>
       </form>
-
-      <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
-        Não tem conta?{' '}
-        <Link to="/auth/register" className="font-medium text-[var(--brand)] hover:underline">
-          Cadastre-se
-        </Link>
-      </p>
     </AuthForm>
   )
 }

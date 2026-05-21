@@ -1,11 +1,15 @@
 import { apiGet, apiPost, apiPut } from './api'
-import type { AdminStats, MatchAnalytics, MatchFormData, ResultFormData, TeamFormData, UserStats } from '@/types/admin.types'
+import type { AdminUser, AdminStats, MatchAnalytics, MatchFormData, ResultFormData, TeamFormData, UserStats } from '@/types/admin.types'
 import type { Match } from '@/types/match.types'
 import type { BettingGroup, GroupMembership, RankingEntry } from '@/types/group.types'
 import type { Team } from '@/types/match.types'
 
-export function adminLogin(email: string, password: string): Promise<{ ok: boolean }> {
+export function adminLogin(email: string, password: string): Promise<{ admin: AdminUser }> {
   return apiPost('/api/admin/auth/login', { email, password })
+}
+
+export function adminLogout(): Promise<{ ok: boolean }> {
+  return apiPost('/api/admin/auth/logout', {})
 }
 
 export function getAdminStats(): Promise<AdminStats> {

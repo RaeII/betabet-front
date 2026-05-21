@@ -1,10 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '@/hooks/useAuth'
+import { useAdminAuth } from '@/hooks/useAdminAuth'
 
 export function AdminGuard() {
-  const { user, isLoading } = useAuth()
+  const { isAdminAuthenticated, isAdminLoading } = useAdminAuth()
 
-  if (isLoading) return null
+  if (isAdminLoading) return null
 
-  return user?.isAdmin ? <Outlet /> : <Navigate to="/" replace />
+  return isAdminAuthenticated ? <Outlet /> : <Navigate to="/admin/login" replace />
 }

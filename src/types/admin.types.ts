@@ -1,5 +1,12 @@
 import type { Match, TournamentPhase } from './match.types'
 
+export interface AdminUser {
+  id: string
+  name: string
+  email: string
+  createdAt: string
+}
+
 export interface AdminStats {
   totalUsers: number
   totalGroups: number
