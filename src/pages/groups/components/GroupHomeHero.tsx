@@ -19,7 +19,7 @@ export function GroupHomeHero({ group, role, primaryMatchHref }: GroupHomeHeroPr
     >
       <div className="flex min-w-0 flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <GroupAvatar name={group.name} coverUrl={group.coverUrl} size="lg" />
+          <GroupAvatar name={group.name} coverUrl={group.coverUrl} emoji={group.emoji} size="lg" />
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap gap-2">
               <Badge>{role === 'admin' ? 'Admin' : 'Membro'}</Badge>

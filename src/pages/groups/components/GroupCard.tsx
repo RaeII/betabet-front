@@ -24,7 +24,7 @@ export function GroupCard({ group, userRank, isActive = false, compact = false, 
         className,
       )}
     >
-      <GroupAvatar name={group.name} coverUrl={group.coverUrl} size={compact ? 'sm' : 'md'} />
+      <GroupAvatar name={group.name} coverUrl={group.coverUrl} emoji={group.emoji} size={compact ? 'sm' : 'md'} />
 
       <div className="flex-1 min-w-0">
         <p className="truncate font-semibold text-[var(--text)]">{group.name}</p>

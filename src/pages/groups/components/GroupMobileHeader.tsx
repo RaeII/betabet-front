@@ -23,7 +23,7 @@ export function GroupMobileHeader({ group, role }: GroupMobileHeaderProps) {
       </Button>
 
       <div className="flex min-w-0 items-center gap-3">
-        <GroupAvatar name={group.name} coverUrl={group.coverUrl} size="sm" />
+        <GroupAvatar name={group.name} coverUrl={group.coverUrl} emoji={group.emoji} size="sm" />
         <div className="min-w-0">
           <p className="truncate text-base font-semibold text-[var(--text)]">{group.name}</p>
           <p className="text-xs text-[var(--text-muted)]">

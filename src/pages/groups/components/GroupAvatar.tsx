@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 interface GroupAvatarProps {
   name: string
   coverUrl: string | null
+  emoji?: string | null
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }
@@ -14,7 +15,13 @@ const sizeClasses = {
   lg: 'h-16 w-16',
 }
 
-export function GroupAvatar({ name, coverUrl, size = 'md', className }: GroupAvatarProps) {
+const emojiSizeClasses = {
+  sm: 'text-xl',
+  md: 'text-2xl',
+  lg: 'text-3xl',
+}
+
+export function GroupAvatar({ name, coverUrl, emoji, size = 'md', className }: GroupAvatarProps) {
   return (
     <div
       className={cn(
@@ -22,10 +29,12 @@ export function GroupAvatar({ name, coverUrl, size = 'md', className }: GroupAva
         sizeClasses[size],
         className,
       )}
-      aria-hidden={!coverUrl}
+      aria-hidden={!coverUrl && !emoji}
     >
       {coverUrl ? (
         <img src={coverUrl} alt={name} className="h-full w-full object-cover" />
+      ) : emoji ? (
+        <span className={emojiSizeClasses[size]} role="img" aria-label={name}>{emoji}</span>
       ) : (
         <Trophy size={size === 'lg' ? 28 : 22} strokeWidth={1.8} />
       )}
