@@ -1,46 +1,41 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { AdminGuard } from '@/router/guards/AdminGuard'
-import { AuthProvider } from '@/context/auth.context'
-import { server } from '../../mocks/server'
-import { authHandlers } from '../../mocks/handlers/auth.handlers'
+
+vi.mock('@/context/admin.context', () => ({
+  useAdminAuthContext: vi.fn(() => ({ isAdminAuthenticated: false, isAdminLoading: false })),
+  AdminAuthProvider: ({ children }: { children: React.ReactNode }) =>
+    createElement('div', null, children),
+}))
 
 function makeWrapper(initialPath: string) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return ({ children }: { children: React.ReactNode }) =>
     createElement(
-      QueryClientProvider,
-      { client: qc },
+      MemoryRouter,
+      { initialEntries: [initialPath] },
       createElement(
-        AuthProvider,
+        Routes,
         null,
+        createElement(Route, { path: '/admin/login', element: createElement('div', null, 'Admin Login') }),
         createElement(
-          MemoryRouter,
-          { initialEntries: [initialPath] },
-          createElement(Routes, null,
-            createElement(Route, { path: '/', element: createElement('div', null, 'Home') }),
-            createElement(Route, { element: createElement(AdminGuard) },
-              createElement(Route, { path: '/admin', element: children }),
-            ),
-          ),
+          Route,
+          { element: createElement(AdminGuard) },
+          createElement(Route, { path: '/admin', element: children }),
         ),
       ),
     )
 }
 
 describe('AdminGuard', () => {
-  beforeEach(() => server.use(...authHandlers))
-
-  it('redirects non-admin user to /', async () => {
+  it('redirects non-admin user to /admin/login', () => {
     render(
       createElement('div', null, 'Admin content'),
       { wrapper: makeWrapper('/admin') },
     )
 
-    await waitFor(() => expect(screen.getByText('Home')).toBeInTheDocument())
+    expect(screen.getByText('Admin Login')).toBeInTheDocument()
     expect(screen.queryByText('Admin content')).not.toBeInTheDocument()
   })
 })

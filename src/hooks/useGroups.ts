@@ -2,6 +2,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as groupsService from '@/services/groups.service'
 import type { CreateGroupData, UpdateGroupData } from '@/types/group.types'
 
+export function useJoinByCode() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ code }: { code: string }) => {
+      const { group } = await groupsService.resolveInviteCode(code)
+      const result = await groupsService.joinGroup(group.id, code)
+      return { ...result, groupId: group.id }
+    },
+    onSuccess: () => qc.refetchQueries({ queryKey: groupKeys.lists() }),
+  })
+}
+
 export const groupKeys = {
   all: ['groups'] as const,
   lists: () => [...groupKeys.all, 'list'] as const,
@@ -45,7 +57,7 @@ export function useCreateGroup() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateGroupData) => groupsService.createGroup(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: groupKeys.lists() }),
+    onSuccess: () => qc.refetchQueries({ queryKey: groupKeys.lists() }),
   })
 }
 

@@ -4,6 +4,7 @@ import type { BettingGroup, GroupMembership, RankingEntry } from '@/types/group.
 const makeGroup = (overrides: Partial<BettingGroup>): BettingGroup => ({
   id: 'group-1',
   name: 'Bolão dos Amigos',
+  emoji: null,
   coverUrl: null,
   adminId: 'user-1',
   resultPoints: 1,

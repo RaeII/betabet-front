@@ -6,6 +6,7 @@ export type JoinMode = 'invite' | 'request'
 export interface BettingGroup {
   id: string
   name: string
+  emoji: string | null
   coverUrl: string | null
   adminId: string
   resultPoints: number
@@ -45,6 +46,7 @@ export interface JoinRequest {
 
 export interface CreateGroupData {
   name: string
+  emoji?: string
   coverUrl?: string
   resultPoints?: number
   exactScorePoints?: number
