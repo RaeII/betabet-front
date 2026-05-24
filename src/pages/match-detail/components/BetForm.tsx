@@ -35,7 +35,7 @@ export function BetForm({ matchId, groupId, existingBet, isLocked, userGroupCoun
     setFieldError('')
 
     if (isEditing) {
-      editBet.mutate({ betId: existingBet.id, homeScore, awayScore })
+      editBet.mutate({ betId: existingBet.id, homeScore, awayScore, matchId, groupId })
     } else {
       placeBet.mutate({ matchId, groupId, homeScore, awayScore, replicateToAllGroups: replicate })
     }

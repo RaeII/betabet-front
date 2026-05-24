@@ -1,0 +1,89 @@
+import { useState } from 'react'
+import { NavLink } from 'react-router-dom'
+import { Award, Home, MessageSquare, Plus, Settings, Trophy, Users } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
+import { GroupsModal } from '@/pages/groups/components/GroupsModal'
+import { useTheme } from '@/hooks/useTheme'
+import { Moon, Sun } from 'lucide-react'
+
+const iconMap: Record<string, LucideIcon> = {
+  home: Home,
+  trophy: Trophy,
+  'message-square': MessageSquare,
+  award: Award,
+  users: Users,
+  settings: Settings,
+}
+
+export function GroupSidebar() {
+  const { groupId, isAdmin } = useActiveGroup()
+  const [modalOpen, setModalOpen] = useState(false)
+  const { theme, toggleTheme } = useTheme()
+  const isDark = theme === 'dark'
+
+  if (!groupId) return null
+
+  const items = sidebarDestinations.filter(item => !item.adminOnly || isAdmin)
+
+  return (
+    <aside className="hidden lg:flex lg:flex-col md:rounded-[var(--radius-sm)] lg:border lg:border-[var(--border)] lg:bg-[var(--surface)] lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] lg:overflow-hidden">
+      <nav aria-label="Navegação do grupo" className="flex-1 overflow-y-auto px-3 py-4">
+        <ul className="space-y-1">
+          {items.map(item => {
+            const Icon = iconMap[item.iconName] ?? Home
+            const to = pathFor(groupId, item)
+            return (
+              <li key={item.id}>
+                <NavLink
+                  to={to}
+                  end={item.to === ''}
+                  className={({ isActive }) =>
+                    [
+                      'flex items-center gap-3 rounded-[var(--radius-pill)] px-3 py-2 text-sm font-medium transition',
+                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]',
+                      isActive
+                        ? 'bg-[var(--surface-soft)] text-[var(--brand)]'
+                        : 'text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]',
+                    ].join(' ')
+                  }
+                >
+                  <Icon size={18} />
+                  <span className="truncate">{item.label}</span>
+                </NavLink>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+
+      <div className="border-t border-[var(--border)] p-3">
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="mb-2 flex w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] border border-dashed border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]"
+        >
+          <Plus size={14} />
+          Grupos
+        </button>
+
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={isDark ? 'Ativar tema claro' : 'Ativar tema escuro'}
+          className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]"
+        >
+          {isDark ? <Sun size={12} /> : <Moon size={12} />}
+          {isDark ? 'Claro' : 'Escuro'}
+        </button>
+      </div>
+
+      <GroupsModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        activeGroupId={groupId}
+      />
+    </aside>
+  )
+}

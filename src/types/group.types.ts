@@ -55,3 +55,23 @@ export interface CreateGroupData {
 }
 
 export interface UpdateGroupData extends Partial<CreateGroupData> {}
+
+export type SidebarDestination =
+  | 'home'
+  | 'jogos'
+  | 'palpites'
+  | 'ranking'
+  | 'membros'
+  | 'configuracoes'
+
+export interface SidebarItem {
+  id: SidebarDestination
+  label: string
+  to: string
+  iconName: string
+  adminOnly: boolean
+}
+
+export interface LeaveGroupResult {
+  ok: boolean
+}

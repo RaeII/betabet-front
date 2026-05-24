@@ -20,6 +20,7 @@ export const groupKeys = {
   detail: (id: string) => [...groupKeys.all, 'detail', id] as const,
   members: (id: string) => [...groupKeys.all, 'members', id] as const,
   requests: (id: string) => [...groupKeys.all, 'requests', id] as const,
+  matches: (id: string) => [...groupKeys.all, 'matches', id] as const,
 }
 
 export function useUserGroups() {

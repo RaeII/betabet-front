@@ -98,3 +98,41 @@ When a new reusable function is created, add it here before closing the feature 
 - **File**: `src/lib/bet.utils.ts`
 - **Purpose**: Returns true if both `homeScore` and `awayScore` are non-null (match result is confirmed).
 - **Usage**: `matchHasResult(match)` — used to gate result display and point calculation.
+
+---
+
+## Matchday Utilities — `src/lib/matchday.utils.ts`
+
+### groupMatchesByDay(matches: MatchWithUserBet[], options?: { includePast?: boolean }): MatchdayGroup[]
+
+- **File**: `src/lib/matchday.utils.ts`
+- **Purpose**: Group matches by local day (yyyy-mm-dd) in the user's browser timezone; orders chronologically and (by default) hides days whose matches are entirely in the past.
+- **Usage**: `groupMatchesByDay(matches, { includePast: false })`
+
+### findDefaultMatchday(matchdays: MatchdayGroup[]): number
+
+- **File**: `src/lib/matchday.utils.ts`
+- **Purpose**: Index of the matchday to highlight by default — today (local) if present, otherwise the first upcoming day, otherwise 0.
+- **Usage**: `findDefaultMatchday(matchdays)`
+
+### isPastDay(matchday: MatchdayGroup, now?: Date): boolean
+
+- **File**: `src/lib/matchday.utils.ts`
+- **Purpose**: Returns true if every match for the day is finished or scheduled in the past.
+- **Usage**: `isPastDay(matchday)`
+
+---
+
+## Last-accessed group — `src/services/last-group.service.ts`
+
+### getLastAccessedGroup(userId: string): string | null
+
+- **Purpose**: Read the stored last-accessed groupId for a user from `localStorage`; tolerates read errors silently.
+
+### setLastAccessedGroup(userId: string, groupId: string): void
+
+- **Purpose**: Persist the last-accessed groupId for a user in `localStorage`; tolerates write errors silently (e.g. Safari private mode).
+
+### clearLastAccessedGroup(userId: string): void
+
+- **Purpose**: Remove the stored last-accessed groupId for a user; tolerates errors silently.

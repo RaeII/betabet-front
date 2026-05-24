@@ -301,7 +301,7 @@ Usar escala baseada em 8px:
 
 | Token           |   Valor | Uso                     |
 | --------------- | ------: | ----------------------- |
-| `--radius-sm`   |  `10px` | inputs pequenos, chips  |
+| `--radius-sm`   |  `10px` | inputs pequenos, chips, **shell containers (sidebar, header do app)** |
 | `--radius-md`   |  `16px` | inputs, blocos internos |
 | `--radius-lg`   |  `20px` | cards padrão            |
 | `--radius-xl`   |  `24px` | cards grandes           |
@@ -570,6 +570,32 @@ Regras:
 - um botão ou chamada simples;
 - não adicionar pattern forte dentro do CTA.
 
+### 11.5 App shell (sidebar + conteúdo)
+
+Layout interno do produto autenticado (área do grupo). A sidebar e o header **não ficam colados** nas bordas da tela nem encostados um no outro — eles flutuam sobre o pattern de fundo com respiro nas quatro extremidades e um gap entre si.
+
+Regras:
+
+- aplicar padding de `--space-4` (16px) em todas as bordas do shell em telas `lg+`;
+- usar gap de `--space-4` (16px) entre sidebar e container principal;
+- mobile (`< lg`) mantém layout edge-to-edge — o inset é apenas desktop;
+- sidebar com `--radius-sm` (10px), borda completa em todos os lados e `bg-surface`;
+- sidebar fica `sticky` no topo com `top: --space-4` e ocupa `calc(100vh - 2 * --space-4)` de altura, com `overflow-hidden` para respeitar o radius;
+- nav interna da sidebar usa `overflow-y-auto` para suportar muitos itens sem quebrar o card;
+- header do grupo compartilha o **mesmo radius** da sidebar (`--radius-sm`) e borda completa em `lg+`, com `sticky top: --space-4` para alinhar com a sidebar;
+- pattern de fundo permanece visível nas faixas de respiro ao redor dos cards — esse é o efeito desejado;
+- no mobile o header mantém apenas `border-b` (sem radius), pois ocupa toda a largura.
+
+A intenção visual é dar a sensação de **painéis flutuantes coesos** sobre o pattern, em vez de blocos colados nas bordas da tela.
+
+Atenção aos mínimos detalhes:
+
+- radius **idênticos** entre sidebar e header — qualquer divergência aqui quebra a coesão;
+- offset do `sticky` deve bater **exatamente** com o padding do shell (mesmo token de espaçamento);
+- bordas devem usar o mesmo token `--border` em ambos os cards;
+- `overflow-hidden` no card é obrigatório quando há radius — sem isso, filhos vazam pelos cantos;
+- gap e padding usam o **mesmo** token (`--space-4`) para criar ritmo visual previsível.
+
 ---
 
 ## 12. Motion design
@@ -654,6 +680,7 @@ Todos os elementos interativos precisam de estado de foco visível.
 - Criar componentes reutilizáveis.
 - Manter espaçamento generoso.
 - Usar bordas finas e radius alto.
+- **Prestar atenção aos mínimos detalhes**: radius idênticos entre componentes irmãos, offsets de `sticky` alinhados com o padding do container, mesmos tokens de espaçamento para gap/padding correlatos, bordas consistentes (`--border`). Pequenas divergências (1–2px, radius diferente em cards vizinhos, gap quebrado) destroem a sensação de produto polido. Revisar pixel a pixel antes de considerar concluído.
 
 ### Não fazer
 

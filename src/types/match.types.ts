@@ -47,3 +47,22 @@ export interface MatchesResponse {
   groupStage: Record<string, Record<string, Match[]>>
   knockout: Record<string, Match[]>
 }
+
+export interface MatchdayGroup {
+  date: string
+  label: string
+  matches: MatchWithUserBet[]
+  isPast: boolean
+  isToday: boolean
+}
+
+export interface BettingProgress {
+  betted: number
+  total: number
+  pct: number
+  isComplete: boolean
+}
+
+export interface GroupMatchesResponse {
+  matches: MatchWithUserBet[]
+}

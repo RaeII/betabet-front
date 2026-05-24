@@ -1,10 +1,12 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
+import { GroupShell } from '@/components/layout/GroupShell'
 import { AuthGuard } from './guards/AuthGuard'
 import { AdminGuard } from './guards/AdminGuard'
 import { OnboardingGuard } from './guards/OnboardingGuard'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
+import { RootResolver } from './RootResolver'
 
 export const router = createBrowserRouter([
   {
@@ -98,6 +100,23 @@ export const router = createBrowserRouter([
             element: <AppShell />,
             children: [
               {
+                path: 'profile',
+                lazy: async () => {
+                  const { ProfilePage } = await import('@/pages/profile/ProfilePage')
+                  return { Component: ProfilePage }
+                },
+              },
+            ],
+          },
+          {
+            index: true,
+            element: <RootResolver />,
+          },
+          {
+            path: 'groups/:groupId',
+            element: <GroupShell />,
+            children: [
+              {
                 index: true,
                 lazy: async () => {
                   const { HomePage } = await import('@/pages/home/HomePage')
@@ -105,10 +124,45 @@ export const router = createBrowserRouter([
                 },
               },
               {
-                path: 'matches',
+                path: 'jogos',
                 lazy: async () => {
-                  const { MatchesPage } = await import('@/pages/matches/MatchesPage')
-                  return { Component: MatchesPage }
+                  const { GroupJogosPage } = await import('@/pages/groups/GroupJogosPage')
+                  return { Component: GroupJogosPage }
+                },
+              },
+              {
+                path: 'palpites',
+                lazy: async () => {
+                  const { GroupPalpitesPage } = await import('@/pages/groups/GroupPalpitesPage')
+                  return { Component: GroupPalpitesPage }
+                },
+              },
+              {
+                path: 'ranking',
+                lazy: async () => {
+                  const { GroupRankingPage } = await import('@/pages/groups/GroupRankingPage')
+                  return { Component: GroupRankingPage }
+                },
+              },
+              {
+                path: 'membros',
+                lazy: async () => {
+                  const { GroupMembersPage } = await import('@/pages/groups/GroupMembersPage')
+                  return { Component: GroupMembersPage }
+                },
+              },
+              {
+                path: 'configuracoes',
+                lazy: async () => {
+                  const { GroupSettingsPage } = await import('@/pages/groups/GroupSettingsPage')
+                  return { Component: GroupSettingsPage }
+                },
+              },
+              {
+                path: 'detalhes',
+                lazy: async () => {
+                  const { GroupDetailsPage } = await import('@/pages/groups/GroupDetailsPage')
+                  return { Component: GroupDetailsPage }
                 },
               },
               {
@@ -116,41 +170,6 @@ export const router = createBrowserRouter([
                 lazy: async () => {
                   const { MatchDetailPage } = await import('@/pages/match-detail/MatchDetailPage')
                   return { Component: MatchDetailPage }
-                },
-              },
-              {
-                path: 'groups',
-                lazy: async () => {
-                  const { GroupsPage } = await import('@/pages/groups/GroupsPage')
-                  return { Component: GroupsPage }
-                },
-              },
-              {
-                path: 'groups/:groupId',
-                lazy: async () => {
-                  const { GroupDetailPage } = await import('@/pages/groups/GroupDetailPage')
-                  return { Component: GroupDetailPage }
-                },
-              },
-              {
-                path: 'groups/:groupId/matches/:matchId',
-                lazy: async () => {
-                  const { MatchDetailPage } = await import('@/pages/match-detail/MatchDetailPage')
-                  return { Component: MatchDetailPage }
-                },
-              },
-              {
-                path: 'groups/:groupId/settings',
-                lazy: async () => {
-                  const { GroupSettingsPage } = await import('@/pages/groups/GroupSettingsPage')
-                  return { Component: GroupSettingsPage }
-                },
-              },
-              {
-                path: 'profile',
-                lazy: async () => {
-                  const { ProfilePage } = await import('@/pages/profile/ProfilePage')
-                  return { Component: ProfilePage }
                 },
               },
             ],

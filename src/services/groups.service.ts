@@ -1,6 +1,13 @@
 import { apiDelete, apiGet, apiPost, apiPut } from './api'
-import type { BettingGroup, GroupMembership, JoinRequest, RankingEntry } from '@/types/group.types'
+import type {
+  BettingGroup,
+  GroupMembership,
+  JoinRequest,
+  LeaveGroupResult,
+  RankingEntry,
+} from '@/types/group.types'
 import type { CreateGroupData, UpdateGroupData } from '@/types/group.types'
+import type { GroupMatchesResponse } from '@/types/match.types'
 
 export function getUserGroups(): Promise<{ groups: BettingGroup[] }> {
   return apiGet('/api/groups')
@@ -54,4 +61,12 @@ export function handleJoinRequest(
   action: 'approve' | 'reject',
 ): Promise<{ ok: boolean }> {
   return apiPut(`/api/groups/${groupId}/requests/${requestId}`, { action })
+}
+
+export function leaveGroup(groupId: string): Promise<LeaveGroupResult> {
+  return apiPost(`/api/groups/${groupId}/leave`)
+}
+
+export function getGroupMatches(groupId: string): Promise<GroupMatchesResponse> {
+  return apiGet(`/api/groups/${groupId}/matches`)
 }
