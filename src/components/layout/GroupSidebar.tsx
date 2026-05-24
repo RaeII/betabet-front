@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { Award, Home, MessageSquare, Plus, Settings, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
@@ -29,6 +29,17 @@ export function GroupSidebar() {
 
   return (
     <aside className="hidden lg:flex lg:flex-col md:rounded-[var(--radius-sm)] lg:border lg:border-[var(--border)] lg:bg-[var(--surface)] lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] lg:overflow-hidden">
+      <Link
+        to="/"
+        aria-label="betabet"
+        className="flex h-16 shrink-0 items-center gap-2 border-b border-[var(--border)] px-4"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--brand-text)]">
+          <Trophy size={16} />
+        </span>
+        <span className="text-sm font-bold tracking-tight">betabet</span>
+      </Link>
+
       <nav aria-label="Navegação do grupo" className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-1">
           {items.map(item => {
