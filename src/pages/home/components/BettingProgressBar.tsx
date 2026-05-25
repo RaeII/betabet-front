@@ -6,18 +6,15 @@ interface BettingProgressBarProps {
   greeting?: string
 }
 
-export function BettingProgressBar({ progress, greeting }: BettingProgressBarProps) {
+export function BettingProgressBar({ progress }: BettingProgressBarProps) {
   if (progress.total === 0) return null
 
   return (
     <section
       aria-label="Progresso de palpites"
-      className="space-y-2 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4"
+      className="space-y-1 rounded-[var(--radius-xl)]"
     >
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="truncate text-sm font-semibold text-[var(--text)]">
-          {greeting ?? 'Seus palpites'}
-        </p>
+      <div className="flex items-baseline justify-between gap-1">
         <p className="shrink-0 text-xs font-semibold text-[var(--text-muted)]">
           {progress.betted} de {progress.total} palpites
         </p>

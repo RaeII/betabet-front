@@ -16,21 +16,19 @@ export function HomePage() {
 
   const matches = data?.matches ?? []
 
-  const visibleMatchdays = useMemo(
-    () => groupMatchesByDay(matches, { includePast: false }),
-    [matches],
-  )
+  const matchdays = useMemo(() => groupMatchesByDay(matches, { includePast: true }), [matches])
+  const upcomingMatchdays = useMemo(() => matchdays.filter(day => !day.isPast), [matchdays])
 
   const currentDate = useMemo(() => {
-    if (selectedDate && visibleMatchdays.some(m => m.date === selectedDate)) {
+    if (selectedDate && matchdays.some(m => m.date === selectedDate)) {
       return selectedDate
     }
-    if (visibleMatchdays.length === 0) return null
-    return visibleMatchdays[findDefaultMatchday(visibleMatchdays)].date
-  }, [selectedDate, visibleMatchdays])
+    if (matchdays.length === 0) return null
+    return matchdays[findDefaultMatchday(matchdays)].date
+  }, [selectedDate, matchdays])
 
-  const currentMatchday = visibleMatchdays.find(m => m.date === currentDate) ?? null
-  const progress = useBettingProgress(visibleMatchdays)
+  const currentMatchday = matchdays.find(m => m.date === currentDate) ?? null
+  const progress = useBettingProgress(upcomingMatchdays)
 
   if (!groupId || !group) return null
 

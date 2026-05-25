@@ -73,7 +73,7 @@ describe('DayStrip', () => {
     expect(onSelect).toHaveBeenCalledWith('2026-06-17')
   })
 
-  it('shows toggle to include past days', () => {
+  it('does not render past-day toggle button anymore', () => {
     render(
       <DayStrip
         matches={[
@@ -84,9 +84,77 @@ describe('DayStrip', () => {
         onSelectDate={vi.fn()}
       />,
     )
-    // Default shows only upcoming; past hidden
-    expect(screen.getByRole('button', { name: /ver dias passados/i })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /ver dias passados/i }))
-    expect(screen.getByRole('button', { name: /ocultar dias passados/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /ver dias passados/i })).not.toBeInTheDocument()
+  })
+
+  it('shows and hides left/right indicators based on scroll position', () => {
+    render(
+      <DayStrip
+        matches={[
+          makeMatch('2026-06-10T18:00:00', 'finished'),
+          makeMatch('2026-06-11T18:00:00', 'finished'),
+          makeMatch('2026-06-16T18:00:00'),
+          makeMatch('2026-06-17T18:00:00'),
+        ]}
+        selectedDate="2026-06-16"
+        onSelectDate={vi.fn()}
+      />,
+    )
+
+    const tablist = screen.getByRole('tablist', { name: /dias com partidas/i })
+    Object.defineProperty(tablist, 'clientWidth', { value: 120, configurable: true })
+    Object.defineProperty(tablist, 'scrollWidth', { value: 360, configurable: true })
+    Object.defineProperty(tablist, 'scrollLeft', { value: 0, writable: true, configurable: true })
+
+    fireEvent(window, new Event('resize'))
+    expect(screen.queryByTestId('daystrip-hidden-left')).not.toBeInTheDocument()
+    expect(screen.getByTestId('daystrip-hidden-right')).toBeInTheDocument()
+
+    tablist.scrollLeft = 80
+    fireEvent.scroll(tablist)
+    expect(screen.getByTestId('daystrip-hidden-left')).toBeInTheDocument()
+    expect(screen.getByTestId('daystrip-hidden-right')).toBeInTheDocument()
+
+    tablist.scrollLeft = 240
+    fireEvent.scroll(tablist)
+    expect(screen.getByTestId('daystrip-hidden-left')).toBeInTheDocument()
+    expect(screen.queryByTestId('daystrip-hidden-right')).not.toBeInTheDocument()
+  })
+
+  it('scrolls when clicking the hidden-day arrows', () => {
+    render(
+      <DayStrip
+        matches={[
+          makeMatch('2026-06-10T18:00:00', 'finished'),
+          makeMatch('2026-06-11T18:00:00', 'finished'),
+          makeMatch('2026-06-16T18:00:00'),
+          makeMatch('2026-06-17T18:00:00'),
+        ]}
+        selectedDate="2026-06-16"
+        onSelectDate={vi.fn()}
+      />,
+    )
+
+    const tablist = screen.getByRole('tablist', { name: /dias com partidas/i })
+    Object.defineProperty(tablist, 'clientWidth', { value: 120, configurable: true })
+    Object.defineProperty(tablist, 'scrollWidth', { value: 360, configurable: true })
+    Object.defineProperty(tablist, 'scrollLeft', { value: 0, writable: true, configurable: true })
+    Object.defineProperty(tablist, 'scrollBy', {
+      value: vi.fn(({ left }: ScrollToOptions) => {
+        tablist.scrollLeft += left ?? 0
+      }),
+      configurable: true,
+    })
+
+    fireEvent(window, new Event('resize'))
+    fireEvent.click(screen.getByRole('button', { name: /mostrar próximos dias/i }))
+
+    expect(tablist.scrollLeft).toBeGreaterThan(0)
+
+    tablist.scrollLeft = 120
+    fireEvent.scroll(tablist)
+    fireEvent.click(screen.getByRole('button', { name: /mostrar dias anteriores/i }))
+
+    expect(tablist.scrollLeft).toBeLessThan(120)
   })
 })
