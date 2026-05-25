@@ -1,3 +1,5 @@
+import { applyFlagCacheToResponse, buildFlagCacheHeader } from '@/lib/flagCache'
+
 interface ApiError {
   error: string
   code: string
@@ -15,14 +17,21 @@ export class ApiRequestError extends Error {
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    ...(init?.headers as Record<string, string> | undefined),
+  }
+
+  const flagCacheHeader = buildFlagCacheHeader()
+  if (flagCacheHeader) {
+    headers['x-betabet-cached-flags'] = flagCacheHeader
+  }
+
   const response = await fetch(path, {
     ...init,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      ...init?.headers,
-    },
+    headers,
   })
 
   if (!response.ok) {
@@ -34,7 +43,9 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (response.status === 204) return undefined as T
-  return response.json() as Promise<T>
+  const json = (await response.json()) as T
+  applyFlagCacheToResponse(json)
+  return json
 }
 
 export function apiGet<T>(path: string): Promise<T> {

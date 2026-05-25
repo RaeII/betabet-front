@@ -7,7 +7,12 @@ export type TournamentPhase = 'group' | 'r16' | 'qf' | 'sf' | 'final'
 export interface Team {
   id: string
   name: string
+  /** Data URI (`data:image/svg+xml;base64,...`) or external URL. Empty when the backend
+   *  knows the client already has it cached under `flagVersion`. */
   flagUrl: string
+  /** Stored-flag version (ms since epoch as string). `null` when the team has no
+   *  base64 flag persisted (only the legacy external URL). */
+  flagVersion: string | null
   group: string | null
 }
 
