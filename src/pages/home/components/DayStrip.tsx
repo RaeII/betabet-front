@@ -49,7 +49,7 @@ export function DayStrip({ matches, selectedDate, onSelectDate }: DayStripProps)
         style={{ scrollSnapType: 'x proximity' }}
       >
         {matchdays.map(md => (
-          <div key={md.date} style={{ scrollSnapAlign: 'start' }}>
+          <div key={md.date} className="shrink-0" style={{ scrollSnapAlign: 'start' }}>
             <DayStripPill
               matchday={md}
               selected={md.date === selectedDate}

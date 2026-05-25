@@ -1,4 +1,4 @@
-import { apiPost, apiPut } from './api'
+import { apiGet, apiPost, apiPut } from './api'
 import type { Bet, BetWithUser, EmojiReaction, PlaceBetRequest } from '@/types/bet.types'
 
 export function placeBet(data: PlaceBetRequest): Promise<{ bets: Bet[] }> {
@@ -13,7 +13,7 @@ export function getGroupMatchBets(
   groupId: string,
   matchId: string,
 ): Promise<{ bets: BetWithUser[]; canView: boolean }> {
-  return apiPost(`/api/groups/${groupId}/matches/${matchId}/bets`)
+  return apiGet(`/api/groups/${groupId}/matches/${matchId}/bets`)
 }
 
 export function toggleReaction(
