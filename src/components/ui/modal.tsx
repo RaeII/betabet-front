@@ -11,7 +11,6 @@ interface ModalProps {
   children: ReactNode
   className?: string
   showClose?: boolean
-  labelledById?: string
 }
 
 export function Modal({
@@ -22,8 +21,9 @@ export function Modal({
   children,
   className,
   showClose = true,
-  labelledById,
 }: ModalProps) {
+  const descriptionProps = description ? {} : { 'aria-describedby': undefined }
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -31,7 +31,7 @@ export function Modal({
           className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0"
         />
         <Dialog.Content
-          aria-labelledby={labelledById}
+          {...descriptionProps}
           className={cn(
             'fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 px-4 outline-none',
             'sm:max-w-md md:max-w-lg',
@@ -49,7 +49,6 @@ export function Modal({
                 <div className="min-w-0 flex-1 space-y-1">
                   {title ? (
                     <Dialog.Title
-                      id={labelledById}
                       className="truncate text-lg font-bold text-[var(--text)]"
                     >
                       {title}

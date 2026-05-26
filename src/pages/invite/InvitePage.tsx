@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
@@ -7,7 +7,9 @@ import { resolveInviteCode, joinGroup } from '@/services/groups.service'
 export function InvitePage() {
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { isAuthenticated } = useAuth()
+  const referralCode = searchParams.get('ref')
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['invite', code],
@@ -17,7 +19,10 @@ export function InvitePage() {
 
   async function handleJoin() {
     if (!isAuthenticated) {
-      navigate(`/auth/register?ref=${code}`)
+      const params = new URLSearchParams()
+      if (referralCode) params.set('ref', referralCode)
+      if (code) params.set('invite', code)
+      navigate(`/auth/register?${params.toString()}`)
       return
     }
     if (!data?.group || !code) return

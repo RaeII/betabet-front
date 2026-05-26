@@ -29,7 +29,6 @@ export function LeaveGroupConfirm({
       onOpenChange={onOpenChange}
       title={`Sair de ${groupName}?`}
       description="Você perderá acesso ao ranking, palpites e configurações deste grupo. Esta ação pode ser desfeita aceitando um novo convite."
-      labelledById="leave-group-title"
     >
       <div className="flex flex-col gap-3 p-5 sm:flex-row-reverse">
         <Button

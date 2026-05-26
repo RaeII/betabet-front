@@ -9,5 +9,6 @@ export interface ReferralInfo {
 export interface ReferredUser {
   id: string
   name: string
+  avatarUrl?: string | null
   joinedAt: string
 }

@@ -44,7 +44,6 @@ export function GroupsModal({ open, onOpenChange, activeGroupId }: GroupsModalPr
       open={open}
       onOpenChange={onOpenChange}
       title={mode === 'list' ? 'Seus grupos' : 'Criar novo grupo'}
-      labelledById="groups-modal-title"
     >
       {mode === 'list' ? (
         <GroupsModalList

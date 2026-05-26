@@ -45,6 +45,7 @@ export function MatchDetailPage() {
   const isLocked = !isBetEditable(match.scheduledAt)
   const userGroupCount = groupsData?.groups?.length ?? 0
   const activeGroupId = groupId ?? groupsData?.groups?.[0]?.id ?? ''
+  const activeGroup = groupsData?.groups?.find(g => g.id === activeGroupId)
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -110,7 +111,11 @@ export function MatchDetailPage() {
       {groupId && betsData && (
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-[var(--text)]">Apostas do grupo</h2>
-          <BetsGrid bets={betsData.bets} canView={betsData.canView} />
+          <BetsGrid
+            bets={betsData.bets}
+            canView={betsData.canView}
+            groupInviteCode={activeGroup?.inviteCode}
+          />
         </section>
       )}
     </div>

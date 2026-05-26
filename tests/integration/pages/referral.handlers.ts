@@ -18,8 +18,8 @@ export const referralHandlers = [
   }),
 
   http.post('/api/referral/apply', async ({ request }) => {
-    const body = await request.json() as { code?: string }
-    if (!body.code) {
+    const body = await request.json() as { code?: string; referralCode?: string }
+    if (!body.referralCode && !body.code) {
       return HttpResponse.json({ error: 'Code required', code: 'VALIDATION_ERROR' }, { status: 400 })
     }
     return HttpResponse.json({ ok: true })

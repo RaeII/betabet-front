@@ -14,6 +14,7 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { register } = useAuth()
+  const inviteCode = searchParams.get('invite')
 
   const [values, setValues] = useState<FormValues>({
     name: '',
@@ -50,7 +51,7 @@ export function RegisterPage() {
     try {
       const { confirmPassword: _confirm, ...registerData } = result.data
       await register(registerData as RegisterData)
-      navigate('/')
+      navigate(inviteCode ? `/invite/${inviteCode}` : '/')
     } catch {
       setServerError('Não foi possível criar a conta. Tente novamente.')
     } finally {

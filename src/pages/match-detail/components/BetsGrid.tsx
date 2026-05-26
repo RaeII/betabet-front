@@ -1,21 +1,30 @@
 import { EmojiPicker } from './EmojiPicker'
+import { ReferralUnlockPanel } from '@/components/referral/ReferralUnlockPanel'
 import { formatScore } from '@/lib/format.utils'
 import { useAuth } from '@/hooks/useAuth'
+import { useReferralInfo } from '@/hooks/useReferral'
 import type { BetWithUser } from '@/types/bet.types'
 
 interface BetsGridProps {
   bets: BetWithUser[]
   canView: boolean
+  groupInviteCode?: string
 }
 
-export function BetsGrid({ bets, canView }: BetsGridProps) {
+export function BetsGrid({ bets, canView, groupInviteCode }: BetsGridProps) {
   const { user } = useAuth()
+  const { data: referralInfo } = useReferralInfo(!canView)
+  const referralCount = referralInfo?.count ?? user?.referralCount ?? 0
+  const referralCode = referralInfo?.code ?? user?.referralCode
 
   if (!canView) {
     return (
-      <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center text-sm text-[var(--text-muted)]">
-        As apostas serão reveladas quando a partida começar.
-      </div>
+      <ReferralUnlockPanel
+        featureName="a visualização de palpites"
+        referralCount={referralCount}
+        referralCode={referralCode}
+        groupInviteCode={groupInviteCode}
+      />
     )
   }
 

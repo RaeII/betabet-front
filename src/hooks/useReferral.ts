@@ -5,10 +5,11 @@ export const referralKeys = {
   info: ['referral', 'info'] as const,
 }
 
-export function useReferralInfo() {
+export function useReferralInfo(enabled = true) {
   return useQuery({
     queryKey: referralKeys.info,
     queryFn: getReferralInfo,
+    enabled,
   })
 }
 
