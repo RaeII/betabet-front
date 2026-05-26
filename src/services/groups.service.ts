@@ -2,8 +2,10 @@ import { apiDelete, apiGet, apiPost, apiPut } from './api'
 import type {
   BettingGroup,
   GroupMembership,
+  InvitePreviewGroup,
   JoinRequest,
   LeaveGroupResult,
+  MyJoinRequest,
   RankingEntry,
 } from '@/types/group.types'
 import type { CreateGroupData, UpdateGroupData } from '@/types/group.types'
@@ -41,9 +43,7 @@ export function generateInviteLink(groupId: string): Promise<{ inviteCode: strin
   return apiPost(`/api/groups/${groupId}/invite-link`)
 }
 
-export function resolveInviteCode(code: string): Promise<{
-  group: Pick<BettingGroup, 'id' | 'name' | 'coverUrl' | 'memberCount'>
-}> {
+export function resolveInviteCode(code: string): Promise<{ group: InvitePreviewGroup }> {
   return apiGet(`/api/groups/invite/${code}`)
 }
 
@@ -53,6 +53,10 @@ export function joinGroup(groupId: string, inviteCode: string): Promise<{ joined
 
 export function getJoinRequests(groupId: string): Promise<{ requests: JoinRequest[] }> {
   return apiGet(`/api/groups/${groupId}/requests`)
+}
+
+export function getMyJoinRequests(): Promise<{ requests: MyJoinRequest[] }> {
+  return apiGet('/api/groups/my-requests')
 }
 
 export function handleJoinRequest(

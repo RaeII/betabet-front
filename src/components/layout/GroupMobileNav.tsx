@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { Award, Home, MessageSquare, Plus, Settings, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { useJoinRequests } from '@/hooks/useGroups'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
 
@@ -18,10 +19,12 @@ const iconMap: Record<string, LucideIcon> = {
 export function GroupMobileNav() {
   const { groupId, isAdmin } = useActiveGroup()
   const [modalOpen, setModalOpen] = useState(false)
+  const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
 
   if (!groupId) return null
 
   const items = sidebarDestinations.filter(item => !item.adminOnly || isAdmin)
+  const pendingRequests = requestsQuery.data?.requests.length ?? 0
 
   return (
     <>
@@ -32,7 +35,10 @@ export function GroupMobileNav() {
         <ul className="flex items-center gap-1 overflow-x-auto px-2 py-1.5">
           {items.map(item => {
             const Icon = iconMap[item.iconName] ?? Home
-            const to = pathFor(groupId, item)
+            const hasPendingMemberRequests = item.id === 'membros' && pendingRequests > 0
+            const to = hasPendingMemberRequests
+              ? `${pathFor(groupId, item)}?tab=requests`
+              : pathFor(groupId, item)
             return (
               <li key={item.id} className="shrink-0">
                 <NavLink
@@ -48,7 +54,17 @@ export function GroupMobileNav() {
                     ].join(' ')
                   }
                 >
-                  <Icon size={20} />
+                  <span className="relative">
+                    <Icon size={20} />
+                    {item.id === 'membros' && pendingRequests > 0 ? (
+                      <span
+                        className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-center text-[10px] font-bold leading-none text-[var(--surface)]"
+                        aria-label={`${pendingRequests} solicitações pendentes`}
+                      >
+                        {pendingRequests > 99 ? '99+' : pendingRequests}
+                      </span>
+                    ) : null}
+                  </span>
                   <span>{item.label}</span>
                 </NavLink>
               </li>

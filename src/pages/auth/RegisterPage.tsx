@@ -1,11 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { AuthField } from './components/AuthField'
 import { AuthForm } from './components/AuthForm'
+import { InviteGroupCard } from '@/components/group/InviteGroupCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/hooks/useAuth'
+import { useJoinByCode } from '@/hooks/useGroups'
 import { RegisterSchema } from '@/lib/schemas'
+import { resolveInviteCode } from '@/services/groups.service'
+import { ApiRequestError } from '@/services/api'
 import type { RegisterData } from '@/types/auth.types'
 
 type FormValues = Omit<RegisterData, 'referralCode'> & { referralCode: string; confirmPassword: string }
@@ -14,23 +19,48 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { register } = useAuth()
+  const joinByCode = useJoinByCode()
   const inviteCode = searchParams.get('invite')
+  const referralCode = searchParams.get('ref')
 
   const [values, setValues] = useState<FormValues>({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    referralCode: searchParams.get('ref') ?? '',
+    referralCode: referralCode ?? '',
   })
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({})
   const [serverError, setServerError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const { data: invitePreview, isError: isInviteInvalid } = useQuery({
+    queryKey: ['invite', inviteCode],
+    queryFn: () => resolveInviteCode(inviteCode!),
+    enabled: !!inviteCode,
+    retry: false,
+  })
+
   function handleChange(field: keyof FormValues) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       setValues(prev => ({ ...prev, [field]: e.target.value }))
       setErrors(prev => ({ ...prev, [field]: undefined }))
+    }
+  }
+
+  async function attemptJoin(code: string): Promise<void> {
+    try {
+      const { joined, group } = await joinByCode.mutateAsync({ code })
+      if (joined) {
+        navigate(`/groups/${group.id}`, { replace: true })
+        return
+      }
+      navigate('/onboarding', {
+        replace: true,
+        state: { pendingJoin: { groupName: group.name, groupEmoji: group.emoji } },
+      })
+    } catch {
+      navigate('/onboarding', { replace: true })
     }
   }
 
@@ -51,13 +81,25 @@ export function RegisterPage() {
     try {
       const { confirmPassword: _confirm, ...registerData } = result.data
       await register(registerData as RegisterData)
-      navigate(inviteCode ? `/invite/${inviteCode}` : '/')
-    } catch {
-      setServerError('Não foi possível criar a conta. Tente novamente.')
-    } finally {
+      if (inviteCode && !isInviteInvalid) {
+        await attemptJoin(inviteCode)
+      } else {
+        navigate('/')
+      }
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        setServerError(error.message || 'Não foi possível criar a conta. Tente novamente.')
+      } else {
+        setServerError('Não foi possível criar a conta. Tente novamente.')
+      }
       setIsSubmitting(false)
     }
   }
+
+  const loginParams = new URLSearchParams()
+  if (inviteCode) loginParams.set('invite', inviteCode)
+  if (referralCode) loginParams.set('ref', referralCode)
+  const loginSearch = loginParams.toString()
 
   return (
     <AuthForm title="Criar conta" subtitle="Participe do Bolão da Copa">
@@ -143,9 +185,27 @@ export function RegisterPage() {
         </div>
       </form>
 
+      {invitePreview?.group && (
+        <div className="mt-4">
+          <InviteGroupCard
+            group={invitePreview.group}
+            hint="Crie sua conta para entrar neste grupo."
+          />
+        </div>
+      )}
+
+      {inviteCode && isInviteInvalid && (
+        <p className="mt-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4 text-sm text-[var(--text)]">
+          Convite inválido ou expirado. Você ainda pode criar sua conta e entrar em um grupo depois.
+        </p>
+      )}
+
       <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
         Já tem conta?{' '}
-        <Link to="/auth/login" className="font-medium text-[var(--brand)] hover:underline">
+        <Link
+          to={`/auth/login${loginSearch ? `?${loginSearch}` : ''}`}
+          className="font-medium text-[var(--brand)] hover:underline"
+        >
           Entrar
         </Link>
       </p>

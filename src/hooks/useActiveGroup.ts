@@ -32,7 +32,9 @@ export function useActiveGroup(): ActiveGroup {
     groupQuery.data?.group ??
     userGroupsQuery.data?.groups?.find(g => g.id === groupId) ??
     null
-  const role = (groupQuery.data?.role as GroupRole | undefined) ?? null
+  const apiRole = groupQuery.data?.role as GroupRole | undefined
+  const derivedRole = group && user?.id === group.adminId ? 'admin' : null
+  const role = apiRole ?? derivedRole
 
   return {
     groupId,

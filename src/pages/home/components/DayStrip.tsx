@@ -108,10 +108,6 @@ export function DayStrip({ matches, selectedDate, onSelectDate }: DayStripProps)
       startScrollLeft: el.scrollLeft,
       moved: false,
     }
-    setIsDragging(true)
-    if (typeof el.setPointerCapture === 'function') {
-      el.setPointerCapture(event.pointerId)
-    }
   }, [])
 
   const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
@@ -123,6 +119,10 @@ export function DayStrip({ matches, selectedDate, onSelectDate }: DayStripProps)
     const absDeltaX = Math.abs(deltaX)
     if (!state.moved && absDeltaX > dragStartThreshold) {
       state.moved = true
+      setIsDragging(true)
+      if (typeof el.setPointerCapture === 'function') {
+        el.setPointerCapture(event.pointerId)
+      }
     }
 
     if (!state.moved) return

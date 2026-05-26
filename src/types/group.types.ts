@@ -44,6 +44,20 @@ export interface JoinRequest {
   createdAt: string
 }
 
+export interface MyJoinRequest {
+  id: string
+  groupId: string
+  groupName: string
+  groupEmoji: string | null
+  groupCoverUrl: string | null
+  createdAt: string
+}
+
+export type InvitePreviewGroup = Pick<
+  BettingGroup,
+  'id' | 'name' | 'emoji' | 'coverUrl' | 'memberCount' | 'joinMode'
+>
+
 export interface CreateGroupData {
   name: string
   emoji?: string

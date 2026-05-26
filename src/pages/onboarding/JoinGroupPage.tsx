@@ -4,10 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { OnboardingShell } from './components/OnboardingShell'
+import { JoinPendingModal } from '@/components/group/JoinPendingModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useJoinByCode } from '@/hooks/useGroups'
+import { useJoinByCode, useUserGroups } from '@/hooks/useGroups'
 import { resolveInviteCode } from '@/services/groups.service'
+import { ApiRequestError } from '@/services/api'
 
 const easeBrasil = [0.2, 0.8, 0.2, 1] as const
 
@@ -20,7 +22,9 @@ export function JoinGroupPage() {
   const navigate = useNavigate()
   const [rawInput, setRawInput] = useState('')
   const [submittedCode, setSubmittedCode] = useState<string | null>(null)
+  const [pendingModal, setPendingModal] = useState<{ groupName: string; groupEmoji: string | null } | null>(null)
   const joinByCode = useJoinByCode()
+  const { data: groupsData } = useUserGroups()
 
   const { data: preview, isLoading: isResolving, isError: isInvalid } = useQuery({
     queryKey: ['invite', submittedCode],
@@ -40,9 +44,31 @@ export function JoinGroupPage() {
     if (!submittedCode || !preview?.group) return
     joinByCode.mutate(
       { code: submittedCode },
-      { onSuccess: (data) => navigate(`/groups/${data.groupId}`) },
+      {
+        onSuccess: ({ joined, group }) => {
+          if (joined) {
+            navigate(`/groups/${group.id}`)
+            return
+          }
+          setPendingModal({ groupName: group.name, groupEmoji: group.emoji })
+        },
+        onError: (error) => {
+          if (error instanceof ApiRequestError && error.status === 409 && preview?.group) {
+            navigate(`/groups/${preview.group.id}`)
+          }
+        },
+      },
     )
   }
+
+  function handlePendingModalClose() {
+    setPendingModal(null)
+    const firstGroup = groupsData?.groups?.[0]
+    if (firstGroup) navigate(`/groups/${firstGroup.id}`)
+    else navigate('/onboarding')
+  }
+
+  const joinButtonLabel = preview?.group?.joinMode === 'request' ? 'Solicitar entrada' : 'Entrar no grupo'
 
   return (
     <OnboardingShell backTo="/onboarding">
@@ -107,9 +133,9 @@ export function JoinGroupPage() {
             >
               {joinByCode.isPending
                 ? <Loader2 size={16} className="animate-spin" />
-                : 'Entrar no grupo'}
+                : joinButtonLabel}
             </Button>
-            {joinByCode.isError && (
+            {joinByCode.isError && !(joinByCode.error instanceof ApiRequestError && joinByCode.error.status === 409) && (
               <p className="text-sm text-[var(--text-muted)]">
                 Erro ao entrar no grupo. Tente novamente.
               </p>
@@ -117,6 +143,17 @@ export function JoinGroupPage() {
           </div>
         )}
       </motion.section>
+
+      {pendingModal && (
+        <JoinPendingModal
+          open
+          onOpenChange={(open) => {
+            if (!open) handlePendingModalClose()
+          }}
+          groupName={pendingModal.groupName}
+          groupEmoji={pendingModal.groupEmoji}
+        />
+      )}
     </OnboardingShell>
   )
 }

@@ -7,14 +7,20 @@ import { createElement } from 'react'
 vi.mock('@/hooks/useActiveGroup', () => ({ useActiveGroup: vi.fn() }))
 vi.mock('@/hooks/useGroups', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/useGroups')>('@/hooks/useGroups')
-  return { ...actual, useUserGroups: () => ({ data: { groups: [] } }) }
+  return {
+    ...actual,
+    useUserGroups: () => ({ data: { groups: [] } }),
+    useJoinRequests: vi.fn(),
+  }
 })
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u' } }) }))
 
 import { GroupMobileNav } from '@/components/layout/GroupMobileNav'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { useJoinRequests } from '@/hooks/useGroups'
 
 const mockedActive = useActiveGroup as ReturnType<typeof vi.fn>
+const mockedRequests = useJoinRequests as ReturnType<typeof vi.fn>
 
 function renderNav() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -36,7 +42,10 @@ function renderNav() {
 }
 
 describe('GroupMobileNav', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockedRequests.mockReturnValue({ data: { requests: [] } })
+  })
 
   it('renders mobile nav with 5 items for member', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
@@ -50,6 +59,17 @@ describe('GroupMobileNav', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: true })
     renderNav()
     expect(screen.getByText('Configurações')).toBeInTheDocument()
+  })
+
+  it('shows pending request notification on Membros for admin', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: true })
+    mockedRequests.mockReturnValue({ data: { requests: [{ id: 'r1' }] } })
+    renderNav()
+    expect(screen.getByLabelText('1 solicitações pendentes')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Membros/i })).toHaveAttribute(
+      'href',
+      '/groups/g1/membros?tab=requests',
+    )
   })
 
   it('"Grupos" button opens the modal', async () => {

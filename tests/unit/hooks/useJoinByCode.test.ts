@@ -43,7 +43,7 @@ describe('useJoinByCode', () => {
     act(() => { result.current.mutate({ code: 'ABC123' }) })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data?.groupId).toBe('group-99')
+    expect(result.current.data?.group.id).toBe('group-99')
     expect(result.current.data?.joined).toBe(true)
   })
 

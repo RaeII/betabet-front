@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { OnboardingPage } from '@/pages/onboarding/OnboardingPage'
 
@@ -8,8 +9,19 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ logout: vi.fn().mockResolvedValue(undefined) }),
 }))
 
+vi.mock('@/hooks/useGroups', () => ({
+  useMyJoinRequests: () => ({ data: { requests: [] } }),
+}))
+
 function wrapper({ children }: { children: React.ReactNode }) {
-  return createElement(MemoryRouter, null, children)
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  })
+  return createElement(
+    QueryClientProvider,
+    { client: qc },
+    createElement(MemoryRouter, null, children),
+  )
 }
 
 describe('OnboardingPage', () => {

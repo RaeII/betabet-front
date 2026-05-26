@@ -26,45 +26,50 @@ export const router = createBrowserRouter([
   {
     path: '/admin',
     element: <AdminGuard />,
-    lazy: async () => {
-      const { AdminShell } = await import('@/pages/admin/AdminShell')
-      return { Component: AdminShell }
-    },
     children: [
       {
-        index: true,
+        path: '',
         lazy: async () => {
-          const { AdminDashboardPage } = await import('@/pages/admin/AdminDashboardPage')
-          return { Component: AdminDashboardPage }
+          const { AdminShell } = await import('@/pages/admin/AdminShell')
+          return { Component: AdminShell }
         },
-      },
-      {
-        path: 'matches',
-        lazy: async () => {
-          const { AdminMatchesPage } = await import('@/pages/admin/AdminMatchesPage')
-          return { Component: AdminMatchesPage }
-        },
-      },
-      {
-        path: 'teams',
-        lazy: async () => {
-          const { AdminTeamsPage } = await import('@/pages/admin/AdminTeamsPage')
-          return { Component: AdminTeamsPage }
-        },
-      },
-      {
-        path: 'import/teams',
-        lazy: async () => {
-          const { AdminImportTeamsPage } = await import('@/pages/admin/AdminImportTeamsPage')
-          return { Component: AdminImportTeamsPage }
-        },
-      },
-      {
-        path: 'import/matches',
-        lazy: async () => {
-          const { AdminImportMatchesPage } = await import('@/pages/admin/AdminImportMatchesPage')
-          return { Component: AdminImportMatchesPage }
-        },
+        children: [
+          {
+            index: true,
+            lazy: async () => {
+              const { AdminDashboardPage } = await import('@/pages/admin/AdminDashboardPage')
+              return { Component: AdminDashboardPage }
+            },
+          },
+          {
+            path: 'matches',
+            lazy: async () => {
+              const { AdminMatchesPage } = await import('@/pages/admin/AdminMatchesPage')
+              return { Component: AdminMatchesPage }
+            },
+          },
+          {
+            path: 'teams',
+            lazy: async () => {
+              const { AdminTeamsPage } = await import('@/pages/admin/AdminTeamsPage')
+              return { Component: AdminTeamsPage }
+            },
+          },
+          {
+            path: 'import/teams',
+            lazy: async () => {
+              const { AdminImportTeamsPage } = await import('@/pages/admin/AdminImportTeamsPage')
+              return { Component: AdminImportTeamsPage }
+            },
+          },
+          {
+            path: 'import/matches',
+            lazy: async () => {
+              const { AdminImportMatchesPage } = await import('@/pages/admin/AdminImportMatchesPage')
+              return { Component: AdminImportMatchesPage }
+            },
+          },
+        ],
       },
     ],
   },

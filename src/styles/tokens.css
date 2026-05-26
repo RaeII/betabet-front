@@ -8,6 +8,7 @@
   --brand: #123d2a;
   --brand-text: #f7f4ec;
   --support: #d8a900;
+  --danger: #c0392b;
 
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -37,4 +38,5 @@
   --brand: #7fbf9a;
   --brand-text: #0f1110;
   --support: #d8a900;
+  --danger: #e57373;
 }

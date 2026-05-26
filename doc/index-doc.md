@@ -18,6 +18,20 @@ Principais temas:
 - uso do componente reutilizável `ReferralUnlockPanel`;
 - arquivos do frontend envolvidos no modal de palpites e em outros recursos bloqueados.
 
+### [002-group-member-requests.md](./002-group-member-requests.md)
+
+Documenta como o frontend exibe solicitações de entrada em grupos, notifica admins e processa aprovação ou recusa.
+
+Principais temas:
+
+- endpoints `GET /api/groups/:groupId/requests` e `PUT /api/groups/:groupId/requests/:requestId`;
+- hooks `useJoinRequests` e `useHandleJoinRequest`;
+- reconhecimento de admin via `role` e `group.adminId`;
+- aba `Solicitações` em `GroupMembersPage`;
+- badge vermelho no menu `Membros` da sidebar desktop e navegação mobile;
+- invalidação de queries de solicitações e membros após aprovação ou recusa;
+- testes relacionados ao fluxo de solicitações.
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

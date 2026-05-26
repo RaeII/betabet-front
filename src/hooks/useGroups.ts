@@ -2,25 +2,37 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as groupsService from '@/services/groups.service'
 import type { CreateGroupData, UpdateGroupData } from '@/types/group.types'
 
-export function useJoinByCode() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ code }: { code: string }) => {
-      const { group } = await groupsService.resolveInviteCode(code)
-      const result = await groupsService.joinGroup(group.id, code)
-      return { ...result, groupId: group.id }
-    },
-    onSuccess: () => qc.refetchQueries({ queryKey: groupKeys.lists() }),
-  })
-}
-
 export const groupKeys = {
   all: ['groups'] as const,
   lists: () => [...groupKeys.all, 'list'] as const,
   detail: (id: string) => [...groupKeys.all, 'detail', id] as const,
   members: (id: string) => [...groupKeys.all, 'members', id] as const,
   requests: (id: string) => [...groupKeys.all, 'requests', id] as const,
+  myRequests: () => [...groupKeys.all, 'my-requests'] as const,
   matches: (id: string) => [...groupKeys.all, 'matches', id] as const,
+}
+
+export function useJoinByCode() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ code }: { code: string }) => {
+      const { group } = await groupsService.resolveInviteCode(code)
+      const result = await groupsService.joinGroup(group.id, code)
+      return { ...result, group }
+    },
+    onSuccess: () => {
+      void qc.refetchQueries({ queryKey: groupKeys.lists() })
+      void qc.invalidateQueries({ queryKey: groupKeys.myRequests() })
+    },
+  })
+}
+
+export function useMyJoinRequests(enabled = true) {
+  return useQuery({
+    queryKey: groupKeys.myRequests(),
+    queryFn: groupsService.getMyJoinRequests,
+    enabled,
+  })
 }
 
 export function useUserGroups() {
@@ -51,6 +63,7 @@ export function useJoinRequests(groupId: string, isAdmin: boolean) {
     queryKey: groupKeys.requests(groupId),
     queryFn: () => groupsService.getJoinRequests(groupId),
     enabled: !!groupId && isAdmin,
+    refetchInterval: !!groupId && isAdmin ? 30000 : false,
   })
 }
 

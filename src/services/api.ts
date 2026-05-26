@@ -1,8 +1,10 @@
 import { applyFlagCacheToResponse, buildFlagCacheHeader } from '@/lib/flagCache'
 
 interface ApiError {
-  error: string
-  code: string
+  message?: string
+  error?: string
+  code?: string
+  issues?: { path: string; message: string }[]
 }
 
 export class ApiRequestError extends Error {
@@ -36,10 +38,11 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = (await response.json().catch(() => ({
-      error: 'Unknown error',
+      message: 'Unknown error',
       code: 'UNKNOWN',
     }))) as ApiError
-    throw new ApiRequestError(body.code, body.error, response.status)
+    const message = body.message ?? body.error ?? 'Unknown error'
+    throw new ApiRequestError(body.code ?? 'UNKNOWN', message, response.status)
   }
 
   if (response.status === 204) return undefined as T

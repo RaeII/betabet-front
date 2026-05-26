@@ -7,7 +7,11 @@ import { createElement } from 'react'
 vi.mock('@/hooks/useActiveGroup', () => ({ useActiveGroup: vi.fn() }))
 vi.mock('@/hooks/useGroups', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/useGroups')>('@/hooks/useGroups')
-  return { ...actual, useUserGroups: () => ({ data: { groups: [] } }) }
+  return {
+    ...actual,
+    useUserGroups: () => ({ data: { groups: [] } }),
+    useJoinRequests: vi.fn(),
+  }
 })
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u' } }) }))
 vi.mock('@/hooks/useTheme', () => ({
@@ -16,8 +20,10 @@ vi.mock('@/hooks/useTheme', () => ({
 
 import { GroupSidebar } from '@/components/layout/GroupSidebar'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { useJoinRequests } from '@/hooks/useGroups'
 
 const mockedActive = useActiveGroup as ReturnType<typeof vi.fn>
+const mockedRequests = useJoinRequests as ReturnType<typeof vi.fn>
 
 function renderSidebar(path = '/groups/g1') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -39,7 +45,10 @@ function renderSidebar(path = '/groups/g1') {
 }
 
 describe('GroupSidebar', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockedRequests.mockReturnValue({ data: { requests: [] } })
+  })
 
   it('member sees 5 items (no Configurações)', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
@@ -56,6 +65,19 @@ describe('GroupSidebar', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: true })
     renderSidebar()
     expect(screen.getByText('Configurações')).toBeInTheDocument()
+  })
+
+  it('shows pending request notification on Membros for admin', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: true })
+    mockedRequests.mockReturnValue({
+      data: { requests: [{ id: 'r1' }, { id: 'r2' }] },
+    })
+    renderSidebar()
+    expect(screen.getByLabelText('2 solicitações pendentes')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Membros/i })).toHaveAttribute(
+      'href',
+      '/groups/g1/membros?tab=requests',
+    )
   })
 
   it('renders aria-current on the active destination', () => {

@@ -73,6 +73,49 @@ describe('DayStrip', () => {
     expect(onSelect).toHaveBeenCalledWith('2026-06-17')
   })
 
+  it('does not capture the pointer before a mouse click becomes a drag', () => {
+    const onSelect = vi.fn()
+    render(
+      <DayStrip
+        matches={[
+          makeMatch('2026-06-16T18:00:00'),
+          makeMatch('2026-06-17T18:00:00'),
+        ]}
+        selectedDate="2026-06-16"
+        onSelectDate={onSelect}
+      />,
+    )
+
+    const tablist = screen.getByRole('tablist', { name: /dias com partidas/i })
+    const setPointerCapture = vi.fn()
+    Object.defineProperty(tablist, 'setPointerCapture', {
+      value: setPointerCapture,
+      configurable: true,
+    })
+    Object.defineProperty(tablist, 'hasPointerCapture', {
+      value: vi.fn(() => false),
+      configurable: true,
+    })
+
+    const pills = screen.getAllByRole('button', { name: /Selecionar dia/ })
+    fireEvent.pointerDown(pills[1], {
+      pointerId: 1,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 40,
+    })
+    fireEvent.pointerUp(pills[1], {
+      pointerId: 1,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 40,
+    })
+    fireEvent.click(pills[1])
+
+    expect(setPointerCapture).not.toHaveBeenCalled()
+    expect(onSelect).toHaveBeenCalledWith('2026-06-17')
+  })
+
   it('does not render past-day toggle button anymore', () => {
     render(
       <DayStrip

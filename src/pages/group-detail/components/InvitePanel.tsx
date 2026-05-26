@@ -1,21 +1,13 @@
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useJoinRequests, useHandleJoinRequest } from '@/hooks/useGroups'
-import type { GroupRole } from '@/types/group.types'
 
 interface InvitePanelProps {
-  groupId: string
   inviteCode: string
-  role: GroupRole
 }
 
-export function InvitePanel({ groupId, inviteCode, role }: InvitePanelProps) {
+export function InvitePanel({ inviteCode }: InvitePanelProps) {
   const [copied, setCopied] = useState(false)
-  const isAdmin = role === 'admin'
-  const { data } = useJoinRequests(groupId, isAdmin)
-  const handleRequest = useHandleJoinRequest(groupId)
-
   const inviteUrl = `${window.location.origin}/invite/${inviteCode}`
 
   async function copyLink() {
@@ -39,32 +31,6 @@ export function InvitePanel({ groupId, inviteCode, role }: InvitePanelProps) {
           </Button>
         </div>
       </div>
-
-      {isAdmin && data?.requests && data.requests.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-[var(--text)]">Solicitações pendentes</p>
-          {data.requests.map(req => (
-            <div key={req.id} className="flex items-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3">
-              <span className="flex-1 text-sm text-[var(--text)]">{req.user.name}</span>
-              <Button
-                size="sm"
-                onClick={() => handleRequest.mutate({ requestId: req.id, action: 'approve' })}
-                disabled={handleRequest.isPending}
-              >
-                Aceitar
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleRequest.mutate({ requestId: req.id, action: 'reject' })}
-                disabled={handleRequest.isPending}
-              >
-                Recusar
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

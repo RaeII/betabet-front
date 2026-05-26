@@ -96,4 +96,14 @@ describe('useActiveGroup', () => {
     expect(result.current.isAdmin).toBe(true)
     expect(result.current.role).toBe('admin')
   })
+
+  it('derives admin role from group adminId when API role is missing', () => {
+    mockedUseAuth.mockReturnValue({ user: { id: 'u' }, isLoading: false })
+    mockedUseGroup.mockReturnValue({ data: { group: baseGroup } })
+
+    const { result } = renderHook(() => useActiveGroup(), { wrapper: wrap('group-a') })
+
+    expect(result.current.isAdmin).toBe(true)
+    expect(result.current.role).toBe('admin')
+  })
 })

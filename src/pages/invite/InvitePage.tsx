@@ -1,42 +1,73 @@
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
-import { resolveInviteCode, joinGroup } from '@/services/groups.service'
+import { useJoinByCode, useUserGroups } from '@/hooks/useGroups'
+import { ApiRequestError } from '@/services/api'
 
 export function InvitePage() {
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
   const referralCode = searchParams.get('ref')
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['invite', code],
-    queryFn: () => resolveInviteCode(code!),
-    enabled: !!code,
-  })
+  const { data: groupsData, isLoading: isGroupsLoading } = useUserGroups()
+  const joinByCode = useJoinByCode()
+  const hasAttempted = useRef(false)
 
-  async function handleJoin() {
-    if (!isAuthenticated) {
-      const params = new URLSearchParams()
-      if (referralCode) params.set('ref', referralCode)
-      if (code) params.set('invite', code)
-      navigate(`/auth/register?${params.toString()}`)
-      return
-    }
-    if (!data?.group || !code) return
-    await joinGroup(data.group.id, code)
-    navigate(`/groups/${data.group.id}`)
-  }
+  useEffect(() => {
+    if (!code || !isAuthenticated || isGroupsLoading || hasAttempted.current) return
+    hasAttempted.current = true
+    joinByCode.mutate(
+      { code },
+      {
+        onSuccess: ({ joined, group }) => {
+          if (joined) {
+            navigate(`/groups/${group.id}`, { replace: true })
+            return
+          }
+          const fallbackGroup = groupsData?.groups?.[0]
+          const pendingState = {
+            pendingJoin: { groupName: group.name, groupEmoji: group.emoji },
+          }
+          if (fallbackGroup) {
+            navigate(`/groups/${fallbackGroup.id}`, { replace: true, state: pendingState })
+          } else {
+            navigate('/onboarding', { replace: true, state: pendingState })
+          }
+        },
+        onError: (error) => {
+          if (error instanceof ApiRequestError && error.status === 409) {
+            const target = groupsData?.groups?.[0]
+            navigate(target ? `/groups/${target.id}` : '/onboarding', { replace: true })
+          }
+        },
+      },
+    )
+  }, [code, isAuthenticated, isGroupsLoading, groupsData, joinByCode, navigate])
+
+  if (!code) return <Navigate to="/" replace />
 
   if (isLoading) {
-    return <div className="flex h-screen items-center justify-center text-[var(--text-muted)]">Carregando convite…</div>
+    return (
+      <div className="flex h-screen items-center justify-center text-[var(--text-muted)]">
+        <Loader2 size={18} className="animate-spin" />
+      </div>
+    )
   }
 
-  if (isError || !data) {
+  if (!isAuthenticated) {
+    const params = new URLSearchParams()
+    params.set('invite', code)
+    if (referralCode) params.set('ref', referralCode)
+    return <Navigate to={`/auth/login?${params.toString()}`} replace />
+  }
+
+  if (joinByCode.isError && !(joinByCode.error instanceof ApiRequestError && joinByCode.error.status === 409)) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-[var(--danger)]">Convite inválido ou expirado.</p>
         <Button onClick={() => navigate('/')}>Ir para o início</Button>
       </div>
@@ -44,19 +75,8 @@ export function InvitePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-6 text-center">
-        <span className="text-5xl">🏆</span>
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text)]">Você foi convidado!</h1>
-          <p className="mt-1 text-[var(--text-muted)]">Para entrar no grupo</p>
-          <p className="mt-2 text-xl font-semibold text-[var(--text)]">{data.group.name}</p>
-          <p className="text-sm text-[var(--text-muted)]">{data.group.memberCount} membros</p>
-        </div>
-        <Button onClick={handleJoin} className="w-full">
-          {isAuthenticated ? 'Entrar no grupo' : 'Cadastre-se e entre'}
-        </Button>
-      </div>
+    <div className="flex h-screen items-center justify-center text-[var(--text-muted)]">
+      <Loader2 size={18} className="animate-spin" />
     </div>
   )
 }

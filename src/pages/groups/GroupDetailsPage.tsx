@@ -48,7 +48,7 @@ export function GroupDetailsPage() {
       {role ? (
         <section className="space-y-3 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5">
           <h2 className="text-lg font-semibold text-[var(--text)]">Convite</h2>
-          <InvitePanel groupId={groupId} inviteCode={group.inviteCode} role={role} />
+          <InvitePanel inviteCode={group.inviteCode} />
         </section>
       ) : null}
     </div>
