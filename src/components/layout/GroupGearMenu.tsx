@@ -4,28 +4,36 @@ import { Info, LogOut, Moon, Settings, Sun } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useAuth } from '@/hooks/useAuth'
-import { useGroupMembers } from '@/hooks/useGroups'
 import { useTheme } from '@/hooks/useTheme'
-import { LeaveGroupConfirm } from '@/pages/groups/components/LeaveGroupConfirm'
+import { Modal } from '@/components/ui/modal'
+import { Button } from '@/components/ui/button'
 
 export function GroupGearMenu() {
   const { groupId, group, isAdmin } = useActiveGroup()
-  const { user } = useAuth()
-  const { data: membersData } = useGroupMembers(groupId ?? '')
+  const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState(false)
 
   if (!groupId || !group) return null
 
   const isDark = theme === 'dark'
-  const members = membersData?.members ?? []
   const userInitial = user?.name.charAt(0).toUpperCase() ?? 'P'
-  const otherAdmins = members.filter(m => m.role === 'admin' && m.userId !== members.find(x => x)?.userId).length
-  // Last-admin gate: caller is the only admin AND there are other members
-  const adminCount = members.filter(m => m.role === 'admin').length
-  const isLastAdmin = isAdmin && adminCount <= 1 && (group.memberCount ?? members.length) > 1
-  void otherAdmins // keep variable for clarity
+
+  async function handleLogoutConfirm() {
+    setIsLoggingOut(true)
+    setLogoutError(false)
+    try {
+      await logout()
+      setLogoutConfirmOpen(false)
+    } catch {
+      setLogoutError(true)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <>
@@ -57,6 +65,13 @@ export function GroupGearMenu() {
               Perfil
             </DropdownMenu.Item>
             <DropdownMenu.Item
+              onSelect={() => navigate(`/groups/${groupId}/detalhes`)}
+              className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--text)] outline-none data-[highlighted]:bg-[var(--surface-soft)]"
+            >
+              <Info size={14} />
+              {isAdmin ? 'Configurações do Bolão' : 'Dados do bolão'}
+            </DropdownMenu.Item>
+                        <DropdownMenu.Item
               onSelect={toggleTheme}
               className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--text)] outline-none data-[highlighted]:bg-[var(--surface-soft)]"
             >
@@ -64,37 +79,56 @@ export function GroupGearMenu() {
               {isDark ? 'Tema claro' : 'Tema escuro'}
             </DropdownMenu.Item>
             <DropdownMenu.Item
-              onSelect={() => navigate(`/groups/${groupId}/detalhes`)}
-              className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--text)] outline-none data-[highlighted]:bg-[var(--surface-soft)]"
-            >
-              <Info size={14} />
-              {isAdmin ? 'Configurações do Bolão' : 'Detalhes'}
-            </DropdownMenu.Item>
-            <DropdownMenu.Item
-              disabled={isLastAdmin}
-              onSelect={e => {
-                if (isLastAdmin) {
-                  e.preventDefault()
-                  return
-                }
-                setConfirmOpen(true)
+              onSelect={() => {
+                setLogoutError(false)
+                setLogoutConfirmOpen(true)
               }}
-              title={isLastAdmin ? 'Você é o último admin — transfira a administração antes de sair.' : undefined}
               className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--danger)] outline-none data-[highlighted]:bg-[var(--surface-soft)] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
             >
               <LogOut size={14} />
-              Sair
+              Sair do app
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
 
-      <LeaveGroupConfirm
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        groupId={groupId}
-        groupName={group.name}
-      />
+      <Modal
+        open={logoutConfirmOpen}
+        onOpenChange={open => {
+          if (!isLoggingOut) setLogoutConfirmOpen(open)
+        }}
+        title="Sair do aplicativo?"
+        description="Você será desconectado da sua conta neste dispositivo e precisará entrar novamente para acessar seus bolões."
+      >
+        <div className="flex flex-col gap-3 p-5 sm:flex-row-reverse">
+          <Button
+            type="button"
+            onClick={handleLogoutConfirm}
+            disabled={isLoggingOut}
+            variant="destructive"
+            className="w-full sm:w-auto"
+          >
+            {isLoggingOut ? 'Saindo…' : 'Sair'}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setLogoutConfirmOpen(false)}
+            disabled={isLoggingOut}
+            className="w-full sm:w-auto"
+          >
+            Cancelar
+          </Button>
+          {logoutError ? (
+            <p
+              role="alert"
+              className="flex-1 self-center text-sm text-[var(--danger)]"
+            >
+              Não foi possível sair do aplicativo. Tente novamente.
+            </p>
+          ) : null}
+        </div>
+      </Modal>
     </>
   )
 }
