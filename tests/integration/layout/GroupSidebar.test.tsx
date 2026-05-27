@@ -51,22 +51,23 @@ describe('GroupSidebar', () => {
     mockedRequests.mockReturnValue({ data: { requests: [] } })
   })
 
-  it('member sees 5 items (no Configurações)', () => {
+  it('member sees the regular sidebar items without Palpites or Configurações', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
     renderSidebar()
     expect(screen.getByText('Home')).toBeInTheDocument()
     expect(screen.getByText('Jogos')).toBeInTheDocument()
-    expect(screen.getByText('Palpites')).toBeInTheDocument()
     expect(screen.getByText('Ranking')).toBeInTheDocument()
     expect(screen.getByText('Membros')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Grupos/i })).toBeInTheDocument()
+    expect(screen.queryByText('Palpites')).not.toBeInTheDocument()
     expect(screen.queryByText('Configurações')).not.toBeInTheDocument()
   })
 
-  it('admin sees 6 items including Configurações', () => {
+  it('admin does not see Configurações in the sidebar', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: true })
     renderSidebar()
-    expect(screen.getByText('Configurações')).toBeInTheDocument()
+    expect(screen.queryByText('Configurações')).not.toBeInTheDocument()
+    expect(screen.queryByText('Palpites')).not.toBeInTheDocument()
   })
 
   it('shows pending request notification on Membros for admin', () => {

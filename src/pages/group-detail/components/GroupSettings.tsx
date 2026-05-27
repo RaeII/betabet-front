@@ -14,20 +14,18 @@ export function GroupSettings({ group }: GroupSettingsProps) {
   const [name, setName] = useState(group.name)
   const [resultPoints, setResultPoints] = useState(group.resultPoints)
   const [exactScorePoints, setExactScorePoints] = useState(group.exactScorePoints)
-  const [showBets, setShowBets] = useState(group.showBetsBeforeKickoff)
   const [joinMode, setJoinMode] = useState(group.joinMode)
 
   useEffect(() => {
     setName(group.name)
     setResultPoints(group.resultPoints)
     setExactScorePoints(group.exactScorePoints)
-    setShowBets(group.showBetsBeforeKickoff)
     setJoinMode(group.joinMode)
   }, [group])
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    update.mutate({ name, resultPoints, exactScorePoints, showBetsBeforeKickoff: showBets, joinMode })
+    update.mutate({ name, resultPoints, exactScorePoints, joinMode })
   }
 
   const status = update.isError
@@ -64,16 +62,6 @@ export function GroupSettings({ group }: GroupSettingsProps) {
           />
         </div>
       </div>
-
-      <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--text)]">
-        <input
-          type="checkbox"
-          checked={showBets}
-          onChange={e => setShowBets(e.target.checked)}
-          className="accent-[var(--brand)]"
-        />
-        Mostrar apostas antes da partida começar
-      </label>
 
       <div className="flex flex-col gap-1">
         <label htmlFor={joinModeId} className="text-sm font-medium text-[var(--text)]">Entrada no bolão</label>

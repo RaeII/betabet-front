@@ -9,7 +9,7 @@ const makeGroup = (overrides: Partial<BettingGroup>): BettingGroup => ({
   adminId: 'user-1',
   resultPoints: 1,
   exactScorePoints: 3,
-  showBetsBeforeKickoff: false,
+  showBetsBeforeKickoff: true,
   joinMode: 'request',
   memberCount: 3,
   inviteCode: 'ABC12345',

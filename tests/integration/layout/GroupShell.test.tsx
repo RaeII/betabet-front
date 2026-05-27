@@ -15,7 +15,7 @@ vi.mock('@/hooks/useActiveGroup', () => ({
       adminId: 'u',
       resultPoints: 1,
       exactScorePoints: 3,
-      showBetsBeforeKickoff: false,
+      showBetsBeforeKickoff: true,
       joinMode: 'request',
       memberCount: 1,
       inviteCode: 'X',
@@ -33,7 +33,7 @@ vi.mock('@/hooks/useGroups', async () => {
     useUserGroups: () => ({ data: { groups: [] } }),
   }
 })
-vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u' } }) }))
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u', name: 'Usuário' } }) }))
 vi.mock('@/hooks/useTheme', () => ({
   useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
 }))
@@ -64,6 +64,29 @@ function render_(path: string, element: React.ReactNode) {
   )
 }
 
+function renderProfileShell() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    createElement(
+      QueryClientProvider,
+      { client: qc },
+      createElement(
+        MemoryRouter,
+        { initialEntries: ['/profile'] },
+        createElement(
+          Routes,
+          null,
+          createElement(
+            Route,
+            { path: '/profile', element: createElement(GroupShell) },
+            createElement(Route, { index: true, element: createElement(StubProfilePage) }),
+          ),
+        ),
+      ),
+    ),
+  )
+}
+
 describe('GroupShell layout', () => {
   beforeEach(() => vi.clearAllMocks())
 
@@ -78,9 +101,11 @@ describe('GroupShell layout', () => {
     expect(screen.queryByTestId('group-shell')).not.toBeInTheDocument()
   })
 
-  it('does NOT render the group shell on /profile', () => {
-    render_('/profile', createElement(StubProfilePage))
-    expect(screen.queryByTestId('group-shell')).not.toBeInTheDocument()
+  it('renders the group shell on /profile', () => {
+    renderProfileShell()
+    expect(screen.getByTestId('group-shell')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Navegação do grupo' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: /Navegação do grupo \(mobile\)/i })).toBeInTheDocument()
     expect(screen.getByTestId('profile-stub')).toBeInTheDocument()
   })
 })

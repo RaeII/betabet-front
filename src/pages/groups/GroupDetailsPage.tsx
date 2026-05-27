@@ -37,7 +37,7 @@ export function GroupDetailsPage() {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="mx-auto max-w-lg space-y-6">
         <section className="flex flex-col items-center gap-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-6 text-center">
           <GroupAvatar
             name={group.name}

@@ -39,7 +39,7 @@ const group = {
   adminId: 'u1',
   resultPoints: 1,
   exactScorePoints: 3,
-  showBetsBeforeKickoff: false,
+  showBetsBeforeKickoff: true,
   joinMode: 'request' as const,
   memberCount: 1,
   inviteCode: 'ABC12345',

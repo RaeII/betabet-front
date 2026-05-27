@@ -16,7 +16,7 @@ const mockGroup = {
   adminId: 'user-1',
   resultPoints: 1,
   exactScorePoints: 3,
-  showBetsBeforeKickoff: false,
+  showBetsBeforeKickoff: true,
   joinMode: 'request',
   memberCount: 1,
   inviteCode: 'XYZ',

@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Award, Home, MessageSquare, Plus, Settings, Trophy, Users } from 'lucide-react'
+import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useJoinRequests } from '@/hooks/useGroups'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
 
+const hiddenSidebarItemIds = new Set(['palpites', 'configuracoes'])
+
 const iconMap: Record<string, LucideIcon> = {
   home: Home,
   trophy: Trophy,
-  'message-square': MessageSquare,
   award: Award,
   users: Users,
-  settings: Settings,
 }
 
 export function GroupSidebar() {
@@ -23,7 +23,9 @@ export function GroupSidebar() {
 
   if (!groupId) return null
 
-  const items = sidebarDestinations.filter(item => !item.adminOnly || isAdmin)
+  const items = sidebarDestinations.filter(
+    item => !hiddenSidebarItemIds.has(item.id) && (!item.adminOnly || isAdmin),
+  )
   const pendingRequests = requestsQuery.data?.requests.length ?? 0
 
   return (
@@ -87,7 +89,7 @@ export function GroupSidebar() {
               ].join(' ')}
             >
               <Plus size={18} />
-              <span className="truncate">Grupos</span>
+              <span className="truncate">Bolões</span>
             </button>
           </li>
         </ul>

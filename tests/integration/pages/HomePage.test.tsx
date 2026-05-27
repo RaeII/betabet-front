@@ -15,7 +15,7 @@ vi.mock('@/hooks/useActiveGroup', () => ({
       adminId: 'u',
       resultPoints: 1,
       exactScorePoints: 3,
-      showBetsBeforeKickoff: false,
+      showBetsBeforeKickoff: true,
       joinMode: 'request',
       memberCount: 1,
       inviteCode: 'X',

@@ -30,7 +30,6 @@ export const GroupCreateSchema = z.object({
   emoji: z.string().emoji('Emoji inválido').optional(),
   resultPoints: z.number().int().min(1).max(10).default(1),
   exactScorePoints: z.number().int().min(1).max(20).default(3),
-  showBetsBeforeKickoff: z.boolean().default(false),
   joinMode: z.enum(['invite', 'request']).default('request'),
 })
 

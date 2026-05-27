@@ -32,7 +32,7 @@ const makeGroup = (id: string, name: string) => ({
   adminId: 'user-1',
   resultPoints: 1,
   exactScorePoints: 3,
-  showBetsBeforeKickoff: false,
+  showBetsBeforeKickoff: true,
   joinMode: 'request' as const,
   memberCount: 3,
   inviteCode: 'X',

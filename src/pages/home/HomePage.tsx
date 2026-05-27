@@ -57,7 +57,7 @@ export function HomePage() {
           {firstName ? `Olá, ${firstName}` : 'Olá!'}
         </h2>
         <p className="text-sm text-[var(--text-muted)]">
-          Veja os jogos do dia e salve seus palpites em segundos.
+          Veja os jogos do dia e salve seus palpites
         </p>
       </section>
 

@@ -64,7 +64,6 @@ export interface CreateGroupData {
   coverUrl?: string
   resultPoints?: number
   exactScorePoints?: number
-  showBetsBeforeKickoff?: boolean
   joinMode?: JoinMode
 }
 

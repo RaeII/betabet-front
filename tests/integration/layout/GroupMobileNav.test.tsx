@@ -47,18 +47,35 @@ describe('GroupMobileNav', () => {
     mockedRequests.mockReturnValue({ data: { requests: [] } })
   })
 
-  it('renders mobile nav with 5 items for member', () => {
+  it('renders mobile nav without Palpites or Configurações', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
     renderNav()
     expect(screen.getByLabelText(/Navegação do grupo \(mobile\)/i)).toBeInTheDocument()
     expect(screen.getByText('Home')).toBeInTheDocument()
+    expect(screen.queryByText('Palpites')).not.toBeInTheDocument()
     expect(screen.queryByText('Configurações')).not.toBeInTheDocument()
   })
 
-  it('renders 6 items for admin', () => {
+  it('centers Home between all mobile menu icons', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    renderNav()
+
+    const nav = screen.getByLabelText(/Navegação do grupo \(mobile\)/i)
+    const list = nav.querySelector('ul')
+    const homeLink = screen.getByRole('link', { name: 'Home' })
+    const labels = Array.from(nav.querySelectorAll('a, button')).map(item => item.textContent)
+
+    expect(list).toHaveClass('grid', 'items-center')
+    expect(list).toHaveStyle({ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' })
+    expect(homeLink).toHaveClass('items-center', 'justify-center', 'text-center')
+    expect(labels).toEqual(['Jogos', 'Ranking', 'Home', 'Membros', 'Grupos'])
+  })
+
+  it('does not render Configurações for admin in the mobile menu', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: true })
     renderNav()
-    expect(screen.getByText('Configurações')).toBeInTheDocument()
+    expect(screen.queryByText('Configurações')).not.toBeInTheDocument()
+    expect(screen.queryByText('Palpites')).not.toBeInTheDocument()
   })
 
   it('shows pending request notification on Membros for admin', () => {

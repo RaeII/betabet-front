@@ -4,12 +4,14 @@ import { createElement } from 'react'
 import { GroupDetailsPage } from '@/pages/groups/GroupDetailsPage'
 
 vi.mock('@/hooks/useActiveGroup', () => ({ useActiveGroup: vi.fn() }))
-vi.mock('@/hooks/useGroups', () => ({ useUpdateGroup: vi.fn() }))
+vi.mock('@/hooks/useGroups', () => ({ useGroupMembers: vi.fn(), useUpdateGroup: vi.fn() }))
+vi.mock('@/pages/groups/components/LeaveGroupConfirm', () => ({ LeaveGroupConfirm: () => null }))
 
 import { useActiveGroup } from '@/hooks/useActiveGroup'
-import { useUpdateGroup } from '@/hooks/useGroups'
+import { useGroupMembers, useUpdateGroup } from '@/hooks/useGroups'
 
 const mockedActive = useActiveGroup as ReturnType<typeof vi.fn>
+const mockedGroupMembers = useGroupMembers as ReturnType<typeof vi.fn>
 const mockedUpdateGroup = useUpdateGroup as ReturnType<typeof vi.fn>
 
 const baseGroup = {
@@ -20,7 +22,7 @@ const baseGroup = {
   adminId: 'user-1',
   resultPoints: 1,
   exactScorePoints: 3,
-  showBetsBeforeKickoff: false,
+  showBetsBeforeKickoff: true,
   joinMode: 'request' as const,
   memberCount: 3,
   inviteCode: 'ABC12345',
@@ -38,6 +40,7 @@ describe('GroupDetailsPage', () => {
       isError: false,
       isSuccess: false,
     })
+    mockedGroupMembers.mockReturnValue({ data: { members: [] } })
   })
 
   it('renders editable group settings for admins', () => {
@@ -53,6 +56,7 @@ describe('GroupDetailsPage', () => {
     expect(screen.getByRole('heading', { name: 'Configurações do Bolão' })).toBeInTheDocument()
     expect(screen.getByLabelText('Nome do grupo')).toHaveValue('Bolão')
     expect(screen.getByLabelText('Entrada no bolão')).toHaveDisplayValue('Grupo fechado, solicitação para entrar')
+    expect(screen.queryByLabelText('Mostrar apostas antes da partida começar')).not.toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Nome do grupo'), { target: { value: 'Novo Bolão' } })
     fireEvent.change(screen.getByLabelText('Pontos por resultado'), { target: { value: '2' } })
@@ -62,7 +66,6 @@ describe('GroupDetailsPage', () => {
       name: 'Novo Bolão',
       resultPoints: 2,
       exactScorePoints: 3,
-      showBetsBeforeKickoff: false,
       joinMode: 'request',
     })
   })

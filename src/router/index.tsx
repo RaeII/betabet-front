@@ -1,5 +1,4 @@
 import { createBrowserRouter } from 'react-router-dom'
-import { AppShell } from '@/components/layout/AppShell'
 import { GroupShell } from '@/components/layout/GroupShell'
 import { AuthGuard } from './guards/AuthGuard'
 import { AdminGuard } from './guards/AdminGuard'
@@ -102,10 +101,11 @@ export const router = createBrowserRouter([
         element: <OnboardingGuard />,
         children: [
           {
-            element: <AppShell />,
+            path: 'profile',
+            element: <GroupShell />,
             children: [
               {
-                path: 'profile',
+                index: true,
                 lazy: async () => {
                   const { ProfilePage } = await import('@/pages/profile/ProfilePage')
                   return { Component: ProfilePage }
