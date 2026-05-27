@@ -34,6 +34,24 @@ vi.mock('@/hooks/useBets', () => ({
 
 import { InlineBetCard } from '@/pages/home/components/InlineBetCard'
 import type { MatchWithUserBet } from '@/types/match.types'
+import type { Bet } from '@/types/bet.types'
+
+function makeBet(overrides: Partial<Bet> = {}): Bet {
+  return {
+    id: 'b1',
+    matchId: 'm-1',
+    userId: 'u',
+    groupId: 'g1',
+    homeScore: 3,
+    awayScore: 2,
+    resultPoints: null,
+    exactScorePoints: null,
+    replicate: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  }
+}
 
 const baseTeam = { id: 't', name: 'Brasil', flagUrl: '', group: null }
 const baseStadium = { id: 's', name: 'Nacional', city: 'BSB' }
@@ -102,23 +120,69 @@ describe('InlineBetCard', () => {
     )
   })
 
-  it('pre-fills score inputs when match already has a bet', () => {
-    renderCard(
-      makeMatch({
-        userBet: {
-          id: 'b1',
-          matchId: 'm-1',
-          userId: 'u',
-          groupId: 'g1',
-          homeScore: 3,
-          awayScore: 2,
-          resultPoints: null,
-          exactScorePoints: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      }),
+  it('replicates to all groups by default (toggle starts on)', () => {
+    renderCard(makeMatch())
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true')
+
+    const [home, away] = screen.getAllByRole('textbox', { name: /Palpite / })
+    fireEvent.change(home, { target: { value: '2' } })
+    fireEvent.change(away, { target: { value: '1' } })
+    fireEvent.click(screen.getByRole('button', { name: /Salvar palpite/i }))
+
+    expect(placeMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ replicateToAllGroups: true }),
     )
+    expect(editMutate).not.toHaveBeenCalled()
+  })
+
+  it('saves only to the current group when the toggle is off', () => {
+    renderCard(makeMatch())
+    fireEvent.click(screen.getByRole('switch'))
+
+    const [home, away] = screen.getAllByRole('textbox', { name: /Palpite / })
+    fireEvent.change(home, { target: { value: '2' } })
+    fireEvent.change(away, { target: { value: '1' } })
+    fireEvent.click(screen.getByRole('button', { name: /Salvar palpite/i }))
+
+    expect(placeMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ replicateToAllGroups: false }),
+    )
+  })
+
+  it('reflects the persisted replicate flag in the toggle', () => {
+    renderCard(makeMatch({ userBet: makeBet({ replicate: false }) }))
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('edits and replicates when the toggle is on', () => {
+    renderCard(makeMatch({ userBet: makeBet({ replicate: true }) }))
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true')
+
+    const [home] = screen.getAllByRole('textbox', { name: /Palpite / })
+    fireEvent.change(home, { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: /Atualizar/i }))
+
+    expect(editMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ betId: 'b1', homeScore: 4, awayScore: 2, replicate: true }),
+    )
+    expect(placeMutate).not.toHaveBeenCalled()
+  })
+
+  it('edits only the current group bet when the toggle is off', () => {
+    renderCard(makeMatch({ userBet: makeBet({ replicate: false }) }))
+
+    const [home] = screen.getAllByRole('textbox', { name: /Palpite / })
+    fireEvent.change(home, { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: /Atualizar/i }))
+
+    expect(editMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ betId: 'b1', homeScore: 4, awayScore: 2, replicate: false }),
+    )
+    expect(placeMutate).not.toHaveBeenCalled()
+  })
+
+  it('pre-fills score inputs when match already has a bet', () => {
+    renderCard(makeMatch({ userBet: makeBet() }))
     const [home, away] = screen.getAllByRole('textbox', { name: /Palpite / })
     expect(home).toHaveValue('3')
     expect(away).toHaveValue('2')
@@ -126,20 +190,7 @@ describe('InlineBetCard', () => {
 
   it('resets score inputs when the active group changes for the same match', () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    const matchWithGroupBet = makeMatch({
-      userBet: {
-        id: 'b1',
-        matchId: 'm-1',
-        userId: 'u',
-        groupId: 'g1',
-        homeScore: 3,
-        awayScore: 2,
-        resultPoints: null,
-        exactScorePoints: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    })
+    const matchWithGroupBet = makeMatch({ userBet: makeBet() })
 
     const { rerender } = render(
       createElement(

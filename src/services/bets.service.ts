@@ -5,8 +5,13 @@ export function placeBet(data: PlaceBetRequest): Promise<{ bets: Bet[] }> {
   return apiPost('/api/bets', data)
 }
 
-export function editBet(betId: string, homeScore: number, awayScore: number): Promise<{ bet: Bet }> {
-  return apiPut(`/api/bets/${betId}`, { homeScore, awayScore })
+export function editBet(
+  betId: string,
+  homeScore: number,
+  awayScore: number,
+  replicate: boolean,
+): Promise<{ bet: Bet }> {
+  return apiPut(`/api/bets/${betId}`, { homeScore, awayScore, replicate })
 }
 
 export function getGroupMatchBets(

@@ -21,6 +21,7 @@ function buildOptimisticBet(
   groupId: string,
   homeScore: number,
   awayScore: number,
+  replicate: boolean,
   existing: Bet | null,
 ): Bet {
   const now = new Date().toISOString()
@@ -33,6 +34,7 @@ function buildOptimisticBet(
     awayScore,
     resultPoints: null,
     exactScorePoints: null,
+    replicate,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   }
@@ -55,6 +57,7 @@ export function usePlaceBet() {
           vars.groupId,
           vars.homeScore,
           vars.awayScore,
+          vars.replicateToAllGroups,
           (match as MatchWithUserBet | undefined)?.userBet ?? null,
         )
         return patchUserBet(prev, vars.matchId, optimistic)
@@ -77,6 +80,7 @@ interface EditBetVariables {
   betId: string
   homeScore: number
   awayScore: number
+  replicate: boolean
   matchId?: string
   groupId?: string
 }
@@ -84,8 +88,8 @@ interface EditBetVariables {
 export function useEditBet(matchId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ betId, homeScore, awayScore }: EditBetVariables) =>
-      editBet(betId, homeScore, awayScore),
+    mutationFn: ({ betId, homeScore, awayScore, replicate }: EditBetVariables) =>
+      editBet(betId, homeScore, awayScore, replicate),
     onMutate: async vars => {
       if (!vars.groupId || !vars.matchId) return { previous: undefined, key: undefined }
       const key = groupKeys.matches(vars.groupId)
@@ -99,6 +103,7 @@ export function useEditBet(matchId: string) {
           vars.groupId!,
           vars.homeScore,
           vars.awayScore,
+          vars.replicate,
           (match as MatchWithUserBet | undefined)?.userBet ?? null,
         )
         return patchUserBet(prev, vars.matchId!, optimistic)

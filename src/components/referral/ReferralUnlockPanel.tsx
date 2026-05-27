@@ -97,7 +97,10 @@ export function ReferralUnlockPanel({
       <div className="space-y-1">
         <p className="text-sm font-semibold text-[var(--text)]">Indicações necessárias</p>
         <p className="text-sm leading-5 text-[var(--text-muted)]">
-          Faltam apenas {missing} {pluralizeIndication(missing)} para liberar {featureName}.
+          <strong className="font-bold text-[var(--text)]">
+            Apenas {missing} {pluralizeIndication(missing)}
+          </strong>{' '}
+          para liberar {featureName}.
         </p>
       </div>
 

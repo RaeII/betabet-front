@@ -8,7 +8,7 @@ const mockUser: User = {
   avatarUrl: null,
   referralCode: 'TEST1234',
   referredByCode: null,
-  referralCount: 0,
+  referralCount: 1,
   chartUnlocked: false,
   isAdmin: false,
   createdAt: '2026-05-19T00:00:00.000Z',

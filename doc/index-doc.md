@@ -10,7 +10,7 @@ Documenta como o frontend lida com referral, links de indicação e recursos blo
 
 Principais temas:
 
-- dados de referral vindos do auth e de `GET /api/referral`;
+- dados de referral vindos do auth e de `GET /api/referral`, incluindo o crédito inicial de 1 indicação;
 - normalização da resposta em `src/services/referral.service.ts`;
 - link pessoal de indicação (`/?ref=<referralCode>`);
 - link de convite do grupo com indicação (`/invite/<inviteCode>?ref=<referralCode>`);
@@ -31,6 +31,18 @@ Principais temas:
 - badge vermelho no menu `Membros` da sidebar desktop e navegação mobile;
 - invalidação de queries de solicitações e membros após aprovação ou recusa;
 - testes relacionados ao fluxo de solicitações.
+
+### [003-bet-replication.md](./003-bet-replication.md)
+
+Documenta o toggle de replicação em cada card de partida e como ele controla a replicação do palpite para os demais grupos do usuário.
+
+Principais temas:
+
+- toggle por card de grupo, no canto inferior esquerdo, com estado vindo de `userBet.replicate` (default ligado);
+- comportamento de ligado (replica) vs desligado (opt-out, só este grupo);
+- decisão entre `usePlaceBet` (POST) e `useEditBet` (PUT) e o envio do flag;
+- campo `replicate` em `Bet` e a aposta otimista em `useBets`;
+- arquivos do frontend envolvidos e pontos de atenção (estado vem do servidor, opt-out exige salvar).
 
 ### [ui.md](./ui.md)
 

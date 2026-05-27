@@ -8,7 +8,6 @@ export const mockReferralInfo: ReferralInfo = {
   isUnlocked: false,
   referredUsers: [
     { id: 'user-2', name: 'Maria', joinedAt: new Date().toISOString() },
-    { id: 'user-3', name: 'João', joinedAt: new Date().toISOString() },
   ],
 }
 

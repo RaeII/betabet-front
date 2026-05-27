@@ -15,4 +15,18 @@ describe('ReferralUnlockPanel', () => {
     expect(screen.getByDisplayValue(`${window.location.origin}/?ref=ABC12345`)).toBeInTheDocument()
     expect(screen.queryByDisplayValue(/\/auth\/register\?ref=/)).not.toBeInTheDocument()
   })
+
+  it('highlights the remaining indication count in bold', () => {
+    render(
+      <ReferralUnlockPanel
+        featureName="a visualização de palpites"
+        referralCount={1}
+        referralCode="ABC12345"
+      />,
+    )
+
+    const highlight = screen.getByText('Apenas 2 indicações')
+    expect(highlight).toBeInTheDocument()
+    expect(highlight.tagName).toBe('STRONG')
+  })
 })

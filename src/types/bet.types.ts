@@ -11,6 +11,8 @@ export interface Bet {
   awayScore: number
   resultPoints: number | null
   exactScorePoints: number | null
+  /** Estado do toggle de replicação deste palpite no grupo. */
+  replicate: boolean
   createdAt: string
   updatedAt: string
 }

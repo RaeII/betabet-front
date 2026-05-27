@@ -25,7 +25,7 @@ const baseUser: User = {
   avatarUrl: null,
   referralCode: 'OWN123',
   referredByCode: null,
-  referralCount: 0,
+  referralCount: 1,
   chartUnlocked: false,
   isAdmin: false,
   createdAt: '2026-05-19T00:00:00.000Z',

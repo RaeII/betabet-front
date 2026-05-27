@@ -4,7 +4,7 @@
 
 Este documento registra como o frontend do Betabet monta e exibe links de indicação, especialmente nos recursos bloqueados por indicação.
 
-A regra funcional vem do backend: o usuário libera recursos premium quando atinge 3 indicações aceitas. No frontend, essa regra aparece como:
+A regra funcional vem do backend: o usuário libera recursos premium quando atinge 3 indicações no total. Todo usuário começa com 1 crédito inicial, então precisa conquistar mais 2 indicações. No frontend, essa regra aparece como:
 
 ```txt
 referralCount >= 3
@@ -18,8 +18,8 @@ O frontend não decide se o usuário pode ver palpites de outras pessoas. Ele re
 O usuário autenticado já recebe estes campos no auth:
 
 - `user.referralCode`: código próprio de indicação.
-- `user.referralCount`: total de indicações aceitas.
-- `user.chartUnlocked`: `true` quando o usuário já atingiu 3 indicações.
+- `user.referralCount`: total de indicações contabilizadas, incluindo o crédito inicial de 1.
+- `user.chartUnlocked`: `true` quando o usuário já atingiu 3 indicações no total.
 
 O endpoint `GET /api/referral` também retorna dados do programa. O backend responde no formato:
 
@@ -27,7 +27,7 @@ O endpoint `GET /api/referral` também retorna dados do programa. O backend resp
 {
   "referral": {
     "referralCode": "ABC12345",
-    "referralCount": 2,
+    "referralCount": 1,
     "chartUnlocked": false,
     "referredUsers": []
   }
@@ -98,9 +98,9 @@ src/components/referral/ReferralUnlockPanel.tsx
 
 O componente mostra:
 
-- número atual de indicações;
+- número atual de indicações, já incluindo o crédito inicial;
 - barra de progresso até 3 indicações;
-- texto com quantas indicações faltam;
+- texto em destaque com quantas indicações faltam;
 - link pessoal de indicação;
 - link do grupo com `?ref=<referralCode>`, quando `groupInviteCode` for informado.
 
@@ -150,4 +150,5 @@ Exemplo de uso:
 - Não usar o `inviteCode` do grupo como código de indicação.
 - Não montar links de grupo sem preservar `?ref=<referralCode>` quando a intenção for também contar indicação.
 - Não duplicar a regra de desbloqueio no front. O backend continua sendo a fonte de verdade para `canView`.
+- Não subtrair o crédito inicial no front: `referralCount` já chega pronto para exibição e progresso.
 - Para novos recursos bloqueados, reutilizar `ReferralUnlockPanel` em vez de criar um card novo.

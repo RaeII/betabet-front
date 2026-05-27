@@ -123,8 +123,11 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
   const hideSavedIconTimeout = useRef<number | null>(null)
   const savedHome = match.userBet ? String(match.userBet.homeScore) : ''
   const savedAway = match.userBet ? String(match.userBet.awayScore) : ''
+  // Toggle persistido por grupo: reflete o palpite existente; default ligado.
+  const savedReplicate = match.userBet ? match.userBet.replicate : true
   const [home, setHome] = useState<string>(savedHome)
   const [away, setAway] = useState<string>(savedAway)
+  const [replicate, setReplicate] = useState(savedReplicate)
   const [showSavedIcon, setShowSavedIcon] = useState(false)
   const [betsModalOpen, setBetsModalOpen] = useState(false)
   const locked = !isBetEditable(match.scheduledAt) || match.status === 'finished'
@@ -138,9 +141,10 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
   useEffect(() => {
     setHome(savedHome)
     setAway(savedAway)
+    setReplicate(savedReplicate)
     setShowSavedIcon(false)
     setBetsModalOpen(false)
-  }, [groupId, match.id, savedHome, savedAway])
+  }, [groupId, match.id, savedHome, savedAway, savedReplicate])
 
   useEffect(() => {
     if (!placeBet.isSuccess && !editBet.isSuccess) return
@@ -181,11 +185,14 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
     setHome(String(h))
     setAway(String(a))
 
+    // `replicate` (toggle) é persistido por grupo. Quando ligado, o backend
+    // propaga o placar para os demais grupos, exceto os que estão em opt-out.
     if (isEditing && match.userBet) {
       editBet.mutate({
         betId: match.userBet.id,
         homeScore: h,
         awayScore: a,
+        replicate,
         matchId: match.id,
         groupId,
       })
@@ -195,7 +202,7 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
         groupId,
         homeScore: h,
         awayScore: a,
-        replicateToAllGroups: false,
+        replicateToAllGroups: replicate,
       })
     }
   }
@@ -233,7 +240,32 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
         </div>
       </div>
 
-      <footer className="relative flex min-h-9 items-center justify-center pb-6 sm:pb-0">
+      <footer className="relative flex min-h-9 items-center justify-center pb-12 sm:pb-0">
+        {!locked ? (
+          <div className="absolute bottom-0 left-0 flex flex-col gap-1 sm:bottom-1/2 sm:translate-y-1/2">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={replicate}
+              aria-label="Replicar palpite para todos os grupos"
+              onClick={() => setReplicate(v => !v)}
+              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
+                replicate
+                  ? 'bg-[var(--brand)]'
+                  : 'border border-[var(--border)] bg-[var(--surface-soft)]'
+              }`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${
+                  replicate ? 'translate-x-[1.125rem]' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+            <span className="max-w-[8rem] text-[10px] leading-tight text-[var(--text-muted)]">
+              {replicate ? 'Replicando para todos os grupos' : 'Somente este grupo'}
+            </span>
+          </div>
+        ) : null}
         {locked ? (
           <span className="text-xs text-[var(--text-muted)]">Apostas encerradas</span>
         ) : (
