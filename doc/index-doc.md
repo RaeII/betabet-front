@@ -12,7 +12,7 @@ Principais temas:
 
 - dados de referral vindos do auth e de `GET /api/referral`;
 - normalização da resposta em `src/services/referral.service.ts`;
-- link pessoal de indicação (`/auth/register?ref=<referralCode>`);
+- link pessoal de indicação (`/?ref=<referralCode>`);
 - link de convite do grupo com indicação (`/invite/<inviteCode>?ref=<referralCode>`);
 - preservação de `ref` e `invite` no fluxo de cadastro;
 - uso do componente reutilizável `ReferralUnlockPanel`;

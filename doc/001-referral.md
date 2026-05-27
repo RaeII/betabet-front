@@ -53,10 +53,13 @@ O frontend normaliza isso em `src/services/referral.service.ts` para:
 O link pessoal usa somente o código do usuário:
 
 ```txt
-/auth/register?ref=<referralCode>
+/?ref=<referralCode>
 ```
 
-Esse link preenche o campo "Código de indicação" no cadastro.
+Esse link não abre a página de cadastro diretamente. Se a pessoa já estiver logada,
+o app mostra um modal informando que a indicação não pode ser aplicada em conta
+existente. Se não estiver logada, ela cai no login com o `ref` preservado e pode
+criar uma nova conta pelo link de cadastro.
 
 ### Link do grupo com indicação
 
@@ -74,7 +77,7 @@ Esse formato preserva as duas intenções:
 Quando o visitante não autenticado abre `/invite/:code?ref=<referralCode>`, a página de convite envia para:
 
 ```txt
-/auth/register?ref=<referralCode>&invite=<inviteCode>
+/auth/login?ref=<referralCode>&invite=<inviteCode>
 ```
 
 Depois que a conta é criada, `RegisterPage` redireciona de volta para:
@@ -131,11 +134,16 @@ Exemplo de uso:
   - Expõe `useReferralInfo(enabled)` para buscar dados de referral sob demanda.
 
 - `src/pages/invite/InvitePage.tsx`
-  - Preserva `?ref=<referralCode>` quando envia um visitante não autenticado para cadastro.
+  - Preserva `?ref=<referralCode>` quando envia um visitante não autenticado para login.
+  - Mostra o aviso de indicação para contas existentes quando o visitante já está autenticado.
 
 - `src/pages/auth/RegisterPage.tsx`
   - Lê `ref` para preencher o código de indicação.
   - Lê `invite` para voltar ao convite de grupo depois do cadastro.
+
+- `src/components/referral/ReferralApplyHost.tsx`
+  - Não aplica indicação automaticamente em contas existentes.
+  - Mostra modal informando se o usuário já possui indicação ou se a indicação é apenas para novas contas.
 
 ## Cuidados
 

@@ -10,7 +10,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useJoinByCode } from '@/hooks/useGroups'
 import { LoginSchema } from '@/lib/schemas'
 import { resolveInviteCode } from '@/services/groups.service'
-import { applyReferralCode } from '@/services/referral.service'
 import { ApiRequestError } from '@/services/api'
 import type { LoginCredentials } from '@/types/auth.types'
 
@@ -40,23 +39,28 @@ export function LoginPage() {
     }
   }
 
+  function withReferralSearch(path: string) {
+    if (!referralCode) return path
+    return `${path}?ref=${encodeURIComponent(referralCode)}`
+  }
+
   async function attemptJoin(code: string): Promise<void> {
     try {
       const { joined, group } = await joinByCode.mutateAsync({ code })
       if (joined) {
-        navigate(`/groups/${group.id}`, { replace: true })
+        navigate(withReferralSearch(`/groups/${group.id}`), { replace: true })
         return
       }
-      navigate('/', {
+      navigate(withReferralSearch('/'), {
         replace: true,
         state: { pendingJoin: { groupName: group.name, groupEmoji: group.emoji } },
       })
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 409 && invitePreview?.group) {
-        navigate(`/groups/${invitePreview.group.id}`, { replace: true })
+        navigate(withReferralSearch(`/groups/${invitePreview.group.id}`), { replace: true })
         return
       }
-      navigate('/', { replace: true })
+      navigate(withReferralSearch('/'), { replace: true })
     }
   }
 
@@ -76,13 +80,10 @@ export function LoginPage() {
     setServerError('')
     try {
       await login({ email: result.data.email, password: result.data.password })
-      if (referralCode) {
-        try { await applyReferralCode(referralCode) } catch { /* duplicate / self-ref ignored */ }
-      }
       if (inviteCode && !isInviteInvalid) {
         await attemptJoin(inviteCode)
       } else {
-        navigate('/')
+        navigate(withReferralSearch('/'))
       }
     } catch {
       setServerError('E-mail ou senha inválidos.')

@@ -29,7 +29,7 @@ function pluralizeIndication(count: number) {
 function buildUserReferralLink(referralCode?: string | null) {
   if (!referralCode) return ''
   const origin = getOrigin()
-  return `${origin}/auth/register?ref=${encodeURIComponent(referralCode)}`
+  return `${origin}/?ref=${encodeURIComponent(referralCode)}`
 }
 
 function buildGroupReferralLink(groupInviteCode?: string | null, referralCode?: string | null) {

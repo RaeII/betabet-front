@@ -6,8 +6,6 @@ import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useJoinRequests } from '@/hooks/useGroups'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
-import { useTheme } from '@/hooks/useTheme'
-import { Moon, Sun } from 'lucide-react'
 
 const iconMap: Record<string, LucideIcon> = {
   home: Home,
@@ -21,9 +19,7 @@ const iconMap: Record<string, LucideIcon> = {
 export function GroupSidebar() {
   const { groupId, isAdmin } = useActiveGroup()
   const [modalOpen, setModalOpen] = useState(false)
-  const { theme, toggleTheme } = useTheme()
   const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
-  const isDark = theme === 'dark'
 
   if (!groupId) return null
 
@@ -59,7 +55,7 @@ export function GroupSidebar() {
                   className={({ isActive }) =>
                     [
                       'flex items-center gap-3 rounded-[var(--radius-pill)] px-3 py-2 text-sm font-medium transition',
-                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]',
+                      'focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]',
                       isActive
                         ? 'bg-[var(--surface-soft)] text-[var(--brand)]'
                         : 'text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]',
@@ -96,18 +92,6 @@ export function GroupSidebar() {
           </li>
         </ul>
       </nav>
-
-      <div className="border-t border-[var(--border)] p-3">
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label={isDark ? 'Ativar tema claro' : 'Ativar tema escuro'}
-          className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]"
-        >
-          {isDark ? <Sun size={12} /> : <Moon size={12} />}
-          {isDark ? 'Claro' : 'Escuro'}
-        </button>
-      </div>
 
       <GroupsModal
         open={modalOpen}

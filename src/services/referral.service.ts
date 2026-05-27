@@ -16,7 +16,7 @@ type ReferralApiResponse =
 
 function buildReferralLink(code: string) {
   if (!code || typeof window === 'undefined') return ''
-  return `${window.location.origin}/auth/register?ref=${encodeURIComponent(code)}`
+  return `${window.location.origin}/?ref=${encodeURIComponent(code)}`
 }
 
 function normalizeReferralInfo(response: ReferralApiResponse): ReferralInfo {

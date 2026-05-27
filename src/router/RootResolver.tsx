@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useLastAccessedGroup } from '@/hooks/useLastAccessedGroup'
 
 export function RootResolver() {
   const { groupId, isReady, reason } = useLastAccessedGroup()
+  const location = useLocation()
 
   if (!isReady) {
     return (
@@ -11,8 +12,8 @@ export function RootResolver() {
   }
 
   if (reason === 'none' || groupId === null) {
-    return <Navigate to="/onboarding" replace />
+    return <Navigate to={`/onboarding${location.search}`} replace />
   }
 
-  return <Navigate to={`/groups/${groupId}`} replace />
+  return <Navigate to={`/groups/${groupId}${location.search}`} replace />
 }
