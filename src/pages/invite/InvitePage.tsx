@@ -1,10 +1,12 @@
-import { useEffect, useRef } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import { InviteGroupCard } from '@/components/group/InviteGroupCard'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
 import { useJoinByCode, useUserGroups } from '@/hooks/useGroups'
 import { ApiRequestError } from '@/services/api'
+import { resolveInviteCode } from '@/services/groups.service'
 
 export function InvitePage() {
   const { code } = useParams<{ code: string }>()
@@ -15,11 +17,21 @@ export function InvitePage() {
 
   const { data: groupsData, isLoading: isGroupsLoading } = useUserGroups()
   const joinByCode = useJoinByCode()
-  const hasAttempted = useRef(false)
 
-  useEffect(() => {
-    if (!code || !isAuthenticated || isGroupsLoading || hasAttempted.current) return
-    hasAttempted.current = true
+  const {
+    data: invitePreview,
+    isLoading: isInviteLoading,
+    isError: isInviteInvalid,
+  } = useQuery({
+    queryKey: ['invite', code],
+    queryFn: () => resolveInviteCode(code!),
+    enabled: !!code && isAuthenticated,
+    retry: false,
+  })
+
+  function handleJoin() {
+    if (!code || !invitePreview?.group || isGroupsLoading) return
+
     joinByCode.mutate(
       { code },
       {
@@ -40,13 +52,12 @@ export function InvitePage() {
         },
         onError: (error) => {
           if (error instanceof ApiRequestError && error.status === 409) {
-            const target = groupsData?.groups?.[0]
-            navigate(target ? `/groups/${target.id}` : '/onboarding', { replace: true })
+            navigate(`/groups/${invitePreview.group.id}`, { replace: true })
           }
         },
       },
     )
-  }, [code, isAuthenticated, isGroupsLoading, groupsData, joinByCode, navigate])
+  }
 
   if (!code) return <Navigate to="/" replace />
 
@@ -65,7 +76,19 @@ export function InvitePage() {
     return <Navigate to={`/auth/login?${params.toString()}`} replace />
   }
 
-  if (joinByCode.isError && !(joinByCode.error instanceof ApiRequestError && joinByCode.error.status === 409)) {
+  if (isInviteLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-[var(--text-muted)]">
+        <Loader2 size={18} className="animate-spin" />
+      </div>
+    )
+  }
+
+  if (
+    isInviteInvalid ||
+    (joinByCode.isError &&
+      !(joinByCode.error instanceof ApiRequestError && joinByCode.error.status === 409))
+  ) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-[var(--danger)]">Convite inválido ou expirado.</p>
@@ -74,9 +97,52 @@ export function InvitePage() {
     )
   }
 
+  const group = invitePreview?.group
+  const isClosedGroup = group?.joinMode === 'request'
+
   return (
-    <div className="flex h-screen items-center justify-center text-[var(--text-muted)]">
-      <Loader2 size={18} className="animate-spin" />
+    <div className="flex min-h-screen items-center justify-center px-6 py-10">
+      <section className="w-full max-w-md space-y-5">
+        <div className="space-y-2 text-center">
+          <h1 className="text-2xl font-bold text-[var(--text)]">Confirmar entrada</h1>
+          <p className="text-sm leading-relaxed text-[var(--text-muted)]">
+            Revise o convite antes de enviar sua entrada no bolão.
+          </p>
+        </div>
+
+        {group ? (
+          <InviteGroupCard
+            group={group}
+            hint={isClosedGroup
+              ? 'Grupo fechado: sua solicitação será enviada para aprovação do admin.'
+              : 'Grupo aberto: confirme para entrar no bolão agora.'}
+          />
+        ) : null}
+
+        <div className="flex flex-col gap-3">
+          <Button
+            onClick={handleJoin}
+            disabled={!group || isGroupsLoading || joinByCode.isPending}
+            className="w-full"
+          >
+            {joinByCode.isPending ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : isClosedGroup ? (
+              'Solicitar entrada'
+            ) : (
+              'Entrar no grupo'
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => navigate('/')}
+            className="w-full"
+          >
+            Agora não
+          </Button>
+        </div>
+      </section>
     </div>
   )
 }

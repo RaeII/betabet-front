@@ -81,6 +81,21 @@ describe('GroupGearMenu', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/groups/g1/detalhes')
   })
 
+  it('shows group settings label for admins', async () => {
+    mockedActive.mockReturnValue({
+      groupId: 'g1',
+      group: baseGroup,
+      role: 'admin',
+      isAdmin: true,
+    })
+    renderMenu()
+    await openMenu()
+    const settings = await screen.findByText('Configurações do Bolão')
+    expect(screen.queryByText('Detalhes')).not.toBeInTheDocument()
+    fireEvent.click(settings)
+    expect(mockNavigate).toHaveBeenCalledWith('/groups/g1/detalhes')
+  })
+
   it('opens leave confirm when "Sair" is selected for a non-last-admin', async () => {
     mockedActive.mockReturnValue({
       groupId: 'g1',

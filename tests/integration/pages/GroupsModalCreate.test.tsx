@@ -10,6 +10,7 @@ vi.mock('@/hooks/useGroups', async () => {
   return {
     ...actual,
     useUserGroups: vi.fn(() => ({ data: { groups: [] } })),
+    useMyJoinRequests: vi.fn(() => ({ data: { requests: [] }, isLoading: false })),
     useCreateGroup: () => ({ mutate: createMutate, isPending: false, isError: false }),
   }
 })

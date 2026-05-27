@@ -22,11 +22,11 @@ export function useAllMatches() {
   })
 }
 
-export function useMatch(matchId: string) {
+export function useMatch(matchId: string, enabled = true) {
   return useQuery({
     queryKey: matchKeys.detail(matchId),
     queryFn: () => getMatch(matchId),
-    enabled: !!matchId,
+    enabled: enabled && !!matchId,
   })
 }
 

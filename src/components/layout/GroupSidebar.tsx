@@ -80,19 +80,24 @@ export function GroupSidebar() {
               </li>
             )
           })}
+          <li>
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className={[
+                'flex w-full items-center gap-3 rounded-[var(--radius-pill)] px-3 py-2 text-sm font-medium transition',
+                'text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]',
+                'focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]',
+              ].join(' ')}
+            >
+              <Plus size={18} />
+              <span className="truncate">Grupos</span>
+            </button>
+          </li>
         </ul>
       </nav>
 
       <div className="border-t border-[var(--border)] p-3">
-        <button
-          type="button"
-          onClick={() => setModalOpen(true)}
-          className="mb-2 flex w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] border border-dashed border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]"
-        >
-          <Plus size={14} />
-          Grupos
-        </button>
-
         <button
           type="button"
           onClick={toggleTheme}

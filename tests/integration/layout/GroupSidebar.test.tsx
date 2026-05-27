@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
@@ -11,6 +11,7 @@ vi.mock('@/hooks/useGroups', async () => {
     ...actual,
     useUserGroups: () => ({ data: { groups: [] } }),
     useJoinRequests: vi.fn(),
+    useMyJoinRequests: () => ({ data: { requests: [] }, isLoading: false }),
   }
 })
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u' } }) }))
@@ -58,6 +59,7 @@ describe('GroupSidebar', () => {
     expect(screen.getByText('Palpites')).toBeInTheDocument()
     expect(screen.getByText('Ranking')).toBeInTheDocument()
     expect(screen.getByText('Membros')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Grupos/i })).toBeInTheDocument()
     expect(screen.queryByText('Configurações')).not.toBeInTheDocument()
   })
 
@@ -85,5 +87,14 @@ describe('GroupSidebar', () => {
     renderSidebar('/groups/g1')
     const active = screen.getByRole('link', { name: 'Home' })
     expect(active.getAttribute('aria-current')).toBe('page')
+  })
+
+  it('opens the groups modal from the regular menu item', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    renderSidebar()
+
+    fireEvent.click(screen.getByRole('button', { name: /Grupos/i }))
+
+    expect(screen.getByRole('dialog', { name: /Seus grupos/i })).toBeInTheDocument()
   })
 })

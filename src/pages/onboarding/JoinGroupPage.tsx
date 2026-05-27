@@ -68,7 +68,11 @@ export function JoinGroupPage() {
     else navigate('/onboarding')
   }
 
-  const joinButtonLabel = preview?.group?.joinMode === 'request' ? 'Solicitar entrada' : 'Entrar no grupo'
+  const isClosedGroup = preview?.group?.joinMode === 'request'
+  const joinButtonLabel = isClosedGroup ? 'Solicitar entrada' : 'Entrar no grupo'
+  const joinModeHint = isClosedGroup
+    ? 'Grupo fechado: o admin precisa aprovar sua entrada.'
+    : 'Grupo aberto: quem tem este link consegue entrar no bolão.'
 
   return (
     <OnboardingShell backTo="/onboarding">
@@ -126,6 +130,9 @@ export function JoinGroupPage() {
                 </p>
               </div>
             </div>
+            <p className="text-xs leading-relaxed text-[var(--text-muted)]">
+              {joinModeHint}
+            </p>
             <Button
               onClick={handleJoin}
               className="w-full"

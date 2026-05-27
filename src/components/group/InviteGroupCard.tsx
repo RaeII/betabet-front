@@ -7,8 +7,8 @@ interface InviteGroupCardProps {
 
 export function InviteGroupCard({ group, hint }: InviteGroupCardProps) {
   const defaultHint = group.joinMode === 'request'
-    ? 'Sua entrada será analisada pelo admin do grupo.'
-    : 'Você entrará automaticamente neste grupo.'
+    ? 'Grupo fechado: sua entrada será analisada pelo admin do bolão.'
+    : 'Grupo aberto: quem tem este link consegue entrar no bolão.'
 
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">

@@ -14,9 +14,14 @@ const mockGroup = {
   emoji: '🏆',
   coverUrl: null,
   memberCount: 7,
+  joinMode: 'invite',
 }
 
 const joinHandlers = [
+  http.get('/api/groups', () => {
+    return HttpResponse.json({ groups: [] })
+  }),
+
   http.get('/api/groups/invite/:code', ({ params }) => {
     if (params.code === 'BADCODE') {
       return HttpResponse.json({ error: 'Not found' }, { status: 404 })
@@ -88,6 +93,7 @@ describe('JoinGroupPage', () => {
       expect(screen.getByText('Bolão dos Campeões')).toBeInTheDocument(),
     )
     expect(screen.getByText(/7 membros/i)).toBeInTheDocument()
+    expect(screen.getByText(/Grupo aberto/i)).toBeInTheDocument()
   })
 
   it('joins group and navigates on confirm', async () => {

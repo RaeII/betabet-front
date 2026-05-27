@@ -57,13 +57,13 @@ function makeMatch(overrides: Partial<MatchWithUserBet> = {}): MatchWithUserBet 
   }
 }
 
-function renderCard(match: MatchWithUserBet) {
+function renderCard(match: MatchWithUserBet, groupId = 'g1') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     createElement(
       QueryClientProvider,
       { client: qc },
-      createElement(InlineBetCard, { match, groupId: 'g1' }),
+      createElement(InlineBetCard, { match, groupId }),
     ),
   )
 }
@@ -122,6 +122,48 @@ describe('InlineBetCard', () => {
     const [home, away] = screen.getAllByRole('textbox', { name: /Palpite / })
     expect(home).toHaveValue('3')
     expect(away).toHaveValue('2')
+  })
+
+  it('resets score inputs when the active group changes for the same match', () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const matchWithGroupBet = makeMatch({
+      userBet: {
+        id: 'b1',
+        matchId: 'm-1',
+        userId: 'u',
+        groupId: 'g1',
+        homeScore: 3,
+        awayScore: 2,
+        resultPoints: null,
+        exactScorePoints: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    })
+
+    const { rerender } = render(
+      createElement(
+        QueryClientProvider,
+        { client: qc },
+        createElement(InlineBetCard, { match: matchWithGroupBet, groupId: 'g1' }),
+      ),
+    )
+
+    let [home, away] = screen.getAllByRole('textbox', { name: /Palpite / })
+    expect(home).toHaveValue('3')
+    expect(away).toHaveValue('2')
+
+    rerender(
+      createElement(
+        QueryClientProvider,
+        { client: qc },
+        createElement(InlineBetCard, { match: makeMatch({ userBet: null }), groupId: 'g2' }),
+      ),
+    )
+
+    const [nextHome, nextAway] = screen.getAllByRole('textbox', { name: /Palpite / })
+    expect(nextHome).toHaveValue('')
+    expect(nextAway).toHaveValue('')
   })
 
   it('locks input when match is finished', () => {

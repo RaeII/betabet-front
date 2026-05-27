@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { usePlaceBet, useEditBet } from '@/hooks/useBets'
@@ -24,6 +24,13 @@ export function BetForm({ matchId, groupId, existingBet, isLocked, userGroupCoun
 
   const isEditing = !!existingBet
   const isPending = placeBet.isPending || editBet.isPending
+
+  useEffect(() => {
+    setHomeScore(existingBet?.homeScore ?? 0)
+    setAwayScore(existingBet?.awayScore ?? 0)
+    setReplicate(false)
+    setFieldError('')
+  }, [groupId, matchId, existingBet?.id, existingBet?.homeScore, existingBet?.awayScore])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

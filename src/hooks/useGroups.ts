@@ -63,7 +63,7 @@ export function useJoinRequests(groupId: string, isAdmin: boolean) {
     queryKey: groupKeys.requests(groupId),
     queryFn: () => groupsService.getJoinRequests(groupId),
     enabled: !!groupId && isAdmin,
-    refetchInterval: !!groupId && isAdmin ? 30000 : false,
+    refetchInterval: !!groupId && isAdmin ? 60_000 : false,
   })
 }
 

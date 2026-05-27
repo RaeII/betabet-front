@@ -21,10 +21,10 @@ export function DayMatchList({ matches, group }: DayMatchListProps) {
     <div className="space-y-3">
       {matches.map(match =>
         match.status === 'finished' ? (
-          <FinishedMatchCard key={match.id} match={match} group={group} />
+          <FinishedMatchCard key={`${group.id}:${match.id}`} match={match} group={group} />
         ) : (
           <InlineBetCard
-            key={match.id}
+            key={`${group.id}:${match.id}`}
             match={match}
             groupId={group.id}
             groupInviteCode={group.inviteCode}

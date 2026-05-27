@@ -7,7 +7,7 @@ import { createElement } from 'react'
 vi.mock('@/hooks/useAuth', () => ({ useAuth: vi.fn() }))
 vi.mock('@/hooks/useGroups', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/useGroups')>('@/hooks/useGroups')
-  return { ...actual, useUserGroups: vi.fn() }
+  return { ...actual, useUserGroups: vi.fn(), useMyJoinRequests: vi.fn() }
 })
 
 const mockNavigate = vi.fn()
@@ -17,11 +17,12 @@ vi.mock('react-router-dom', async () => {
 })
 
 import { useAuth } from '@/hooks/useAuth'
-import { useUserGroups } from '@/hooks/useGroups'
+import { useMyJoinRequests, useUserGroups } from '@/hooks/useGroups'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
 
 const mockedAuth = useAuth as ReturnType<typeof vi.fn>
 const mockedGroups = useUserGroups as ReturnType<typeof vi.fn>
+const mockedMyRequests = useMyJoinRequests as ReturnType<typeof vi.fn>
 
 const makeGroup = (id: string, name: string) => ({
   id,
@@ -40,7 +41,8 @@ const makeGroup = (id: string, name: string) => ({
 
 function renderModal(props: { open?: boolean; activeGroupId?: string | null } = {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+  const onOpenChange = vi.fn()
+  const result = render(
     createElement(
       QueryClientProvider,
       { client: qc },
@@ -49,12 +51,13 @@ function renderModal(props: { open?: boolean; activeGroupId?: string | null } = 
         null,
         createElement(GroupsModal, {
           open: props.open ?? true,
-          onOpenChange: vi.fn(),
+          onOpenChange,
           activeGroupId: props.activeGroupId ?? 'group-1',
         }),
       ),
     ),
   )
+  return { ...result, onOpenChange }
 }
 
 describe('GroupsModal (list mode)', () => {
@@ -69,6 +72,7 @@ describe('GroupsModal (list mode)', () => {
         ],
       },
     })
+    mockedMyRequests.mockReturnValue({ data: { requests: [] }, isLoading: false })
   })
 
   it('lists groups and marks the active one', () => {
@@ -90,5 +94,38 @@ describe('GroupsModal (list mode)', () => {
     renderModal()
     fireEvent.click(screen.getByRole('button', { name: /Criar novo grupo/i }))
     expect(screen.getByText(/Passo 1 de 2/i)).toBeInTheDocument()
+  })
+
+  it('navigates to join group flow when clicking "Entrar em um grupo"', () => {
+    const { onOpenChange } = renderModal()
+
+    fireEvent.click(screen.getByRole('button', { name: /Entrar em um grupo/i }))
+
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+    expect(mockNavigate).toHaveBeenCalledWith('/onboarding/join')
+  })
+
+  it('lists groups with pending approval requests', () => {
+    mockedMyRequests.mockReturnValue({
+      data: {
+        requests: [
+          {
+            id: 'request-1',
+            groupId: 'group-3',
+            groupName: 'Bolão Pendente',
+            groupEmoji: null,
+            groupCoverUrl: null,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      },
+      isLoading: false,
+    })
+
+    renderModal()
+
+    expect(screen.getByText('Aguardando aprovação')).toBeInTheDocument()
+    expect(screen.getByText('Bolão Pendente')).toBeInTheDocument()
+    expect(screen.getByText('Solicitação enviada')).toBeInTheDocument()
   })
 })

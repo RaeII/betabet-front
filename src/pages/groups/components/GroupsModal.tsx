@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from '@/components/ui/modal'
 import { useAuth } from '@/hooks/useAuth'
-import { useUserGroups } from '@/hooks/useGroups'
+import { useMyJoinRequests, useUserGroups } from '@/hooks/useGroups'
 import { setLastAccessedGroup } from '@/services/last-group.service'
 import { GroupsModalList } from './GroupsModalList'
 import { GroupsModalCreate } from './GroupsModalCreate'
@@ -16,6 +16,7 @@ interface GroupsModalProps {
 export function GroupsModal({ open, onOpenChange, activeGroupId }: GroupsModalProps) {
   const { user } = useAuth()
   const { data } = useUserGroups()
+  const { data: requestsData, isLoading: isLoadingRequests } = useMyJoinRequests(open)
   const navigate = useNavigate()
   const [mode, setMode] = useState<'list' | 'create'>('list')
 
@@ -37,7 +38,13 @@ export function GroupsModal({ open, onOpenChange, activeGroupId }: GroupsModalPr
     navigate(`/groups/${newGroupId}`, { replace: true })
   }
 
+  function handleJoinGroup() {
+    onOpenChange(false)
+    navigate('/onboarding/join')
+  }
+
   const groups = data?.groups ?? []
+  const pendingRequests = requestsData?.requests ?? []
 
   return (
     <Modal
@@ -49,7 +56,10 @@ export function GroupsModal({ open, onOpenChange, activeGroupId }: GroupsModalPr
         <GroupsModalList
           groups={groups}
           activeGroupId={activeGroupId}
+          pendingRequests={pendingRequests}
+          isLoadingRequests={isLoadingRequests}
           onSelect={handleSelect}
+          onJoin={handleJoinGroup}
           onCreate={() => setMode('create')}
         />
       ) : (

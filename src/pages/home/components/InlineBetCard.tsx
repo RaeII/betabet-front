@@ -136,6 +136,13 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
   const showAction = !locked && !homeEmpty && !awayEmpty && (hasScoreChanged || isPending)
 
   useEffect(() => {
+    setHome(savedHome)
+    setAway(savedAway)
+    setShowSavedIcon(false)
+    setBetsModalOpen(false)
+  }, [groupId, match.id, savedHome, savedAway])
+
+  useEffect(() => {
     if (!placeBet.isSuccess && !editBet.isSuccess) return
 
     setShowSavedIcon(true)

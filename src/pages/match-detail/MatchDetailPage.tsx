@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useMatch, useMatchDistribution } from '@/hooks/useMatches'
 import { useUserGroups } from '@/hooks/useGroups'
+import { useGroupMatches } from '@/hooks/useGroupMatches'
 import { useAuth } from '@/hooks/useAuth'
 import { TeamFlag } from '@/components/match/TeamFlag'
 import { MatchStatusBadge } from '@/components/match/MatchStatusBadge'
@@ -14,8 +15,13 @@ import { getGroupMatchBets } from '@/services/bets.service'
 export function MatchDetailPage() {
   const { matchId, groupId } = useParams<{ matchId: string; groupId?: string }>()
   const { user } = useAuth()
-  const { data: match, isLoading, isError } = useMatch(matchId ?? '')
+  const groupMatchesQuery = useGroupMatches(groupId ?? '')
+  const matchQuery = useMatch(matchId ?? '', !groupId)
   const { data: groupsData } = useUserGroups()
+  const groupMatch = groupMatchesQuery.data?.matches.find(m => m.id === matchId)
+  const match = groupId ? groupMatch : matchQuery.data
+  const isLoading = groupId ? groupMatchesQuery.isLoading : matchQuery.isLoading
+  const isError = groupId ? groupMatchesQuery.isError : matchQuery.isError
 
   const hasStarted = match && (match.status === 'live' || match.status === 'finished')
   const { data: distribution } = useMatchDistribution(matchId ?? '', !!user?.chartUnlocked && !!hasStarted)

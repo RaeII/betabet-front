@@ -1,14 +1,62 @@
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { OnboardingCard } from './components/OnboardingCard'
 import { OnboardingShell } from './components/OnboardingShell'
-import { useMyJoinRequests } from '@/hooks/useGroups'
-import type { MyJoinRequest } from '@/types/group.types'
+import { useMyJoinRequests, useUserGroups } from '@/hooks/useGroups'
+import type { BettingGroup, MyJoinRequest } from '@/types/group.types'
 
 const easeBrasil = [0.2, 0.8, 0.2, 1] as const
+const EMPTY_REQUESTS: MyJoinRequest[] = []
+const EMPTY_GROUPS: BettingGroup[] = []
 
 export function OnboardingPage() {
-  const { data } = useMyJoinRequests()
-  const requests = data?.requests ?? []
+  const navigate = useNavigate()
+  const { data: requestsData } = useMyJoinRequests()
+  const { data: groupsData, refetch: refetchUserGroups } = useUserGroups()
+  const requests = requestsData?.requests ?? EMPTY_REQUESTS
+  const groups = groupsData?.groups ?? EMPTY_GROUPS
+  const [resolvedRequests, setResolvedRequests] = useState<MyJoinRequest[]>([])
+  const initializedRequestsRef = useRef(false)
+  const previousRequestsRef = useRef<MyJoinRequest[]>(EMPTY_REQUESTS)
+
+  useEffect(() => {
+    if (!requestsData) return
+
+    if (!initializedRequestsRef.current) {
+      initializedRequestsRef.current = true
+      previousRequestsRef.current = requests
+      return
+    }
+
+    const currentGroupIds = new Set(requests.map(request => request.groupId))
+    const disappearedRequests = previousRequestsRef.current.filter(
+      request => !currentGroupIds.has(request.groupId),
+    )
+    previousRequestsRef.current = requests
+
+    if (disappearedRequests.length === 0) return
+
+    void refetchUserGroups()
+    setResolvedRequests(prevRequests => {
+      const knownGroupIds = new Set(prevRequests.map(request => request.groupId))
+      const nextRequests = disappearedRequests.filter(
+        request => !knownGroupIds.has(request.groupId),
+      )
+      return nextRequests.length > 0 ? [...prevRequests, ...nextRequests] : prevRequests
+    })
+  }, [requests, requestsData, refetchUserGroups])
+
+  useEffect(() => {
+    if (resolvedRequests.length === 0) return
+
+    const groupIds = new Set(groups.map(group => group.id))
+    const approvedRequest = resolvedRequests.find(request => groupIds.has(request.groupId))
+
+    if (approvedRequest) {
+      navigate(`/groups/${approvedRequest.groupId}`, { replace: true })
+    }
+  }, [groups, navigate, resolvedRequests])
 
   return (
     <OnboardingShell showLogout>
@@ -30,7 +78,7 @@ export function OnboardingPage() {
               ))}
             </div>
             <p className="text-xs text-[var(--text-muted)]">
-              Assim que o admin aprovar, o grupo aparece automaticamente na sua lista. Enquanto isso, você pode entrar em outro grupo ou criar o seu.
+              Assim que o admin aprovar, você será levado automaticamente ao grupo. Enquanto isso, você pode entrar em outro grupo ou criar o seu.
             </p>
           </div>
         )}

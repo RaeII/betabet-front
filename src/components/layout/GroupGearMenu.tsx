@@ -26,7 +26,7 @@ export function GroupGearMenu() {
       <DropdownMenu.Root>
         <DropdownMenu.Trigger
           aria-label="Ações do grupo"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] transition hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] transition hover:text-[var(--text)] focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]"
         >
           <Settings size={16} />
         </DropdownMenu.Trigger>
@@ -42,7 +42,7 @@ export function GroupGearMenu() {
               className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--text)] outline-none data-[highlighted]:bg-[var(--surface-soft)]"
             >
               <Info size={14} />
-              Detalhes
+              {isAdmin ? 'Configurações do Bolão' : 'Detalhes'}
             </DropdownMenu.Item>
             <DropdownMenu.Item
               disabled={isLastAdmin}

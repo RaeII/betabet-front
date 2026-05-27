@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useId, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useUpdateGroup } from '@/hooks/useGroups'
@@ -9,6 +9,7 @@ interface GroupSettingsProps {
 }
 
 export function GroupSettings({ group }: GroupSettingsProps) {
+  const joinModeId = useId()
   const update = useUpdateGroup(group.id)
   const [name, setName] = useState(group.name)
   const [resultPoints, setResultPoints] = useState(group.resultPoints)
@@ -16,10 +17,24 @@ export function GroupSettings({ group }: GroupSettingsProps) {
   const [showBets, setShowBets] = useState(group.showBetsBeforeKickoff)
   const [joinMode, setJoinMode] = useState(group.joinMode)
 
-  function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    setName(group.name)
+    setResultPoints(group.resultPoints)
+    setExactScorePoints(group.exactScorePoints)
+    setShowBets(group.showBetsBeforeKickoff)
+    setJoinMode(group.joinMode)
+  }, [group])
+
+  function handleSubmit(e: FormEvent) {
     e.preventDefault()
     update.mutate({ name, resultPoints, exactScorePoints, showBetsBeforeKickoff: showBets, joinMode })
   }
+
+  const status = update.isError
+    ? { message: 'Erro ao salvar configurações.', className: 'text-[var(--danger)]' }
+    : update.isSuccess
+      ? { message: 'Configurações salvas!', className: 'text-[var(--success)]' }
+      : null
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -61,27 +76,36 @@ export function GroupSettings({ group }: GroupSettingsProps) {
       </label>
 
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-[var(--text)]">Modo de entrada</label>
+        <label htmlFor={joinModeId} className="text-sm font-medium text-[var(--text)]">Entrada no bolão</label>
         <select
+          id={joinModeId}
           value={joinMode}
           onChange={e => setJoinMode(e.target.value as 'invite' | 'request')}
-          className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)]"
+          className="min-h-12 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] focus:border-[var(--brand)] focus:outline-none focus:shadow-[0_0_0_2px_color-mix(in_srgb,var(--brand)_10%,transparent)]"
         >
-          <option value="request">Por solicitação</option>
-          <option value="invite">Apenas por convite</option>
+          <option value="request">Grupo fechado, solicitação para entrar</option>
+          <option value="invite">Aberto, consegue entrar apenas com link do bolão</option>
         </select>
+        <p className="text-xs leading-relaxed text-[var(--text-muted)]">
+          Nos dois casos o link identifica o bolão. Em grupos fechados, o admin precisa aprovar a entrada.
+        </p>
       </div>
 
-      {update.isError && (
-        <p className="text-xs text-[var(--danger)]">Erro ao salvar configurações.</p>
-      )}
-      {update.isSuccess && (
-        <p className="text-xs text-[var(--success)]">Configurações salvas!</p>
-      )}
+      <div className="space-y-2">
+        <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
+          <p
+            className={`text-xs font-medium leading-4 transition duration-150 ${
+              status ? `translate-y-0 opacity-100 ${status.className}` : '-translate-y-1 opacity-0'
+            }`}
+          >
+            {status?.message}
+          </p>
+        </div>
 
-      <Button type="submit" disabled={update.isPending} className="w-full">
-        {update.isPending ? 'Salvando…' : 'Salvar configurações'}
-      </Button>
+        <Button type="submit" disabled={update.isPending} className="w-full">
+          {update.isPending ? 'Salvando…' : 'Salvar configurações'}
+        </Button>
+      </div>
     </form>
   )
 }
