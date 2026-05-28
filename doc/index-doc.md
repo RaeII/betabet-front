@@ -87,6 +87,21 @@ Principais temas:
 - cenários cobertos pelo backend (`null` / `[]` quando dado não existe — componentes omitem o card silenciosamente);
 - pontos de alteração futura (tabela do grupo, head-to-head, tradução do `winner.comment`, skeleton de loading).
 
+### [007-match-live.md](./007-match-live.md)
+
+Documenta a UI ao vivo dentro de `MatchDetailPage` (scoreboard com cronômetro pulsante, quebra de placar 1T/2T/Prorr/Pên, estatísticas comparativas lado a lado, timeline de eventos, campo 2D com escalação) e o sistema de notificações push (gol/expulsão) via diff de events entre polls.
+
+Principais temas:
+
+- hook `useMatchLive(matchId, enabled)` com `refetchInterval: 60_000` e `refetchIntervalInBackground: false` (bate com o TTL backend de 2 min);
+- service `getMatchLive(matchId)` consumindo `GET /api/matches/:matchId/live` — único request que já traz events + lineups + statistics;
+- componentes `LiveScoreboard` (placar 4xl + cronômetro `73' +2` + fase/estádio/árbitro), `LiveScoreBreakdown` (só segmentos com valor), `LiveEventsTimeline` (ícones por tipo, layout dual-side por time, mais recente → antigo), `LiveStats` (barras horizontais dual-side com labels PT-BR, tratamento especial para `Ball Possession`);
+- reuso de `PreMatchLineup` com `headerLabel="Escalação"` e `emptyMessage` parametrizados — mesmo SVG de campo 2D do pré-jogo;
+- hook `useLiveMatchNotifications(matchId, events)` que cria baseline no primeiro render e dispara toasts (⚽ gol / 🟥 expulsão) só nos deltas — sem retroativos ao trocar de match;
+- composição na `MatchDetailPage`: scoreboard substitui o header padrão quando `status==='live' && hasApiFixtureId`;
+- invariantes (polling só durante live, `homeTeamId` é o ID externo da API-Football, baseline por matchId);
+- pontos de alteração futura (polling <60s, Browser Notification API, substituições inline na escalação 2D, stats por tempo, push real via SSE).
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

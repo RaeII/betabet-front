@@ -17,9 +17,15 @@ export function DayMatchList({ matches, group }: DayMatchListProps) {
     )
   }
 
+  const sorted = [...matches].sort((a, b) => {
+    const aFinished = a.status === 'finished' ? 1 : 0
+    const bFinished = b.status === 'finished' ? 1 : 0
+    return aFinished - bFinished
+  })
+
   return (
     <div className="space-y-3">
-      {matches.map(match =>
+      {sorted.map(match =>
         match.status === 'finished' ? (
           <FinishedMatchCard key={`${group.id}:${match.id}`} match={match} group={group} />
         ) : (

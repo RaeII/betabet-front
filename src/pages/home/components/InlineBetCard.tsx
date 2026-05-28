@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { CheckCircle2, Minus, Plus } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Minus, Plus } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useEditBet, usePlaceBet } from '@/hooks/useBets'
-import { formatMatchDate, isBetEditable } from '@/lib/date.utils'
+import {
+  formatCountdownMmSs,
+  formatMatchDate,
+  formatTimeOnly,
+  isBetEditable,
+  isMatchToday,
+  isMatchTomorrow,
+  minutesUntilKickoff,
+  secondsUntilKickoff,
+} from '@/lib/date.utils'
 import type { MatchWithUserBet } from '@/types/match.types'
 import { MatchBetsModal } from './MatchBetsModal'
 
@@ -22,6 +32,18 @@ const scoreInputClassName =
 
 const scoreButtonClassName =
   'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-muted)] transition duration-150 hover:border-[var(--brand)] hover:bg-[var(--surface)] hover:text-[var(--brand)] active:scale-95 disabled:pointer-events-none disabled:opacity-30'
+
+function LiveDot() {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="relative flex h-2 w-2 shrink-0">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+      </span>
+      Ao vivo
+    </span>
+  )
+}
 
 function FlagOrInitial({ name, flagUrl }: { name: string; flagUrl: string }) {
   if (flagUrl) {
@@ -131,6 +153,29 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
   const [showSavedIcon, setShowSavedIcon] = useState(false)
   const [betsModalOpen, setBetsModalOpen] = useState(false)
   const locked = !isBetEditable(match.scheduledAt) || match.status === 'finished'
+  const isLive = match.status === 'live'
+  const [secsRemaining, setSecsRemaining] = useState(() => secondsUntilKickoff(match.scheduledAt))
+  const minsLeft = minutesUntilKickoff(match.scheduledAt)
+  const isPreMatch = match.status === 'upcoming' && minsLeft > 0 && minsLeft <= 30
+
+  useEffect(() => {
+    if (secsRemaining > 30 * 60) return
+    const id = setInterval(() => {
+      setSecsRemaining(secondsUntilKickoff(match.scheduledAt))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [match.scheduledAt, secsRemaining > 30 * 60])
+
+  const timeLabel = (() => {
+    if (isLive) return null
+    if (secsRemaining > 0 && secsRemaining <= 30 * 60) {
+      return formatCountdownMmSs(secsRemaining)
+    }
+    if (isMatchToday(match.scheduledAt)) return `Hoje, ${formatTimeOnly(match.scheduledAt)}`
+    if (isMatchTomorrow(match.scheduledAt)) return `Amanhã, ${formatTimeOnly(match.scheduledAt)}`
+    return formatMatchDate(match.scheduledAt).split(',').join(' ')
+  })()
+  const detailHref = `/groups/${groupId}/matches/${match.id}`
 
   const homeEmpty = home === ''
   const awayEmpty = away === ''
@@ -210,7 +255,7 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
   return (
     <article className="mx-auto w-full max-w-[42rem] space-y-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
       <header className="flex items-center justify-between gap-3 text-xs font-medium text-[var(--text-muted)]">
-        <span className="shrink-0">{formatMatchDate(match.scheduledAt).split(",").join(" ")}</span>
+        <span className="shrink-0 tabular-nums">{timeLabel ?? ''}</span>
         <span className="min-w-0 truncate text-right">{match.stadium.name}</span>
       </header>
 
@@ -267,14 +312,30 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
           </div>
         ) : null}
         {locked ? (
-          <span className="text-xs text-[var(--text-muted)]">Apostas encerradas</span>
+          <Link
+            to={detailHref}
+            className={`inline-flex items-center gap-1 text-xs font-semibold transition duration-150 hover:opacity-75 active:scale-95 ${isLive ? 'text-red-500' : 'text-[var(--brand)]'}`}
+          >
+            {isLive ? <LiveDot /> : isPreMatch ? 'Pré-jogo' : 'Fique por dentro'}
+            <ChevronRight size={14} aria-hidden="true" />
+          </Link>
         ) : (
           <div className="relative flex min-h-9 w-36 items-center justify-center">
+            <Link
+              to={detailHref}
+              className={`absolute inset-0 flex items-center justify-center gap-1 text-xs font-semibold text-[var(--brand)] transition duration-200 ${
+                showAction || showSavedIcon ? 'pointer-events-none opacity-0' : 'opacity-100'
+              }`}
+            >
+              {isPreMatch ? 'Pré-jogo' : 'Fique por dentro'}
+              <ChevronRight size={14} aria-hidden="true" />
+            </Link>
+
             <span
               role="status"
               aria-label="Palpite salvo"
               aria-hidden={!showSavedIcon}
-              className={`absolute inset-0 flex items-center justify-center text-[var(--success)] transition duration-300 ${
+              className={`pointer-events-none absolute inset-0 flex items-center justify-center text-[var(--success)] transition duration-300 ${
                 showSavedIcon ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0'
               }`}
             >

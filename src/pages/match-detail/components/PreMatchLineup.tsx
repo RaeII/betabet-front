@@ -3,6 +3,10 @@ import type { PreviewLineup, PreviewLineupPlayer } from '@/services/matchPreview
 
 interface PreMatchLineupProps {
   lineups: PreviewLineup[]
+  /** Header opcional — default "Escalação provável" (pré-jogo). Em live, passe "Escalação". */
+  headerLabel?: string
+  /** Placeholder quando lineups está vazio (pré-jogo: ~30-60 min antes; live: API sem cobertura). */
+  emptyMessage?: string
 }
 
 /**
@@ -165,10 +169,11 @@ function PitchSVG({ lineups }: { lineups: PreviewLineup[] }) {
 
 function BenchList({ lineup, color }: { lineup: PreviewLineup; color: string }) {
   if (lineup.substitutes.length === 0) return null
+
   return (
     <div className="space-y-1.5">
       <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
-        Banco · {lineup.team.name}
+        Reservas · {lineup.team.name}
       </p>
       <ul className="space-y-1">
         {lineup.substitutes.map((s, idx) => (
@@ -218,18 +223,21 @@ function CoachInfo({ lineup }: { lineup: PreviewLineup }) {
   )
 }
 
-export function PreMatchLineup({ lineups }: PreMatchLineupProps) {
+export function PreMatchLineup({
+  lineups,
+  headerLabel = 'Escalação provável',
+  emptyMessage = 'As escalações são publicadas pela federação cerca de 30–60 minutos antes do apito inicial.',
+}: PreMatchLineupProps) {
   const [view, setView] = useState<'pitch' | 'list'>('pitch')
+  const [showSubstitutes, setShowSubstitutes] = useState(false)
 
   if (lineups.length === 0) {
     return (
       <section className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          Escalação provável
+          {headerLabel}
         </p>
-        <p className="mt-3 text-sm text-[var(--text-muted)]">
-          As escalações são publicadas pela federação cerca de 30–60 minutos antes do apito inicial.
-        </p>
+        <p className="mt-3 text-sm text-[var(--text-muted)]">{emptyMessage}</p>
       </section>
     )
   }
@@ -238,13 +246,14 @@ export function PreMatchLineup({ lineups }: PreMatchLineupProps) {
   const away = lineups[1]
   const homeColor = ensureColor(home?.team.colors?.player.primary, '#123D2A')
   const awayColor = ensureColor(away?.team.colors?.player.primary, '#D8A900')
+  const hasAnySubstitutes = (home?.substitutes.length ?? 0) > 0 || (away?.substitutes.length ?? 0) > 0
 
   return (
     <section className="space-y-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
       <header className="flex items-baseline justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-            Escalação provável
+            {headerLabel}
           </p>
           <h3 className="mt-1 text-base font-semibold tracking-tight text-[var(--text)] sm:text-lg">
             {home?.formation ?? '—'} <span className="text-[var(--text-muted)]">×</span> {away?.formation ?? '—'}
@@ -352,16 +361,33 @@ export function PreMatchLineup({ lineups }: PreMatchLineupProps) {
         {home ? (
           <div className="space-y-3">
             <CoachInfo lineup={home} />
-            <BenchList lineup={home} color={homeColor} />
           </div>
         ) : null}
         {away ? (
           <div className="space-y-3">
             <CoachInfo lineup={away} />
-            <BenchList lineup={away} color={awayColor} />
           </div>
         ) : null}
       </div>
+      {hasAnySubstitutes ? (
+        <div className="space-y-3 border-t border-[var(--border)] pt-4">
+          <button
+            type="button"
+            aria-expanded={showSubstitutes}
+            aria-controls="lineup-substitutes"
+            onClick={() => setShowSubstitutes((curr) => !curr)}
+            className="text-[11px] font-medium text-[var(--text-muted)] underline underline-offset-2 transition hover:text-[var(--text)]"
+          >
+            {showSubstitutes ? 'Ocultar reservas' : 'Mostrar reservas'}
+          </button>
+          {showSubstitutes ? (
+            <div id="lineup-substitutes" className="grid gap-3 sm:grid-cols-2">
+              {home ? <BenchList lineup={home} color={homeColor} /> : null}
+              {away ? <BenchList lineup={away} color={awayColor} /> : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   )
 }

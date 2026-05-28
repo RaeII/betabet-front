@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAllMatches, getMatch, getMatchDistribution, getMatches } from '@/services/matches.service'
 import { getMatchPreview } from '@/services/matchPreview.service'
+import { getMatchLive } from '@/services/liveMatch.service'
 
 export const matchKeys = {
   all: ['matches'] as const,
@@ -8,6 +9,7 @@ export const matchKeys = {
   detail: (id: string) => [...matchKeys.all, 'detail', id] as const,
   distribution: (id: string) => [...matchKeys.all, 'distribution', id] as const,
   preview: (id: string) => [...matchKeys.all, 'preview', id] as const,
+  live: (id: string) => [...matchKeys.all, 'live', id] as const,
 }
 
 export function useMatchesByPhase() {
@@ -46,5 +48,21 @@ export function useMatchPreview(matchId: string, enabled = true) {
     queryFn: () => getMatchPreview(matchId),
     enabled: enabled && !!matchId,
     staleTime: 60 * 60 * 1000, // 1h — bate com o TTL upstream de predictions/injuries
+  })
+}
+
+/**
+ * Live match data. Polling a cada 60s — o cache do backend é 2 min para
+ * status live, então hits mais rápidos só devolvem cache. Atende à
+ * recomendação do doc 006 (`polling não precisa ser mais rápido do que 2 min`).
+ */
+export function useMatchLive(matchId: string, enabled = true) {
+  return useQuery({
+    queryKey: matchKeys.live(matchId),
+    queryFn: () => getMatchLive(matchId),
+    enabled: enabled && !!matchId,
+    refetchInterval: 60 * 1000,
+    refetchIntervalInBackground: false,
+    staleTime: 30 * 1000,
   })
 }

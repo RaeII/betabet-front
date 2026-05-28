@@ -6,8 +6,49 @@ export function minutesUntilKickoff(scheduledAt: string): number {
   return Math.floor((kickoff - now) / 60_000)
 }
 
+export function secondsUntilKickoff(scheduledAt: string): number {
+  const kickoff = new Date(scheduledAt).getTime()
+  const now = Date.now()
+  return Math.floor((kickoff - now) / 1000)
+}
+
 export function isBetEditable(scheduledAt: string): boolean {
   return minutesUntilKickoff(scheduledAt) > BET_LOCK_MINUTES
+}
+
+export function isMatchToday(scheduledAt: string): boolean {
+  const match = new Date(scheduledAt)
+  const today = new Date()
+  return (
+    match.getFullYear() === today.getFullYear() &&
+    match.getMonth() === today.getMonth() &&
+    match.getDate() === today.getDate()
+  )
+}
+
+export function isMatchTomorrow(scheduledAt: string): boolean {
+  const match = new Date(scheduledAt)
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  return (
+    match.getFullYear() === tomorrow.getFullYear() &&
+    match.getMonth() === tomorrow.getMonth() &&
+    match.getDate() === tomorrow.getDate()
+  )
+}
+
+export function formatTimeOnly(scheduledAt: string): string {
+  return new Date(scheduledAt).toLocaleString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export function formatCountdownMmSs(secondsLeft: number): string {
+  if (secondsLeft <= 0) return 'Iniciado'
+  const m = Math.floor(secondsLeft / 60)
+  const s = secondsLeft % 60
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
 export function formatMatchDate(isoString: string): string {

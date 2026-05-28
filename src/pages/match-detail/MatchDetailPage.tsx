@@ -1,9 +1,10 @@
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useMatch, useMatchDistribution, useMatchPreview } from '@/hooks/useMatches'
+import { useMatch, useMatchDistribution, useMatchLive, useMatchPreview } from '@/hooks/useMatches'
 import { useUserGroups } from '@/hooks/useGroups'
 import { useGroupMatches } from '@/hooks/useGroupMatches'
 import { useAuth } from '@/hooks/useAuth'
+import { useLiveMatchNotifications } from '@/hooks/useLiveMatchNotifications'
 import { TeamFlag } from '@/components/match/TeamFlag'
 import { MatchStatusBadge } from '@/components/match/MatchStatusBadge'
 import { BetForm } from './components/BetForm'
@@ -13,6 +14,9 @@ import { PreMatchProbability } from './components/PreMatchProbability'
 import { PreMatchLineup } from './components/PreMatchLineup'
 import { PreMatchInjuries } from './components/PreMatchInjuries'
 import { PreMatchVenue } from './components/PreMatchVenue'
+import { LiveScoreboard } from './components/LiveScoreboard'
+import { LiveEventsTimeline } from './components/LiveEventsTimeline'
+import { LiveStats } from './components/LiveStats'
 import { isBetEditable, formatMatchDate, formatCountdown } from '@/lib/date.utils'
 import { getGroupMatchBets } from '@/services/bets.service'
 
@@ -29,8 +33,11 @@ export function MatchDetailPage() {
 
   const hasStarted = match && (match.status === 'live' || match.status === 'finished')
   const isUpcoming = match?.status === 'upcoming'
+  const isLiveStatus = match?.status === 'live'
   const { data: distribution } = useMatchDistribution(matchId ?? '', !!user?.chartUnlocked && !!hasStarted)
   const { data: preview } = useMatchPreview(matchId ?? '', !!isUpcoming)
+  const { data: live } = useMatchLive(matchId ?? '', !!isLiveStatus)
+  useLiveMatchNotifications(matchId ?? '', live?.events)
 
   const { data: betsData } = useQuery({
     queryKey: ['group-match-bets', groupId, matchId],
@@ -59,33 +66,77 @@ export function MatchDetailPage() {
   const activeGroupId = groupId ?? groupsData?.groups?.[0]?.id ?? ''
   const activeGroup = groupsData?.groups?.find(g => g.id === activeGroupId)
 
+  const showLiveBlock = isLiveStatus && live && live.hasApiFixtureId
+  const liveHomeTeamId = live?.teams?.home.id ?? null
+  const liveStadiumName = live?.venue?.name ?? match.stadium?.name ?? null
+  const liveStadiumCity = live?.venue?.city ?? match.stadium?.city ?? null
+
   return (
     <div className="mx-auto max-w-lg space-y-6">
       {/* Match header */}
-      <div className="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6">
-        <TeamFlag name={match.homeTeam.name} flagUrl={match.homeTeam.flagUrl} size="lg" />
-
-        <div className="flex flex-col items-center gap-2">
-          {hasStarted ? (
-            <span className="text-3xl font-bold tracking-tight text-[var(--text)]">
-              {match.homeScore} × {match.awayScore}
-            </span>
-          ) : (
-            <span className="text-sm font-semibold text-[var(--text-muted)]">
-              {formatCountdown(match.scheduledAt)}
-            </span>
-          )}
-          <MatchStatusBadge status={match.status} />
-          <span className="text-xs text-[var(--text-muted)]">{formatMatchDate(match.scheduledAt)}</span>
-          {match.stadium && (
-            <span className="text-xs text-[var(--text-muted)]">
-              {match.stadium.name}, {match.stadium.city}
-            </span>
-          )}
+      {showLiveBlock ? (
+        <div className="space-y-1.5">
+          <LiveScoreboard
+            live={live}
+            homeTeamName={match.homeTeam.name}
+            homeTeamFlag={match.homeTeam.flagUrl}
+            awayTeamName={match.awayTeam.name}
+            awayTeamFlag={match.awayTeam.flagUrl}
+          />
+          {liveStadiumName ? (
+            <p className="pl-1 text-xs text-[var(--text-muted)]">
+              {liveStadiumName}
+              {liveStadiumCity ? `, ${liveStadiumCity}` : ''}
+            </p>
+          ) : null}
+          {match.userBet ? (
+            <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-soft)] p-3 text-center mt-5">
+              <p className="text-xs text-[var(--text-muted)]">Seu palpite</p>
+              <p className="text-xl font-bold text-[var(--text)]">
+                {match.userBet.homeScore} × {match.userBet.awayScore}
+              </p>
+            </div>
+          ) : null}
         </div>
+      ) : (
+        <div className="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6">
+          <TeamFlag name={match.homeTeam.name} flagUrl={match.homeTeam.flagUrl} size="lg" />
 
-        <TeamFlag name={match.awayTeam.name} flagUrl={match.awayTeam.flagUrl} size="lg" />
-      </div>
+          <div className="flex flex-col items-center gap-2">
+            {hasStarted ? (
+              <span className="text-3xl font-bold tracking-tight text-[var(--text)]">
+                {match.homeScore} × {match.awayScore}
+              </span>
+            ) : (
+              <span className="text-sm font-semibold text-[var(--text-muted)]">
+                {formatCountdown(match.scheduledAt)}
+              </span>
+            )}
+            <MatchStatusBadge status={match.status} />
+            <span className="text-xs text-[var(--text-muted)]">{formatMatchDate(match.scheduledAt)}</span>
+            {match.stadium && (
+              <span className="text-xs text-[var(--text-muted)]">
+                {match.stadium.name}, {match.stadium.city}
+              </span>
+            )}
+          </div>
+
+          <TeamFlag name={match.awayTeam.name} flagUrl={match.awayTeam.flagUrl} size="lg" />
+        </div>
+      )}
+
+      {/* Live blocks (em andamento) */}
+      {showLiveBlock && (
+        <div className="space-y-4">
+          <LiveStats statistics={live.statistics} homeTeamId={liveHomeTeamId} />
+          <LiveEventsTimeline events={live.events} homeTeamId={liveHomeTeamId} />
+          <PreMatchLineup
+            lineups={live.lineups}
+            headerLabel="Escalação"
+            emptyMessage="A federação ainda não publicou as escalações desta partida."
+          />
+        </div>
+      )}
 
       {/* Distribution chart (unlocked users only, after match starts) */}
       {distribution && user?.chartUnlocked && (
@@ -94,20 +145,6 @@ export function MatchDetailPage() {
           homeTeamName={match.homeTeam.name}
           awayTeamName={match.awayTeam.name}
         />
-      )}
-
-      {/* Bet form */}
-      {(match.status === 'upcoming' || match.status === 'live') && activeGroupId && (
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold text-[var(--text)]">Sua aposta</h2>
-          <BetForm
-            matchId={match.id}
-            groupId={activeGroupId}
-            existingBet={match.userBet}
-            isLocked={isLocked}
-            userGroupCount={userGroupCount}
-          />
-        </section>
       )}
 
       {/* Pre-match data (probability, lineups, injuries, venue) */}
