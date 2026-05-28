@@ -44,6 +44,20 @@ Principais temas:
 - campo `replicate` em `Bet` e a aposta otimista em `useBets`;
 - arquivos do frontend envolvidos e pontos de atenção (estado vem do servidor, opt-out exige salvar).
 
+### [004-admin-api-football-explorer.md](./004-admin-api-football-explorer.md)
+
+Documenta a página de admin **API-Football Explorer** (`/admin/explorer`), ferramenta interna read-only para descobrir IDs de ligas, times e jogos diretamente na API-Football.
+
+Principais temas:
+
+- abas **Ligas → Jogos** e **Buscar por Time**, layout 2-colunas e busca debounced;
+- seletor de temporada por liga e escopo `Próximos / Últimos / Ao vivo` para fixtures;
+- exibição consistente dos IDs (liga, time, fixture) via `IdBadge`;
+- service `apiFootballExplorer.service.ts` e wrappers tipados das 3 rotas admin;
+- chaves de React Query, `staleTime` e como o `meta.cachedAt` aparece na UI;
+- registro da rota lazy em `router/index.tsx` e entrada no sidebar do `AdminShell`;
+- pontos de atenção (read-only, quota compartilhada, time pertence a várias ligas).
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

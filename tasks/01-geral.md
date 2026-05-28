@@ -4,6 +4,7 @@
 [X] - Sair do app no gear menu
 [] - imagem de perfil de usuário
 [] - tranferir o admin e adicionar outro admin
-[] - Mudar a indicação para dois
+[x] - Mudar a indicação para dois
+[] - Melhorar a mensagem de indicação
 [] - testar jogos real
 
