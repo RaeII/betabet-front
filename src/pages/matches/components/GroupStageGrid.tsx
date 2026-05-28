@@ -3,9 +3,10 @@ import type { Match, MatchesResponse } from '@/types/match.types'
 
 interface GroupStageGridProps {
   data: MatchesResponse['groupStage']
+  groupId?: string
 }
 
-export function GroupStageGrid({ data }: GroupStageGridProps) {
+export function GroupStageGrid({ data, groupId }: GroupStageGridProps) {
   const groups = Object.entries(data).sort(([a], [b]) => a.localeCompare(b))
 
   if (groups.length === 0) {
@@ -31,7 +32,7 @@ export function GroupStageGrid({ data }: GroupStageGridProps) {
                   <p className="mb-2 text-xs text-[var(--text-muted)]">Rodada {matchday}</p>
                   <div className="space-y-2">
                     {(matches as Match[]).map(match => (
-                      <MatchCard key={match.id} match={match} />
+                      <MatchCard key={match.id} match={match} groupId={groupId} />
                     ))}
                   </div>
                 </div>

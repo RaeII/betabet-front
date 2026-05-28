@@ -58,6 +58,35 @@ Principais temas:
 - registro da rota lazy em `router/index.tsx` e entrada no sidebar do `AdminShell`;
 - pontos de atenção (read-only, quota compartilhada, time pertence a várias ligas).
 
+### [005-admin-friendly-match.md](./005-admin-friendly-match.md)
+
+Documenta o botão **Cadastrar** em cada `FixtureRow` do `/admin/explorer`, que dispara o backend para gravar partidas de outras ligas (não-Copa) e exercitar a infra de jogos ao vivo.
+
+Principais temas:
+
+- estados visuais do botão (`idle / loading / done / error`) e mensagens de feedback;
+- estado local por `FixtureRow` com `useState` (sem cache global);
+- mapeamento de `ApiRequestError` para mensagens (`409 → "Já cadastrada"`, etc.);
+- service `registerFriendlyMatch(apiFixtureId)` em `apiFootballExplorer.service.ts`;
+- reuso de `Button` (variants `primary`/`secondary`, size `sm`) e `apiPost`;
+- pontos de atenção (não é "Importar Partidas", sessão admin obrigatória, estado não persiste após reload);
+- pontos de alteração futura (badge persistente via GET, link para `/admin/matches`, botão de remoção).
+
+### [006-match-preview-pre-match.md](./006-match-preview-pre-match.md)
+
+Documenta a tela de pré-jogo dentro de `MatchDetailPage` (probabilidade de vitória, escalação 2D, desfalques, foto do estádio, árbitro) e a correção do bug de navegação em `GroupJogosPage` que mandava o usuário para `/matches/:id` (rota inexistente).
+
+Principais temas:
+
+- hook `useMatchPreview(matchId, enabled)` com `staleTime: 1h` (bate com o TTL upstream de predictions/injuries);
+- service `getMatchPreview(matchId)` consumindo `GET /api/matches/:matchId/preview`;
+- componentes `PreMatchProbability` (3 barras + xG + advice), `PreMatchLineup` (campo 2D em SVG com parse de `grid: "linha:coluna"` + toggle Campo/Lista + banco + técnico), `PreMatchInjuries` (badge `Fora`/`Dúvida`) e `PreMatchVenue` (foto com gradiente + cidade + capacidade + árbitro);
+- correção da navegação: `GroupJogosPage` lê `groupId` via `useParams` e propaga para `GroupStageGrid`/`KnockoutBracket`; ambos passam para `MatchCard`/`MatchSlot` que constroem o href `/groups/:groupId/matches/:matchId`;
+- mobile-first (`w-full`, `grid sm:grid-cols-2`, foto em `aspect-[16/9] sm:aspect-[21/9]`);
+- tokens da UI seguidos (`--surface`, `--border`, `--radius-xl`, labels em `tracking-[0.18em]`, amarelo só em badges de "Dúvida");
+- cenários cobertos pelo backend (`null` / `[]` quando dado não existe — componentes omitem o card silenciosamente);
+- pontos de alteração futura (tabela do grupo, head-to-head, tradução do `winner.comment`, skeleton de loading).
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

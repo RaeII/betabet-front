@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useMatch, useMatchDistribution } from '@/hooks/useMatches'
+import { useMatch, useMatchDistribution, useMatchPreview } from '@/hooks/useMatches'
 import { useUserGroups } from '@/hooks/useGroups'
 import { useGroupMatches } from '@/hooks/useGroupMatches'
 import { useAuth } from '@/hooks/useAuth'
@@ -9,6 +9,10 @@ import { MatchStatusBadge } from '@/components/match/MatchStatusBadge'
 import { BetForm } from './components/BetForm'
 import { BetsGrid } from './components/BetsGrid'
 import { DistributionChart } from './components/DistributionChart'
+import { PreMatchProbability } from './components/PreMatchProbability'
+import { PreMatchLineup } from './components/PreMatchLineup'
+import { PreMatchInjuries } from './components/PreMatchInjuries'
+import { PreMatchVenue } from './components/PreMatchVenue'
 import { isBetEditable, formatMatchDate, formatCountdown } from '@/lib/date.utils'
 import { getGroupMatchBets } from '@/services/bets.service'
 
@@ -24,7 +28,9 @@ export function MatchDetailPage() {
   const isError = groupId ? groupMatchesQuery.isError : matchQuery.isError
 
   const hasStarted = match && (match.status === 'live' || match.status === 'finished')
+  const isUpcoming = match?.status === 'upcoming'
   const { data: distribution } = useMatchDistribution(matchId ?? '', !!user?.chartUnlocked && !!hasStarted)
+  const { data: preview } = useMatchPreview(matchId ?? '', !!isUpcoming)
 
   const { data: betsData } = useQuery({
     queryKey: ['group-match-bets', groupId, matchId],
@@ -103,6 +109,34 @@ export function MatchDetailPage() {
           />
         </section>
       )}
+
+      {/* Pre-match data (probability, lineups, injuries, venue) */}
+      {isUpcoming && preview ? (
+        <div className="space-y-4">
+          {preview.prediction ? (
+            <PreMatchProbability
+              prediction={preview.prediction}
+              homeName={match.homeTeam.name}
+              awayName={match.awayTeam.name}
+            />
+          ) : null}
+
+          <PreMatchLineup lineups={preview.lineups} />
+
+          <PreMatchInjuries
+            injuries={preview.injuries}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+          />
+
+          <PreMatchVenue
+            venue={preview.venue}
+            referee={preview.referee}
+            fallbackStadiumName={match.stadium?.name ?? null}
+            fallbackStadiumCity={match.stadium?.city ?? null}
+          />
+        </div>
+      ) : null}
 
       {match.status === 'finished' && match.userBet && (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">

@@ -1,4 +1,4 @@
-import { apiGet } from './api'
+import { apiGet, apiPost } from './api'
 
 export interface ApiFootballLeague {
   league: { id: number; name: string; type: string; logo: string }
@@ -65,6 +65,29 @@ export function listTeams(params: {
   id?: number
 }): Promise<Wrapped<ApiFootballTeam>> {
   return apiGet(`/api/admin/api-football/teams${qs(params)}`)
+}
+
+export interface RegisterFriendlyMatchResponse {
+  match: {
+    id: string
+    homeTeam: { id: string; name: string; flagUrl: string }
+    awayTeam: { id: string; name: string; flagUrl: string }
+    stadium: { id: string; name: string; city: string }
+    scheduledAt: string
+    status: string
+    phase: string
+  }
+  league: {
+    apiLeagueId: number
+    name: string
+    country: string
+    season: number
+    round: string
+  }
+}
+
+export function registerFriendlyMatch(apiFixtureId: number): Promise<RegisterFriendlyMatchResponse> {
+  return apiPost(`/api/admin/friendly-matches/${apiFixtureId}`)
 }
 
 export function listFixtures(params: {

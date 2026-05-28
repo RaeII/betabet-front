@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, Loader2, Globe, CalendarClock, MapPin, Radio } from 'lucide-react'
+import { Search, Loader2, Globe, CalendarClock, MapPin, Radio, Plus, Check } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import {
   listLeagues,
   listFixtures,
+  registerFriendlyMatch,
   type ApiFootballLeague,
   type ApiFootballFixture,
 } from '@/services/apiFootballExplorer.service'
@@ -409,6 +410,30 @@ function FixtureRow({ fixture, showLeague }: { fixture: ApiFootballFixture; show
   const isLive = ['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE'].includes(status)
   const isFinished = ['FT', 'AET', 'PEN'].includes(status)
 
+  type RegState =
+    | { status: 'idle' }
+    | { status: 'loading' }
+    | { status: 'done'; matchId: string }
+    | { status: 'error'; message: string }
+  const [reg, setReg] = useState<RegState>({ status: 'idle' })
+  const alreadyRegistered = reg.status === 'done'
+
+  async function handleRegister() {
+    setReg({ status: 'loading' })
+    try {
+      const out = await registerFriendlyMatch(fx.id)
+      setReg({ status: 'done', matchId: out.match.id })
+    } catch (err) {
+      const msg =
+        err instanceof ApiRequestError
+          ? err.status === 409
+            ? 'Já cadastrada'
+            : err.message
+          : 'Falha ao cadastrar'
+      setReg({ status: 'error', message: msg })
+    }
+  }
+
   return (
     <li className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="flex items-center justify-between gap-4">
@@ -448,6 +473,32 @@ function FixtureRow({ fixture, showLeague }: { fixture: ApiFootballFixture; show
             </div>
             <TeamCell team={teams.away} align="left" />
           </div>
+        </div>
+
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Button
+            type="button"
+            variant={alreadyRegistered ? 'secondary' : 'primary'}
+            size="sm"
+            disabled={reg.status === 'loading' || alreadyRegistered}
+            onClick={handleRegister}
+          >
+            {reg.status === 'loading' && <Loader2 size={13} className="animate-spin" />}
+            {alreadyRegistered && <Check size={13} />}
+            {reg.status === 'idle' && <Plus size={13} />}
+            {reg.status === 'error' && <Plus size={13} />}
+            <span className="ml-1">
+              {alreadyRegistered ? 'Cadastrada' : reg.status === 'loading' ? 'Cadastrando…' : 'Cadastrar'}
+            </span>
+          </Button>
+          {reg.status === 'error' && (
+            <p className="max-w-[180px] text-right text-[10px] text-red-600">{reg.message}</p>
+          )}
+          {reg.status === 'done' && (
+            <p className="text-[10px] text-[var(--text-muted)]">
+              Match ID <span className="font-mono">{reg.matchId}</span>
+            </p>
+          )}
         </div>
       </div>
     </li>

@@ -1,0 +1,367 @@
+import { useState } from 'react'
+import type { PreviewLineup, PreviewLineupPlayer } from '@/services/matchPreview.service'
+
+interface PreMatchLineupProps {
+  lineups: PreviewLineup[]
+}
+
+/**
+ * Lê `grid: "linha:coluna"` da API-Football. Retorna coordenadas 0–1 para
+ * posicionamento no SVG. Para o lado away o eixo Y é espelhado para que
+ * os goleiros fiquem nas extremidades do campo.
+ */
+function parseGrid(grid: string | null): { row: number; col: number } | null {
+  if (!grid) return null
+  const [r, c] = grid.split(':').map((n) => Number(n.trim()))
+  if (!Number.isFinite(r) || !Number.isFinite(c)) return null
+  return { row: r, col: c }
+}
+
+function ensureColor(hex: string | undefined | null, fallback: string): string {
+  if (!hex) return fallback
+  const trimmed = hex.replace('#', '').trim()
+  if (/^[0-9a-fA-F]{6}$/.test(trimmed)) return `#${trimmed}`
+  if (/^[0-9a-fA-F]{3}$/.test(trimmed)) return `#${trimmed}`
+  return fallback
+}
+
+interface PlayerDotProps {
+  player: PreviewLineupPlayer
+  cx: number
+  cy: number
+  fill: string
+  stroke: string
+  textColor: string
+}
+
+function PlayerDot({ player, cx, cy, fill, stroke, textColor }: PlayerDotProps) {
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r="3.2" fill={fill} stroke={stroke} strokeWidth="0.4" />
+      <text
+        x={cx}
+        y={cy + 0.7}
+        textAnchor="middle"
+        fontSize="2.6"
+        fontWeight="700"
+        fill={textColor}
+      >
+        {player.number ?? ''}
+      </text>
+      <text
+        x={cx}
+        y={cy + 6.2}
+        textAnchor="middle"
+        fontSize="2"
+        fontWeight="600"
+        fill="var(--text)"
+      >
+        {player.name.length > 12 ? player.name.split(' ').slice(-1)[0] : player.name}
+      </text>
+    </g>
+  )
+}
+
+function buildPositions(players: PreviewLineupPlayer[], side: 'home' | 'away'): Array<{
+  player: PreviewLineupPlayer
+  cx: number
+  cy: number
+}> {
+  const parsed = players.map((p) => ({ player: p, grid: parseGrid(p.grid) }))
+  const withGrid = parsed.filter((p) => p.grid !== null)
+
+  // Side X: home ocupa 0–50, away 50–100. Goalkeeper sempre na borda externa.
+  // grid.row 1 = goleiro; aumenta em direção ao ataque.
+  if (withGrid.length === 0) {
+    // fallback: distribui em linha
+    const step = 100 / (players.length + 1)
+    return players.map((p, idx) => ({
+      player: p,
+      cx: side === 'home' ? 12 + idx * 4 : 88 - idx * 4,
+      cy: step * (idx + 1),
+    }))
+  }
+
+  // Para cada linha (row), distribuir as colunas verticalmente.
+  const rowMap = new Map<number, Array<{ player: PreviewLineupPlayer; col: number }>>()
+  for (const { player, grid } of withGrid) {
+    if (!grid) continue
+    const arr = rowMap.get(grid.row) ?? []
+    arr.push({ player, col: grid.col })
+    rowMap.set(grid.row, arr)
+  }
+  const rows = [...rowMap.keys()].sort((a, b) => a - b)
+  const maxRow = rows[rows.length - 1] ?? 1
+
+  const positions: Array<{ player: PreviewLineupPlayer; cx: number; cy: number }> = []
+  for (const row of rows) {
+    const cols = rowMap.get(row)!.sort((a, b) => a.col - b.col)
+    cols.forEach((entry, idx) => {
+      // row 1 (goleiro) fica na borda; rows altos vão pro centro.
+      const xRatio = (row - 1) / Math.max(1, maxRow)
+      const cx = side === 'home' ? 6 + xRatio * 38 : 94 - xRatio * 38
+      const cy = 12 + (idx + 1) * (76 / (cols.length + 1))
+      positions.push({ player: entry.player, cx, cy })
+    })
+  }
+  return positions
+}
+
+function PitchSVG({ lineups }: { lineups: PreviewLineup[] }) {
+  const home = lineups[0]
+  const away = lineups[1]
+
+  const homeColor = ensureColor(home?.team.colors?.player.primary, '#123D2A')
+  const awayColor = ensureColor(away?.team.colors?.player.primary, '#D8A900')
+  const homeText = ensureColor(home?.team.colors?.player.number, '#FFFFFF')
+  const awayText = ensureColor(away?.team.colors?.player.number, '#FFFFFF')
+  const homeStroke = ensureColor(home?.team.colors?.player.border, '#FFFFFF')
+  const awayStroke = ensureColor(away?.team.colors?.player.border, '#FFFFFF')
+
+  const homePositions = home ? buildPositions(home.startXI, 'home') : []
+  const awayPositions = away ? buildPositions(away.startXI, 'away') : []
+
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      preserveAspectRatio="xMidYMid meet"
+      className="aspect-[5/3] w-full rounded-[var(--radius-md)]"
+      style={{ background: 'color-mix(in srgb, var(--brand) 18%, var(--surface-soft))' }}
+      role="img"
+      aria-label="Campo com escalações"
+    >
+      {/* Linhas do campo */}
+      <rect x="2" y="2" width="96" height="96" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
+      <line x1="50" y1="2" x2="50" y2="98" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
+      <circle cx="50" cy="50" r="9" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
+      <rect x="2" y="28" width="14" height="44" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
+      <rect x="84" y="28" width="14" height="44" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
+
+      {homePositions.map(({ player, cx, cy }, idx) => (
+        <PlayerDot
+          key={`h-${player.id ?? idx}`}
+          player={player}
+          cx={cx}
+          cy={cy}
+          fill={homeColor}
+          stroke={homeStroke}
+          textColor={homeText}
+        />
+      ))}
+      {awayPositions.map(({ player, cx, cy }, idx) => (
+        <PlayerDot
+          key={`a-${player.id ?? idx}`}
+          player={player}
+          cx={cx}
+          cy={cy}
+          fill={awayColor}
+          stroke={awayStroke}
+          textColor={awayText}
+        />
+      ))}
+    </svg>
+  )
+}
+
+function BenchList({ lineup, color }: { lineup: PreviewLineup; color: string }) {
+  if (lineup.substitutes.length === 0) return null
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+        Banco · {lineup.team.name}
+      </p>
+      <ul className="space-y-1">
+        {lineup.substitutes.map((s, idx) => (
+          <li
+            key={s.id ?? `${lineup.team.id}-${idx}`}
+            className="flex items-center gap-2 text-xs text-[var(--text)]"
+          >
+            <span
+              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+              style={{ background: color }}
+            >
+              {s.number ?? '-'}
+            </span>
+            <span className="truncate">{s.name}</span>
+            {s.pos ? (
+              <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                {s.pos}
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function CoachInfo({ lineup }: { lineup: PreviewLineup }) {
+  if (!lineup.coach.name) return null
+  return (
+    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+      {lineup.coach.photo ? (
+        <img
+          src={lineup.coach.photo}
+          alt={lineup.coach.name}
+          loading="lazy"
+          className="h-7 w-7 rounded-full object-cover"
+        />
+      ) : (
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[10px] font-bold text-[var(--text)]">
+          {lineup.coach.name.charAt(0)}
+        </span>
+      )}
+      <span className="truncate">
+        <span className="font-semibold text-[var(--text)]">Téc.</span> {lineup.coach.name}
+      </span>
+    </div>
+  )
+}
+
+export function PreMatchLineup({ lineups }: PreMatchLineupProps) {
+  const [view, setView] = useState<'pitch' | 'list'>('pitch')
+
+  if (lineups.length === 0) {
+    return (
+      <section className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+          Escalação provável
+        </p>
+        <p className="mt-3 text-sm text-[var(--text-muted)]">
+          As escalações são publicadas pela federação cerca de 30–60 minutos antes do apito inicial.
+        </p>
+      </section>
+    )
+  }
+
+  const home = lineups[0]
+  const away = lineups[1]
+  const homeColor = ensureColor(home?.team.colors?.player.primary, '#123D2A')
+  const awayColor = ensureColor(away?.team.colors?.player.primary, '#D8A900')
+
+  return (
+    <section className="space-y-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
+      <header className="flex items-baseline justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+            Escalação provável
+          </p>
+          <h3 className="mt-1 text-base font-semibold tracking-tight text-[var(--text)] sm:text-lg">
+            {home?.formation ?? '—'} <span className="text-[var(--text-muted)]">×</span> {away?.formation ?? '—'}
+          </h3>
+        </div>
+        <div
+          role="tablist"
+          aria-label="Visualização da escalação"
+          className="inline-flex rounded-full border border-[var(--border)] bg-[var(--surface-soft)] p-0.5 text-[10px] font-semibold"
+        >
+          {(['pitch', 'list'] as const).map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              role="tab"
+              aria-selected={view === opt}
+              onClick={() => setView(opt)}
+              className={`rounded-full px-2.5 py-1 transition ${
+                view === opt
+                  ? 'bg-[var(--brand)] text-[var(--brand-text)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+              }`}
+            >
+              {opt === 'pitch' ? 'Campo' : 'Lista'}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {view === 'pitch' ? (
+        <>
+          <PitchSVG lineups={lineups} />
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-2 text-xs text-[var(--text)]">
+              <span
+                aria-hidden="true"
+                className="inline-block h-3 w-3 rounded-full border border-[var(--border)]"
+                style={{ background: homeColor }}
+              />
+              <span className="truncate font-semibold">{home?.team.name}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-[var(--text)] sm:justify-end">
+              <span
+                aria-hidden="true"
+                className="inline-block h-3 w-3 rounded-full border border-[var(--border)]"
+                style={{ background: awayColor }}
+              />
+              <span className="truncate font-semibold">{away?.team.name}</span>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {home ? (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                Titulares · {home.team.name}
+              </p>
+              <ul className="space-y-1">
+                {home.startXI.map((p, idx) => (
+                  <li
+                    key={p.id ?? `h-${idx}`}
+                    className="flex items-center gap-2 text-xs text-[var(--text)]"
+                  >
+                    <span
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      style={{ background: homeColor }}
+                    >
+                      {p.number ?? '-'}
+                    </span>
+                    <span className="truncate">{p.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {away ? (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                Titulares · {away.team.name}
+              </p>
+              <ul className="space-y-1">
+                {away.startXI.map((p, idx) => (
+                  <li
+                    key={p.id ?? `a-${idx}`}
+                    className="flex items-center gap-2 text-xs text-[var(--text)]"
+                  >
+                    <span
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      style={{ background: awayColor }}
+                    >
+                      {p.number ?? '-'}
+                    </span>
+                    <span className="truncate">{p.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      <div className="grid gap-3 border-t border-[var(--border)] pt-4 sm:grid-cols-2">
+        {home ? (
+          <div className="space-y-3">
+            <CoachInfo lineup={home} />
+            <BenchList lineup={home} color={homeColor} />
+          </div>
+        ) : null}
+        {away ? (
+          <div className="space-y-3">
+            <CoachInfo lineup={away} />
+            <BenchList lineup={away} color={awayColor} />
+          </div>
+        ) : null}
+      </div>
+    </section>
+  )
+}

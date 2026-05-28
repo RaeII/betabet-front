@@ -14,12 +14,14 @@ const PHASE_ORDER = ['r16', 'qf', 'sf', 'final']
 
 interface KnockoutBracketProps {
   data: MatchesResponse['knockout']
+  groupId?: string
 }
 
-function MatchSlot({ match }: { match: Match }) {
+function MatchSlot({ match, groupId }: { match: Match; groupId?: string }) {
+  const href = groupId ? `/groups/${groupId}/matches/${match.id}` : `/matches/${match.id}`
   return (
     <Link
-      to={`/matches/${match.id}`}
+      to={href}
       className="flex flex-col gap-1 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-sm transition hover:border-[var(--brand)]/30"
     >
       <div className="flex items-center justify-between gap-2">
@@ -36,7 +38,7 @@ function MatchSlot({ match }: { match: Match }) {
   )
 }
 
-export function KnockoutBracket({ data }: KnockoutBracketProps) {
+export function KnockoutBracket({ data, groupId }: KnockoutBracketProps) {
   const phases = PHASE_ORDER.filter(p => data[p]?.length > 0)
 
   if (phases.length === 0) {
@@ -57,7 +59,7 @@ export function KnockoutBracket({ data }: KnockoutBracketProps) {
             </h3>
             <div className="flex flex-col gap-2">
               {(data[phase] as Match[]).map(match => (
-                <MatchSlot key={match.id} match={match} />
+                <MatchSlot key={match.id} match={match} groupId={groupId} />
               ))}
             </div>
           </div>

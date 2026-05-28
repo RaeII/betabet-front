@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAllMatches, getMatch, getMatchDistribution, getMatches } from '@/services/matches.service'
+import { getMatchPreview } from '@/services/matchPreview.service'
 
 export const matchKeys = {
   all: ['matches'] as const,
   lists: () => [...matchKeys.all, 'list'] as const,
   detail: (id: string) => [...matchKeys.all, 'detail', id] as const,
   distribution: (id: string) => [...matchKeys.all, 'distribution', id] as const,
+  preview: (id: string) => [...matchKeys.all, 'preview', id] as const,
 }
 
 export function useMatchesByPhase() {
@@ -35,5 +37,14 @@ export function useMatchDistribution(matchId: string, enabled: boolean) {
     queryKey: matchKeys.distribution(matchId),
     queryFn: () => getMatchDistribution(matchId),
     enabled: enabled && !!matchId,
+  })
+}
+
+export function useMatchPreview(matchId: string, enabled = true) {
+  return useQuery({
+    queryKey: matchKeys.preview(matchId),
+    queryFn: () => getMatchPreview(matchId),
+    enabled: enabled && !!matchId,
+    staleTime: 60 * 60 * 1000, // 1h — bate com o TTL upstream de predictions/injuries
   })
 }

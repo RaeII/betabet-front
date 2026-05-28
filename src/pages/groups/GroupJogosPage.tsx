@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { PhaseSelector } from '@/pages/matches/components/PhaseSelector'
 import { GroupStageGrid } from '@/pages/matches/components/GroupStageGrid'
 import { KnockoutBracket } from '@/pages/matches/components/KnockoutBracket'
@@ -7,6 +8,7 @@ import { useMatchesByPhase } from '@/hooks/useMatches'
 type Phase = 'group' | 'knockout'
 
 export function GroupJogosPage() {
+  const { groupId } = useParams<{ groupId: string }>()
   const [phase, setPhase] = useState<Phase>('group')
   const { data, isLoading, isError } = useMatchesByPhase()
 
@@ -28,8 +30,8 @@ export function GroupJogosPage() {
         </div>
       )}
 
-      {data && phase === 'group' && <GroupStageGrid data={data.groupStage} />}
-      {data && phase === 'knockout' && <KnockoutBracket data={data.knockout} />}
+      {data && phase === 'group' && <GroupStageGrid data={data.groupStage} groupId={groupId} />}
+      {data && phase === 'knockout' && <KnockoutBracket data={data.knockout} groupId={groupId} />}
     </div>
   )
 }
