@@ -70,7 +70,15 @@ export function usePlaceBet() {
       }
     },
     onSettled: (_data, _err, vars) => {
-      void qc.invalidateQueries({ queryKey: groupKeys.matches(vars.groupId) })
+      // Quando o toggle está ligado, o backend pode ter atualizado outros grupos
+      // do usuário — invalida as queries de matches de todos os grupos para
+      // refletir o novo placar ao navegar até eles (caso contrário, o staleTime
+      // padrão mostraria placar antigo).
+      if (vars.replicateToAllGroups) {
+        void qc.invalidateQueries({ queryKey: [...groupKeys.all, 'matches'] })
+      } else {
+        void qc.invalidateQueries({ queryKey: groupKeys.matches(vars.groupId) })
+      }
       void qc.invalidateQueries({ queryKey: matchKeys.detail(vars.matchId) })
     },
   })
@@ -116,7 +124,9 @@ export function useEditBet(matchId: string) {
       }
     },
     onSettled: (_data, _err, vars) => {
-      if (vars.groupId) {
+      if (vars.replicate) {
+        void qc.invalidateQueries({ queryKey: [...groupKeys.all, 'matches'] })
+      } else if (vars.groupId) {
         void qc.invalidateQueries({ queryKey: groupKeys.matches(vars.groupId) })
       }
       void qc.invalidateQueries({ queryKey: matchKeys.detail(matchId) })

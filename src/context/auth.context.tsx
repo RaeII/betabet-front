@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { User, LoginCredentials, RegisterData } from '@/types/auth.types'
 import * as authService from '@/services/auth.service'
+import { ApiRequestError } from '@/services/api'
 
 interface AuthContextValue {
   user: User | null
@@ -20,11 +21,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    authService
-      .getMe()
-      .then(({ user }) => setUser(user))
-      .catch(() => setUser(null))
-      .finally(() => setIsLoading(false))
+    let cancelled = false
+    let attempt = 0
+    let timer: ReturnType<typeof setTimeout> | undefined
+
+    async function checkAuth(): Promise<void> {
+      try {
+        const { user } = await authService.getMe()
+        if (cancelled) return
+        setUser(user)
+        setIsLoading(false)
+      } catch (err) {
+        if (cancelled) return
+        if (err instanceof ApiRequestError && err.status === 401) {
+          setUser(null)
+          setIsLoading(false)
+          return
+        }
+        attempt += 1
+        const delay = Math.min(1000 * 2 ** Math.min(attempt - 1, 4), 16000)
+        timer = setTimeout(checkAuth, delay)
+      }
+    }
+
+    checkAuth()
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
   }, [])
 
   async function login(credentials: LoginCredentials) {

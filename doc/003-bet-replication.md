@@ -71,8 +71,10 @@ const [replicate, setReplicate] = useState(savedReplicate)
 A atualização otimista (`buildOptimisticBet` em `useBets`) também grava o
 `replicate` enviado, para o toggle não "piscar" enquanto a mutation resolve.
 
-> Observação: após uma replicação, apenas o cache do grupo ativo é invalidado.
-> As listas dos outros grupos são atualizadas quando o usuário navega até eles.
+> Observação: após uma replicação (toggle ligado), o cache de `matches` de
+> todos os grupos é invalidado (`['groups', 'matches']`), pois o backend não
+> retorna os grupos afetados na resposta. Sem isso, o `staleTime` padrão (30s)
+> mostraria placar antigo ao navegar para outro grupo logo após salvar.
 
 ---
 
