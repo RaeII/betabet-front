@@ -1,0 +1,22 @@
+services:
+  betabet-front:
+    image: ghcr.io/raeii/betabet-front:latest
+    container_name: bolaoclt-front
+    environment:
+      API_UPSTREAM: "${API_UPSTREAM:-http://host.docker.internal:3000}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${FRONT_PORT:-4501}:80"
+    restart: unless-stopped
+
+    cpus: "${BETABET_FRONT_CPU_LIMIT:-0.50}"
+    mem_limit: "${BETABET_FRONT_MEM_LIMIT:-256m}"
+    mem_reservation: "${BETABET_FRONT_MEM_RESERVATION:-128m}"
+    pids_limit: 128
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
