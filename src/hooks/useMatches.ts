@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getAllMatches, getMatch, getMatchDistribution, getMatches } from '@/services/matches.service'
 import { getMatchPreview } from '@/services/matchPreview.service'
 import { getMatchLive } from '@/services/liveMatch.service'
+import { getMatchPostMatch } from '@/services/postMatch.service'
 
 export const matchKeys = {
   all: ['matches'] as const,
@@ -10,6 +11,7 @@ export const matchKeys = {
   distribution: (id: string) => [...matchKeys.all, 'distribution', id] as const,
   preview: (id: string) => [...matchKeys.all, 'preview', id] as const,
   live: (id: string) => [...matchKeys.all, 'live', id] as const,
+  postMatch: (id: string) => [...matchKeys.all, 'post-match', id] as const,
 }
 
 export function useMatchesByPhase() {
@@ -64,5 +66,19 @@ export function useMatchLive(matchId: string, enabled = true) {
     refetchInterval: 60 * 1000,
     refetchIntervalInBackground: false,
     staleTime: 30 * 1000,
+  })
+}
+
+/**
+ * Post-match snapshot — lido do banco no backend (sem cota da API-Football).
+ * Imutável após salvo pelo cron, então usamos staleTime longo e desligamos
+ * o polling. Retorna `hasPostMatchData=false` enquanto o cron não capturou.
+ */
+export function useMatchPostMatch(matchId: string, enabled = true) {
+  return useQuery({
+    queryKey: matchKeys.postMatch(matchId),
+    queryFn: () => getMatchPostMatch(matchId),
+    enabled: enabled && !!matchId,
+    staleTime: 30 * 60 * 1000,
   })
 }

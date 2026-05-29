@@ -21,13 +21,15 @@ export function DayStripPill({ matchday, selected, onSelect }: DayStripPillProps
       className={[
         'relative flex w-[52px] flex-col items-center gap-0.5 rounded-[var(--radius-md)] border px-1 py-1 transition-all duration-150',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]',
-        selected
-          ? 'border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-text)]'
-          : matchday.isPast
-            ? 'border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-muted)] hover:text-[var(--text)]'
-            : matchday.isToday
-              ? 'border-[var(--support)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--support)]'
-              : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--brand)]',
+        matchday.isToday && selected
+          ? 'border-[var(--support)] bg-[var(--brand)] text-[var(--brand-text)]'
+          : matchday.isToday
+            ? 'border-[var(--support)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--support)]'
+            : selected
+              ? 'border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-text)]'
+              : matchday.isPast
+                ? 'border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--brand)]',
       ].join(' ')}
     >
       <span

@@ -8,6 +8,12 @@ interface DayMatchListProps {
   group: BettingGroup
 }
 
+// Ordem: ao vivo primeiro, depois mais recente primeiro (scheduledAt desc).
+function getMatchPriority(match: MatchWithUserBet): number {
+  if (match.status === 'live') return 0
+  return 1
+}
+
 export function DayMatchList({ matches, group }: DayMatchListProps) {
   if (matches.length === 0) {
     return (
@@ -18,9 +24,9 @@ export function DayMatchList({ matches, group }: DayMatchListProps) {
   }
 
   const sorted = [...matches].sort((a, b) => {
-    const aFinished = a.status === 'finished' ? 1 : 0
-    const bFinished = b.status === 'finished' ? 1 : 0
-    return aFinished - bFinished
+    const diff = getMatchPriority(a) - getMatchPriority(b)
+    if (diff !== 0) return diff
+    return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
   })
 
   return (

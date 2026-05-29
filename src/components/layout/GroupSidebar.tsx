@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { useGroupMatches } from '@/hooks/useGroupMatches'
 import { useJoinRequests } from '@/hooks/useGroups'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
@@ -16,10 +17,24 @@ const iconMap: Record<string, LucideIcon> = {
   users: Users,
 }
 
+function LiveDot() {
+  return (
+    <span
+      className="relative ml-auto flex h-2 w-2 shrink-0"
+      aria-label="Partida ao vivo"
+      role="img"
+    >
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+    </span>
+  )
+}
+
 export function GroupSidebar() {
   const { groupId, isAdmin } = useActiveGroup()
   const [modalOpen, setModalOpen] = useState(false)
   const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
+  const matchesQuery = useGroupMatches(groupId ?? '')
 
   if (!groupId) return null
 
@@ -27,6 +42,7 @@ export function GroupSidebar() {
     item => !hiddenSidebarItemIds.has(item.id) && (!item.adminOnly || isAdmin),
   )
   const pendingRequests = requestsQuery.data?.requests.length ?? 0
+  const hasLiveMatch = matchesQuery.data?.matches.some(m => m.status === 'live') ?? false
 
   return (
     <aside className="hidden lg:flex lg:flex-col md:rounded-[var(--radius-sm)] lg:border lg:border-[var(--border)] lg:bg-[var(--surface)] lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] lg:overflow-hidden">
@@ -66,6 +82,7 @@ export function GroupSidebar() {
                 >
                   <Icon size={18} />
                   <span className="truncate">{item.label}</span>
+                  {item.id === 'jogos' && hasLiveMatch ? <LiveDot /> : null}
                   {item.id === 'membros' && pendingRequests > 0 ? (
                     <span
                       className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-center text-[11px] font-bold leading-none text-[var(--surface)]"

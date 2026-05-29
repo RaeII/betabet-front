@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { User } from 'lucide-react'
 import type { PreviewLineup, PreviewLineupPlayer } from '@/services/matchPreview.service'
 
 interface PreMatchLineupProps {
@@ -201,16 +202,23 @@ function BenchList({ lineup, color }: { lineup: PreviewLineup; color: string }) 
 }
 
 function CoachInfo({ lineup }: { lineup: PreviewLineup }) {
+  const [hasImageError, setHasImageError] = useState(false)
+
   if (!lineup.coach.name) return null
   return (
     <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-      {lineup.coach.photo ? (
+      {lineup.coach.photo && !hasImageError ? (
         <img
           src={lineup.coach.photo}
           alt={lineup.coach.name}
           loading="lazy"
           className="h-7 w-7 rounded-full object-cover"
+          onError={() => setHasImageError(true)}
         />
+      ) : lineup.coach.photo ? (
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text)]">
+          <User size={14} aria-hidden="true" />
+        </span>
       ) : (
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[10px] font-bold text-[var(--text)]">
           {lineup.coach.name.charAt(0)}

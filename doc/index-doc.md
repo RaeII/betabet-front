@@ -102,6 +102,22 @@ Principais temas:
 - invariantes (polling só durante live, `homeTeamId` é o ID externo da API-Football, baseline por matchId);
 - pontos de alteração futura (polling <60s, Browser Notification API, substituições inline na escalação 2D, stats por tempo, push real via SSE).
 
+### [008-match-postmatch.md](./008-match-postmatch.md)
+
+Documenta a UI pós-jogo dentro de `MatchDetailPage` (placar final com check no vencedor, breakdown 1T/2T/Prorr/Pên, estatísticas finais, timeline completa e escalação) e a correção do bug "jogo fica sempre ao vivo" — o front passa a detectar o término via `live.status.short ∈ {FT, AET, PEN}` sem depender do admin confirmar.
+
+Principais temas:
+
+- hook `useMatchPostMatch(matchId, enabled)` com `staleTime: 30min` (dado imutável após cron salvar) e sem polling;
+- service `getMatchPostMatch(matchId)` consumindo `GET /api/matches/:matchId/post-match` (endpoint puramente DB no backend — zero quota da API-Football);
+- componente novo `PostMatchScoreboard` espelhando o layout do `LiveScoreboard` com diferenças visuais sutis (badge `Final` no lugar do cronômetro, ponto cinza sem animação, vencedor em `--text` + `✓ `, chips de breakdown só quando há mais de 1 segmento);
+- reuso direto de `LiveStats`, `LiveEventsTimeline` e `PreMatchLineup` — DTO pós espelha os shapes do live (`LiveEvent`, `LiveTeamStats`, `PreviewLineup`), sem precisar de abstração genérica;
+- detecção `isFinishedView = match.status === 'finished' || live.status.short ∈ {FT, AET, PEN}` resolve o bug em que o bloco ao vivo nunca desligava;
+- `postSource` unifica a fonte do snapshot: prioriza o DB (`postMatch.hasPostMatchData=true`), cai pra live cacheado (TTL 1h `Finished` no backend) na janela em que o cron ainda não capturou, ou `null` (header padrão);
+- gates `showPostMatchBlock` / `showLiveBlock` mutuamente exclusivos via `!isUpstreamFinished`;
+- invariantes (sem alteração nos hooks de preview/live, fontes mutuamente exclusivas, `fetchedAt` não exibido);
+- pontos de alteração futura (badge de acerto vs. palpite, stats por tempo, ratings individuais, transição live → pós animada).
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

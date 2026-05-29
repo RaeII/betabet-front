@@ -22,7 +22,7 @@ export function TeamFlag({ name, flagUrl, size = 'md' }: TeamFlagProps) {
       <img
         src={src}
         alt={`Bandeira ${name}`}
-        className={`${img} rounded object-cover shadow-sm`}
+        className={`${img} rounded object-contain shadow-sm`}
         loading="lazy"
       />
       <span className={`${text} font-semibold text-[var(--text)] text-center leading-tight`}>

@@ -55,7 +55,12 @@ export function groupMatchesByDay(
     })
   }
 
-  groups.sort((a, b) => a.date.localeCompare(b.date))
+  groups.sort((a, b) => {
+    const aEffectivelyPast = a.isPast && !a.isToday
+    const bEffectivelyPast = b.isPast && !b.isToday
+    if (aEffectivelyPast !== bEffectivelyPast) return aEffectivelyPast ? 1 : -1
+    return a.date.localeCompare(b.date)
+  })
 
   if (!includePast) {
     return groups.filter(g => !g.isPast)

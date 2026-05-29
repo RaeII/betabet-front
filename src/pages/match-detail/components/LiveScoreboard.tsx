@@ -1,5 +1,4 @@
 import type { MatchLive } from '@/services/liveMatch.service'
-import { TeamFlag } from '@/components/match/TeamFlag'
 
 interface LiveScoreboardProps {
   live: MatchLive
@@ -24,6 +23,9 @@ const STATUS_LABEL: Record<string, string> = {
   PEN: 'Após pênaltis',
 }
 
+const PLACEHOLDER_FLAG =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3'%3E%3Crect width='5' height='3' fill='%23e5e7eb'/%3E%3C/svg%3E"
+
 function formatClock(elapsed: number | null, extra: number | null, short: string): string {
   if (short === 'HT') return 'INT'
   if (short === 'BT') return 'INT P'
@@ -34,6 +36,24 @@ function formatClock(elapsed: number | null, extra: number | null, short: string
 
 function formatGoalMinute(minute: number, extra: number | null): string {
   return extra ? `${minute}'+${extra}` : `${minute}'`
+}
+
+function TeamScoreIdentity({ name, flagUrl }: { name: string; flagUrl: string }) {
+  return (
+    <div className="flex h-[76px] min-w-0 flex-col items-center justify-start gap-2">
+      <div className="flex h-12 w-16 shrink-0 items-center justify-center">
+        <img
+          src={flagUrl || PLACEHOLDER_FLAG}
+          alt={`Bandeira ${name}`}
+          className="max-h-full max-w-full rounded object-contain shadow-sm"
+          loading="lazy"
+        />
+      </div>
+      <span className="line-clamp-1 min-h-4 max-w-full text-center text-xs font-semibold leading-4 text-[var(--text)]">
+        {name}
+      </span>
+    </div>
+  )
 }
 
 export function LiveScoreboard({
@@ -72,24 +92,10 @@ export function LiveScoreboard({
         ) : null}
       </header>
 
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex flex-1 flex-col items-center gap-2">
-          <TeamFlag name={homeTeamName} flagUrl={homeTeamFlag} size="lg" />
-          <span className="line-clamp-1 text-center text-xs font-semibold text-[var(--text)]">
-            {homeTeamName}
-          </span>
-          {homeGoals.length > 0 ? (
-            <ul className="w-full space-y-0.5 text-center text-[11px] text-[var(--text-muted)]">
-              {homeGoals.map((event, index) => (
-                <li key={`home-goal-${event.minute}-${event.extra ?? 0}-${event.player}-${index}`}>
-                  <span aria-hidden="true">⚽</span> {event.player || 'Gol'}, {formatGoalMinute(event.minute, event.extra)}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-2 gap-y-3">
+        <TeamScoreIdentity name={homeTeamName} flagUrl={homeTeamFlag} />
 
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex h-[76px] flex-col items-center justify-center gap-1">
           <div className="flex items-baseline gap-2 text-4xl font-bold tabular-nums tracking-tight text-[var(--text)]">
             <span>{homeScore}</span>
             <span className="text-[var(--text-muted)]">×</span>
@@ -100,21 +106,29 @@ export function LiveScoreboard({
           </span>
         </div>
 
-        <div className="flex flex-1 flex-col items-center gap-2">
-          <TeamFlag name={awayTeamName} flagUrl={awayTeamFlag} size="lg" />
-          <span className="line-clamp-1 text-center text-xs font-semibold text-[var(--text)]">
-            {awayTeamName}
-          </span>
-          {awayGoals.length > 0 ? (
-            <ul className="w-full space-y-0.5 text-center text-[11px] text-[var(--text-muted)]">
-              {awayGoals.map((event, index) => (
-                <li key={`away-goal-${event.minute}-${event.extra ?? 0}-${event.player}-${index}`}>
-                  <span aria-hidden="true">⚽</span> {event.player || 'Gol'}, {formatGoalMinute(event.minute, event.extra)}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
+        <TeamScoreIdentity name={awayTeamName} flagUrl={awayTeamFlag} />
+
+        {homeGoals.length > 0 || awayGoals.length > 0 ? (
+          <>
+          <ul className="min-h-0 space-y-0.5 text-center text-[11px] text-[var(--text-muted)]">
+            {homeGoals.map((event, index) => (
+              <li key={`home-goal-${event.minute}-${event.extra ?? 0}-${event.player}-${index}`}>
+                <span aria-hidden="true">⚽</span> {event.player || 'Gol'}, {formatGoalMinute(event.minute, event.extra)}
+              </li>
+            ))}
+          </ul>
+
+          <div aria-hidden="true" />
+
+          <ul className="min-h-0 space-y-0.5 text-center text-[11px] text-[var(--text-muted)]">
+            {awayGoals.map((event, index) => (
+              <li key={`away-goal-${event.minute}-${event.extra ?? 0}-${event.player}-${index}`}>
+                <span aria-hidden="true">⚽</span> {event.player || 'Gol'}, {formatGoalMinute(event.minute, event.extra)}
+              </li>
+            ))}
+          </ul>
+          </>
+        ) : null}
       </div>
 
     </section>

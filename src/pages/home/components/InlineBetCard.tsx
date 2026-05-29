@@ -3,6 +3,7 @@ import { CheckCircle2, ChevronRight, Minus, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useEditBet, usePlaceBet } from '@/hooks/useBets'
+import { useMatchLive } from '@/hooks/useMatches'
 import {
   formatCountdownMmSs,
   formatMatchDate,
@@ -15,6 +16,11 @@ import {
 } from '@/lib/date.utils'
 import type { MatchWithUserBet } from '@/types/match.types'
 import { MatchBetsModal } from './MatchBetsModal'
+
+// Mesmo conjunto usado em MatchDetailPage. Quando o upstream da API-Football
+// reporta um destes, a partida acabou — mesmo que `match.status` ainda esteja
+// 'live' no banco (admin ainda não confirmou o resultado).
+const TERMINAL_STATUSES = new Set(['FT', 'AET', 'PEN'])
 
 interface InlineBetCardProps {
   match: MatchWithUserBet
@@ -41,6 +47,15 @@ function LiveDot() {
         <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
       </span>
       Ao vivo
+    </span>
+  )
+}
+
+function EndedDot() {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-[var(--text-muted)]" />
+      Encerrado
     </span>
   )
 }
@@ -152,11 +167,22 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
   const [replicate, setReplicate] = useState(savedReplicate)
   const [showSavedIcon, setShowSavedIcon] = useState(false)
   const [betsModalOpen, setBetsModalOpen] = useState(false)
-  const locked = !isBetEditable(match.scheduledAt) || match.status === 'finished'
-  const isLive = match.status === 'live'
+  const isLiveStatus = match.status === 'live'
+  // Polling upstream só nos cards com status='live'. O backend cacheia o
+  // /live por 2 min, então cada card paga no máximo 1 hit upstream por
+  // partida ao vivo — mesmo trade-off já aceito em MatchDetailPage.
+  const { data: live } = useMatchLive(match.id, isLiveStatus)
+  const isUpstreamFinished = !!live && TERMINAL_STATUSES.has(live.status.short)
+  // O backend só seta status='finished' quando o admin confirma o resultado.
+  // Tratar FT/AET/PEN do upstream como encerrado evita o card ficar
+  // "Ao vivo" eternamente após o apito final.
+  const isFinishedView = match.status === 'finished' || isUpstreamFinished
+  const locked = !isBetEditable(match.scheduledAt) || isFinishedView
+  const isLive = isLiveStatus && !isUpstreamFinished
   const [secsRemaining, setSecsRemaining] = useState(() => secondsUntilKickoff(match.scheduledAt))
   const minsLeft = minutesUntilKickoff(match.scheduledAt)
   const isPreMatch = match.status === 'upcoming' && minsLeft > 0 && minsLeft <= 30
+  const isCountdown = secsRemaining > 0 && secsRemaining <= 30 * 60
 
   useEffect(() => {
     if (secsRemaining > 30 * 60) return
@@ -255,7 +281,13 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
   return (
     <article className="mx-auto w-full max-w-[42rem] space-y-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
       <header className="flex items-center justify-between gap-3 text-xs font-medium text-[var(--text-muted)]">
-        <span className="shrink-0 tabular-nums">{timeLabel ?? ''}</span>
+        <span
+          className={`shrink-0 tabular-nums ${
+            isPreMatch && isCountdown ? 'font-semibold text-[var(--brand)]' : ''
+          }`}
+        >
+          {timeLabel ?? ''}
+        </span>
         <span className="min-w-0 truncate text-right">{match.stadium.name}</span>
       </header>
 
@@ -314,9 +346,23 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
         {locked ? (
           <Link
             to={detailHref}
-            className={`inline-flex items-center gap-1 text-xs font-semibold transition duration-150 hover:opacity-75 active:scale-95 ${isLive ? 'text-red-500' : 'text-[var(--brand)]'}`}
+            className={`inline-flex items-center gap-1 text-xs font-semibold transition duration-150 hover:opacity-75 active:scale-95 ${
+              isLive
+                ? 'text-red-500'
+                : isUpstreamFinished
+                ? 'text-[var(--text-muted)]'
+                : 'text-[var(--brand)]'
+            }`}
           >
-            {isLive ? <LiveDot /> : isPreMatch ? 'Pré-jogo' : 'Fique por dentro'}
+            {isLive ? (
+              <LiveDot />
+            ) : isUpstreamFinished ? (
+              <EndedDot />
+            ) : isPreMatch ? (
+              'Pré-jogo'
+            ) : (
+              'Fique por dentro'
+            )}
             <ChevronRight size={14} aria-hidden="true" />
           </Link>
         ) : (

@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { useGroupMatches } from '@/hooks/useGroupMatches'
 import { useJoinRequests } from '@/hooks/useGroups'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
@@ -39,6 +40,7 @@ export function GroupMobileNav() {
   const { groupId, isAdmin } = useActiveGroup()
   const [modalOpen, setModalOpen] = useState(false)
   const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
+  const matchesQuery = useGroupMatches(groupId ?? '')
 
   if (!groupId) return null
 
@@ -48,6 +50,7 @@ export function GroupMobileNav() {
     ),
   )
   const pendingRequests = requestsQuery.data?.requests.length ?? 0
+  const hasLiveMatch = matchesQuery.data?.matches.some(m => m.status === 'live') ?? false
   const totalNavItems = items.length + 1
 
   return (
@@ -88,6 +91,16 @@ export function GroupMobileNav() {
                         aria-label={`${pendingRequests} solicitações pendentes`}
                       >
                         {pendingRequests > 99 ? '99+' : pendingRequests}
+                      </span>
+                    ) : null}
+                    {item.id === 'jogos' && hasLiveMatch ? (
+                      <span
+                        className="absolute -right-1.5 -top-1 flex h-2.5 w-2.5"
+                        aria-label="Partida ao vivo"
+                        role="img"
+                      >
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
                       </span>
                     ) : null}
                   </span>

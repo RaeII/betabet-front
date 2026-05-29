@@ -35,9 +35,6 @@ function ProbabilityBar({ label, value, highlight }: BarProps) {
 export function PreMatchProbability({ prediction, homeName, awayName }: PreMatchProbabilityProps) {
   const { home, draw, away } = prediction.percent
   const top = Math.max(home, draw, away)
-  const xgHome = prediction.expectedGoals.home
-  const xgAway = prediction.expectedGoals.away
-  const hasXg = xgHome !== null || xgAway !== null
 
   return (
     <section className="space-y-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
@@ -62,34 +59,6 @@ export function PreMatchProbability({ prediction, homeName, awayName }: PreMatch
         <ProbabilityBar label="Empate" value={draw} highlight={draw === top && draw > 0} />
         <ProbabilityBar label={awayName} value={away} highlight={away === top && away > 0} />
       </div>
-
-      {hasXg ? (
-        <div className="grid grid-cols-2 gap-2 border-t border-[var(--border)] pt-4">
-          <div className="rounded-[var(--radius-md)] bg-[var(--surface-soft)] px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-              Gols esperados
-            </p>
-            <p className="mt-1 text-lg font-bold tabular-nums text-[var(--text)]">
-              {xgHome ?? '—'} <span className="text-[var(--text-muted)]">×</span> {xgAway ?? '—'}
-            </p>
-          </div>
-          {prediction.underOver ? (
-            <div className="rounded-[var(--radius-md)] bg-[var(--surface-soft)] px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                Total de gols
-              </p>
-              <p className="mt-1 text-lg font-bold text-[var(--text)]">{prediction.underOver}</p>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {prediction.advice ? (
-        <p className="text-xs leading-relaxed text-[var(--text-muted)]">
-          <span className="font-semibold text-[var(--text)]">Recomendação: </span>
-          {prediction.advice}
-        </p>
-      ) : null}
     </section>
   )
 }
