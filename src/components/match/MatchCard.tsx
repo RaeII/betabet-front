@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { TeamFlag } from './TeamFlag'
 import { MatchStatusBadge } from './MatchStatusBadge'
+import { MatchPointsBadge } from './MatchPointsBadge'
 import { formatMatchDate } from '@/lib/date.utils'
 import { formatScore } from '@/lib/format.utils'
 import type { Match } from '@/types/match.types'
@@ -28,6 +29,9 @@ export function MatchCard({ match, groupId }: MatchCardProps) {
         </span>
         <MatchStatusBadge status={match.status} />
         <span className="text-xs text-[var(--text-muted)]">{formatMatchDate(match.scheduledAt)}</span>
+        {groupId && match.status === 'live' ? (
+          <MatchPointsBadge matchId={match.id} groupId={groupId} status={match.status} />
+        ) : null}
       </div>
 
       <TeamFlag name={match.awayTeam.name} flagUrl={match.awayTeam.flagUrl} size="sm" />

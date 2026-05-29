@@ -18,6 +18,7 @@ import { LiveScoreboard } from './components/LiveScoreboard'
 import { LiveEventsTimeline } from './components/LiveEventsTimeline'
 import { LiveStats } from './components/LiveStats'
 import { PostMatchScoreboard } from './components/PostMatchScoreboard'
+import { MatchPointsCard } from './components/MatchPointsCard'
 import { isBetEditable, formatMatchDate, formatCountdown } from '@/lib/date.utils'
 import { getGroupMatchBets } from '@/services/bets.service'
 
@@ -120,6 +121,9 @@ export function MatchDetailPage() {
 
   const showPostMatchBlock = isFinishedView && !!postSource
   const showLiveBlock = isLiveStatus && live && live.hasApiFixtureId && !isUpstreamFinished
+  // Pontos do usuário só existem em contexto de grupo (endpoint exige groupId) e
+  // só fazem sentido com o jogo em andamento ou encerrado.
+  const showPoints = !!groupId && !!matchId && (isLiveStatus || isFinishedView)
   const liveHomeTeamId = live?.teams?.home.id ?? null
   const liveStadiumName = live?.venue?.name ?? match.stadium?.name ?? null
   const liveStadiumCity = live?.venue?.city ?? match.stadium?.city ?? null
@@ -201,7 +205,9 @@ export function MatchDetailPage() {
         </div>
       )}
 
-      {match.userBet ? (
+      {showPoints ? (
+        <MatchPointsCard matchId={matchId!} groupId={groupId!} />
+      ) : match.userBet ? (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-soft)] p-3 text-center">
           <p className="text-xs text-[var(--text-muted)]">Seu palpite</p>
           <p className="text-xl font-bold text-[var(--text)]">

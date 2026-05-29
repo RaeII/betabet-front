@@ -71,3 +71,15 @@ export interface BettingProgress {
 export interface GroupMatchesResponse {
   matches: MatchWithUserBet[]
 }
+
+/**
+ * Detalhamento de pontos de um membro do grupo (modal de validação no ranking).
+ * `matches` traz todas as partidas — inclusive as que o membro não palpitou
+ * (`userBet === null`). `canView=false` quando o espectador ainda não
+ * desbloqueou a visualização de palpites alheios (3 indicações).
+ */
+export interface RankingBreakdown {
+  canView: boolean
+  user: { id: string; name: string; avatarUrl: string | null }
+  matches: MatchWithUserBet[]
+}

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useGroupMatches } from '@/hooks/useGroupMatches'
+import { MatchPointsBadge } from '@/components/match/MatchPointsBadge'
 import { formatMatchDate } from '@/lib/date.utils'
 import { formatScore } from '@/lib/format.utils'
 
@@ -42,8 +43,18 @@ export function GroupPalpitesPage() {
                     {match.homeTeam.name} × {match.awayTeam.name}
                   </p>
                 </div>
-                <div className="text-right text-sm font-semibold text-[var(--brand)]">
-                  {formatScore(match.userBet!.homeScore, match.userBet!.awayScore)}
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="text-sm font-semibold text-[var(--brand)]">
+                    {formatScore(match.userBet!.homeScore, match.userBet!.awayScore)}
+                  </span>
+                  {match.status === 'live' || match.status === 'finished' ? (
+                    <MatchPointsBadge
+                      matchId={match.id}
+                      groupId={groupId ?? ''}
+                      status={match.status}
+                      userBet={match.userBet}
+                    />
+                  ) : null}
                 </div>
               </Link>
             </li>

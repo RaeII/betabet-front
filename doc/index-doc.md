@@ -118,6 +118,19 @@ Principais temas:
 - invariantes (sem alteração nos hooks de preview/live, fontes mutuamente exclusivas, `fetchedAt` não exibido);
 - pontos de alteração futura (badge de acerto vs. palpite, stats por tempo, ratings individuais, transição live → pós animada).
 
+### [009-match-my-points.md](./009-match-my-points.md)
+
+Documenta como o frontend exibe os pontos do usuário em uma partida (antes/durante/depois) e alimenta o ranking em tempo real, com pontos consultáveis de forma prática em qualquer tela.
+
+Principais temas:
+
+- service `getMatchMyPoints(matchId, groupId)` consumindo `GET /api/matches/:matchId/my-points?groupId=` (espelha o `MatchMyPointsDTO` do backend);
+- hooks `useMatchMyPoints` (1 partida, polling esperto que para ao `confirmed`) e `useGroupLiveMyPoints` (soma os provisórios das partidas ao vivo do grupo), com `matchPointsKeys` compartilhada que o React Query deduplica;
+- `MatchPointsCard` na `MatchDetailPage` (estados ao vivo/confirmado/provisório, breakdown resultado/placar exato, total antes → com a partida);
+- `MatchPointsBadge` reutilizável: ao vivo via endpoint (dedup), encerrada via `resultPoints`/`exactScorePoints` do próprio palpite (sem rede) — usado em `GroupPalpitesPage` e `MatchCard`;
+- overlay ao vivo do `GroupRanking`: aplica o `liveDelta` do usuário, reordena em tempo real e marca quem subiu de posição, sem contar pontos em dobro;
+- invariantes (sem dupla contagem, definitivo lido do palpite, busca só com `status==='live'`, pontos exigem grupo) e pontos de alteração futura.
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

@@ -9,7 +9,7 @@ import type {
   RankingEntry,
 } from '@/types/group.types'
 import type { CreateGroupData, UpdateGroupData } from '@/types/group.types'
-import type { GroupMatchesResponse } from '@/types/match.types'
+import type { GroupMatchesResponse, RankingBreakdown } from '@/types/match.types'
 
 export function getUserGroups(): Promise<{ groups: BettingGroup[] }> {
   return apiGet('/api/groups')
@@ -73,4 +73,8 @@ export function leaveGroup(groupId: string): Promise<LeaveGroupResult> {
 
 export function getGroupMatches(groupId: string): Promise<GroupMatchesResponse> {
   return apiGet(`/api/groups/${groupId}/matches`)
+}
+
+export function getGroupUserBreakdown(groupId: string, userId: string): Promise<RankingBreakdown> {
+  return apiGet(`/api/groups/${groupId}/users/${userId}/breakdown`)
 }
