@@ -131,6 +131,23 @@ Principais temas:
 - overlay ao vivo do `GroupRanking`: aplica o `liveDelta` do usuário, reordena em tempo real e marca quem subiu de posição, sem contar pontos em dobro;
 - invariantes (sem dupla contagem, definitivo lido do palpite, busca só com `status==='live'`, pontos exigem grupo) e pontos de alteração futura.
 
+### [010-authentication.md](./010-authentication.md)
+
+Documenta a autenticação no frontend para usuário comum, admin do sistema e admin de grupo.
+
+Principais temas:
+
+- cliente HTTP com `credentials: 'include'` e sessão por cookies httpOnly;
+- `AuthProvider` com bootstrap via `GET /api/auth/me`, solicitação/validação de código e logout;
+- login/cadastro de usuário comum por código de 6 dígitos, sem senha;
+- login admin separado com e-mail e senha;
+- preservação de `ref` e `invite` nos fluxos de cadastro/login;
+- `AuthGuard`, `OnboardingGuard` e rotas protegidas de usuário;
+- `AdminAuthProvider`, login admin e probe via `GET /api/admin/stats`;
+- diferença entre admin do sistema e admin de grupo;
+- detecção atual de admin de grupo via `role`/fallback `group.adminId === user.id`;
+- ponto de atenção de contrato: o backend atual de `GET /api/groups/:groupId` retorna `{ group }`, sem `role`.
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

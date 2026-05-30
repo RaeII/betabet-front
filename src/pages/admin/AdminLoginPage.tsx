@@ -5,18 +5,18 @@ import { AuthForm } from '@/pages/auth/components/AuthForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
-import { LoginSchema } from '@/lib/schemas'
-import type { LoginCredentials } from '@/types/auth.types'
+import { AdminLoginSchema } from '@/lib/schemas'
+import type { AdminLoginCredentials } from '@/types/auth.types'
 
 export function AdminLoginPage() {
   const navigate = useNavigate()
   const { adminLogin } = useAdminAuth()
-  const [values, setValues] = useState<LoginCredentials>({ email: '', password: '' })
-  const [errors, setErrors] = useState<Partial<LoginCredentials>>({})
+  const [values, setValues] = useState<AdminLoginCredentials>({ email: '', password: '' })
+  const [errors, setErrors] = useState<Partial<AdminLoginCredentials>>({})
   const [serverError, setServerError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function handleChange(field: keyof LoginCredentials) {
+  function handleChange(field: keyof AdminLoginCredentials) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       setValues(prev => ({ ...prev, [field]: e.target.value }))
       setErrors(prev => ({ ...prev, [field]: undefined }))
@@ -25,11 +25,11 @@ export function AdminLoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const result = LoginSchema.safeParse(values)
+    const result = AdminLoginSchema.safeParse(values)
     if (!result.success) {
-      const fieldErrors: Partial<LoginCredentials> = {}
+      const fieldErrors: Partial<AdminLoginCredentials> = {}
       for (const issue of result.error.issues) {
-        const key = issue.path[0] as keyof LoginCredentials
+        const key = issue.path[0] as keyof AdminLoginCredentials
         fieldErrors[key] = issue.message
       }
       setErrors(fieldErrors)

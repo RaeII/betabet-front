@@ -8,20 +8,23 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/hooks/useAuth'
 import { useJoinByCode } from '@/hooks/useGroups'
-import { LoginSchema } from '@/lib/schemas'
+import { AuthCodeSchema, UserLoginSchema } from '@/lib/schemas'
 import { resolveInviteCode } from '@/services/groups.service'
 import { ApiRequestError } from '@/services/api'
-import type { LoginCredentials } from '@/types/auth.types'
+import type { AuthCodeChallenge, LoginCredentials } from '@/types/auth.types'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const inviteCode = searchParams.get('invite')
   const referralCode = searchParams.get('ref')
-  const { login } = useAuth()
+  const { requestLoginCode, verifyLoginCode } = useAuth()
   const joinByCode = useJoinByCode()
-  const [values, setValues] = useState<LoginCredentials>({ email: '', password: '' })
-  const [errors, setErrors] = useState<Partial<LoginCredentials>>({})
+  const [step, setStep] = useState<'email' | 'code'>('email')
+  const [values, setValues] = useState<LoginCredentials>({ email: '' })
+  const [code, setCode] = useState('')
+  const [challenge, setChallenge] = useState<AuthCodeChallenge | null>(null)
+  const [errors, setErrors] = useState<Partial<LoginCredentials & { code: string }>>({})
   const [serverError, setServerError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -64,9 +67,9 @@ export function LoginPage() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleRequestCode(e: React.FormEvent) {
     e.preventDefault()
-    const result = LoginSchema.safeParse(values)
+    const result = UserLoginSchema.safeParse(values)
     if (!result.success) {
       const fieldErrors: Partial<LoginCredentials> = {}
       for (const issue of result.error.issues) {
@@ -79,14 +82,44 @@ export function LoginPage() {
     setIsSubmitting(true)
     setServerError('')
     try {
-      await login({ email: result.data.email, password: result.data.password })
+      const nextChallenge = await requestLoginCode(result.data.email)
+      setChallenge(nextChallenge)
+      setStep('code')
+      setCode('')
+      setErrors({})
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        setServerError(error.message || 'Não foi possível enviar o código. Tente novamente.')
+      } else {
+        setServerError('Não foi possível enviar o código. Tente novamente.')
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault()
+    const result = AuthCodeSchema.safeParse({ code })
+    if (!result.success) {
+      setErrors({ code: result.error.issues[0]?.message ?? 'Código inválido' })
+      return
+    }
+    if (!challenge) {
+      setServerError('Solicite um novo código para continuar.')
+      return
+    }
+    setIsSubmitting(true)
+    setServerError('')
+    try {
+      await verifyLoginCode({ challengeId: challenge.challengeId, code: result.data.code })
       if (inviteCode && !isInviteInvalid) {
         await attemptJoin(inviteCode)
       } else {
         navigate(withReferralSearch('/'))
       }
     } catch {
-      setServerError('E-mail ou senha inválidos.')
+      setServerError('Código inválido ou expirado.')
       setIsSubmitting(false)
     }
   }
@@ -98,49 +131,101 @@ export function LoginPage() {
 
   return (
     <AuthForm title="Bolão da Copa" subtitle="Entre na sua conta para apostar">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
-        <AuthField errorId="email-error" error={errors.email}>
-          <Input
-            id="email"
-            label="E-mail"
-            type="email"
-            autoComplete="email"
-            value={values.email}
-            onChange={handleChange('email')}
-            aria-invalid={!!errors.email}
-            aria-describedby="email-error"
-          />
-        </AuthField>
+      {step === 'email' ? (
+        <form onSubmit={handleRequestCode} className="flex flex-col gap-2" noValidate>
+          <AuthField errorId="email-error" error={errors.email}>
+            <Input
+              id="email"
+              label="E-mail"
+              type="email"
+              autoComplete="email"
+              value={values.email}
+              onChange={handleChange('email')}
+              aria-invalid={!!errors.email}
+              aria-describedby="email-error"
+            />
+          </AuthField>
 
-        <AuthField errorId="password-error" error={errors.password}>
-          <Input
-            id="password"
-            label="Senha"
-            type="password"
-            autoComplete="current-password"
-            value={values.password}
-            onChange={handleChange('password')}
-            aria-invalid={!!errors.password}
-            aria-describedby="password-error"
-          />
-        </AuthField>
+          <div className="flex flex-col gap-2">
+            <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
+              <p
+                className={`text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
+                  serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+                }`}
+              >
+                {serverError}
+              </p>
+            </div>
 
-        <div className="flex flex-col gap-2">
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? 'Enviando…' : 'Enviar código'}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleVerifyCode} className="flex flex-col gap-2" noValidate>
+          <p className="text-sm text-[var(--text-muted)]">
+            Enviamos um código para <span className="font-medium text-[var(--text)]">{values.email}</span>.
+          </p>
+
+          <AuthField errorId="code-error" error={errors.code}>
+            <Input
+              id="code"
+              label="Código"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={code}
+              onChange={e => {
+                setCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+                setErrors(prev => ({ ...prev, code: undefined }))
+              }}
+              aria-invalid={!!errors.code}
+              aria-describedby="code-error"
+            />
+          </AuthField>
+
           <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
             <p
-              className={`text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
-                serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              className={`text-xs font-medium leading-4 text-[var(--text-muted)] transition duration-150 ${
+                challenge?.debugCode && !serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
               }`}
             >
-              {serverError}
+              {challenge?.debugCode ? `Código de teste: ${challenge.debugCode}` : ''}
             </p>
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? 'Entrando…' : 'Entrar'}
-          </Button>
-        </div>
-      </form>
+          <div className="flex flex-col gap-2">
+            <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
+              <p
+                className={`text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
+                  serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+                }`}
+              >
+                {serverError}
+              </p>
+            </div>
+
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? 'Validando…' : 'Validar código'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isSubmitting}
+              className="w-full"
+              onClick={() => {
+                setStep('email')
+                setServerError('')
+                setErrors({})
+              }}
+            >
+              Alterar e-mail
+            </Button>
+          </div>
+        </form>
+      )}
 
       {invitePreview?.group && (
         <div className="mt-4">

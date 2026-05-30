@@ -19,12 +19,27 @@ export interface AuthState {
 
 export interface LoginCredentials {
   email: string
-  password: string
 }
 
 export interface RegisterData {
   name: string
   email: string
-  password: string
   referralCode?: string
+}
+
+export interface VerifyAuthCodeData {
+  challengeId: string
+  code: string
+}
+
+export interface AuthCodeChallenge {
+  challengeId: string
+  expiresAt: string
+  resendAvailableAt: string
+  debugCode?: string
+}
+
+export interface AdminLoginCredentials {
+  email: string
+  password: string
 }

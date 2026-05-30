@@ -8,29 +8,30 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/hooks/useAuth'
 import { useJoinByCode } from '@/hooks/useGroups'
-import { RegisterSchema } from '@/lib/schemas'
+import { AuthCodeSchema, RegisterSchema } from '@/lib/schemas'
 import { resolveInviteCode } from '@/services/groups.service'
 import { ApiRequestError } from '@/services/api'
-import type { RegisterData } from '@/types/auth.types'
+import type { AuthCodeChallenge, RegisterData } from '@/types/auth.types'
 
-type FormValues = Omit<RegisterData, 'referralCode'> & { referralCode: string; confirmPassword: string }
+type FormValues = Omit<RegisterData, 'referralCode'> & { referralCode: string }
 
 export function RegisterPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { register } = useAuth()
+  const { requestRegisterCode, verifyRegisterCode } = useAuth()
   const joinByCode = useJoinByCode()
   const inviteCode = searchParams.get('invite')
   const referralCode = searchParams.get('ref')
 
+  const [step, setStep] = useState<'data' | 'code'>('data')
   const [values, setValues] = useState<FormValues>({
     name: '',
     email: '',
-    password: '',
-    confirmPassword: '',
     referralCode: referralCode ?? '',
   })
-  const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({})
+  const [code, setCode] = useState('')
+  const [challenge, setChallenge] = useState<AuthCodeChallenge | null>(null)
+  const [errors, setErrors] = useState<Partial<Record<keyof FormValues | 'code', string>>>({})
   const [serverError, setServerError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -64,7 +65,7 @@ export function RegisterPage() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleRequestCode(e: React.FormEvent) {
     e.preventDefault()
     const result = RegisterSchema.safeParse(values)
     if (!result.success) {
@@ -79,8 +80,37 @@ export function RegisterPage() {
     setIsSubmitting(true)
     setServerError('')
     try {
-      const { confirmPassword: _confirm, ...registerData } = result.data
-      await register(registerData as RegisterData)
+      const nextChallenge = await requestRegisterCode(result.data as RegisterData)
+      setChallenge(nextChallenge)
+      setStep('code')
+      setCode('')
+      setErrors({})
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        setServerError(error.message || 'Não foi possível enviar o código. Tente novamente.')
+      } else {
+        setServerError('Não foi possível enviar o código. Tente novamente.')
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault()
+    const result = AuthCodeSchema.safeParse({ code })
+    if (!result.success) {
+      setErrors({ code: result.error.issues[0]?.message ?? 'Código inválido' })
+      return
+    }
+    if (!challenge) {
+      setServerError('Solicite um novo código para continuar.')
+      return
+    }
+    setIsSubmitting(true)
+    setServerError('')
+    try {
+      await verifyRegisterCode({ challengeId: challenge.challengeId, code: result.data.code })
       if (inviteCode && !isInviteInvalid) {
         await attemptJoin(inviteCode)
       } else {
@@ -88,9 +118,9 @@ export function RegisterPage() {
       }
     } catch (error) {
       if (error instanceof ApiRequestError) {
-        setServerError(error.message || 'Não foi possível criar a conta. Tente novamente.')
+        setServerError(error.message || 'Código inválido ou expirado.')
       } else {
-        setServerError('Não foi possível criar a conta. Tente novamente.')
+        setServerError('Código inválido ou expirado.')
       }
       setIsSubmitting(false)
     }
@@ -103,87 +133,126 @@ export function RegisterPage() {
 
   return (
     <AuthForm title="Criar conta" subtitle="Participe do Bolão da Copa">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
-        <AuthField errorId="name-error" error={errors.name}>
-          <Input
-            id="name"
-            label="Nome"
-            autoComplete="name"
-            value={values.name}
-            onChange={handleChange('name')}
-            aria-invalid={!!errors.name}
-            aria-describedby="name-error"
-          />
-        </AuthField>
+      {step === 'data' ? (
+        <form onSubmit={handleRequestCode} className="flex flex-col gap-2" noValidate>
+          <AuthField errorId="name-error" error={errors.name}>
+            <Input
+              id="name"
+              label="Nome"
+              autoComplete="name"
+              value={values.name}
+              onChange={handleChange('name')}
+              aria-invalid={!!errors.name}
+              aria-describedby="name-error"
+            />
+          </AuthField>
 
-        <AuthField errorId="email-error" error={errors.email}>
-          <Input
-            id="email"
-            label="E-mail"
-            type="email"
-            autoComplete="email"
-            value={values.email}
-            onChange={handleChange('email')}
-            aria-invalid={!!errors.email}
-            aria-describedby="email-error"
-          />
-        </AuthField>
+          <AuthField errorId="email-error" error={errors.email}>
+            <Input
+              id="email"
+              label="E-mail"
+              type="email"
+              autoComplete="email"
+              value={values.email}
+              onChange={handleChange('email')}
+              aria-invalid={!!errors.email}
+              aria-describedby="email-error"
+            />
+          </AuthField>
 
-        <AuthField errorId="password-error" error={errors.password}>
-          <Input
-            id="password"
-            label="Senha"
-            type="password"
-            autoComplete="new-password"
-            value={values.password}
-            onChange={handleChange('password')}
-            aria-invalid={!!errors.password}
-            aria-describedby="password-error"
-          />
-        </AuthField>
+          <AuthField errorId="referral-code-error" error={errors.referralCode}>
+            <Input
+              id="referralCode"
+              label={<>Código de indicação <span className="text-[var(--text-muted)]">(opcional)</span></>}
+              autoComplete="off"
+              value={values.referralCode}
+              onChange={handleChange('referralCode')}
+              placeholder="Ex: ABC12345"
+              aria-invalid={!!errors.referralCode}
+              aria-describedby="referral-code-error"
+            />
+          </AuthField>
 
-        <AuthField errorId="confirm-password-error" error={errors.confirmPassword}>
-          <Input
-            id="confirmPassword"
-            label="Confirmar senha"
-            type="password"
-            autoComplete="new-password"
-            value={values.confirmPassword}
-            onChange={handleChange('confirmPassword')}
-            aria-invalid={!!errors.confirmPassword}
-            aria-describedby="confirm-password-error"
-          />
-        </AuthField>
+          <div className="flex flex-col gap-2">
+            <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
+              <p
+                className={`text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
+                  serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+                }`}
+              >
+                {serverError}
+              </p>
+            </div>
 
-        <AuthField errorId="referral-code-error" error={errors.referralCode}>
-          <Input
-            id="referralCode"
-            label={<>Código de indicação <span className="text-[var(--text-muted)]">(opcional)</span></>}
-            autoComplete="off"
-            value={values.referralCode}
-            onChange={handleChange('referralCode')}
-            placeholder="Ex: ABC123"
-            aria-invalid={!!errors.referralCode}
-            aria-describedby="referral-code-error"
-          />
-        </AuthField>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? 'Enviando…' : 'Enviar código'}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleVerifyCode} className="flex flex-col gap-2" noValidate>
+          <p className="text-sm text-[var(--text-muted)]">
+            Enviamos um código para <span className="font-medium text-[var(--text)]">{values.email}</span>.
+          </p>
 
-        <div className="flex flex-col gap-2">
+          <AuthField errorId="code-error" error={errors.code}>
+            <Input
+              id="code"
+              label="Código"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={code}
+              onChange={e => {
+                setCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+                setErrors(prev => ({ ...prev, code: undefined }))
+              }}
+              aria-invalid={!!errors.code}
+              aria-describedby="code-error"
+            />
+          </AuthField>
+
           <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
             <p
-              className={`text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
-                serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              className={`text-xs font-medium leading-4 text-[var(--text-muted)] transition duration-150 ${
+                challenge?.debugCode && !serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
               }`}
             >
-              {serverError}
+              {challenge?.debugCode ? `Código de teste: ${challenge.debugCode}` : ''}
             </p>
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? 'Criando conta…' : 'Criar conta'}
-          </Button>
-        </div>
-      </form>
+          <div className="flex flex-col gap-2">
+            <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
+              <p
+                className={`text-xs font-medium leading-4 text-[var(--danger)] transition duration-150 ${
+                  serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+                }`}
+              >
+                {serverError}
+              </p>
+            </div>
+
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? 'Validando…' : 'Validar código'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isSubmitting}
+              className="w-full"
+              onClick={() => {
+                setStep('data')
+                setServerError('')
+                setErrors({})
+              }}
+            >
+              Alterar dados
+            </Button>
+          </div>
+        </form>
+      )}
 
       {invitePreview?.group && (
         <div className="mt-4">

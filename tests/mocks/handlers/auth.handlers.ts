@@ -16,9 +16,31 @@ const mockUser: User = {
 
 export const authHandlers = [
   http.get('/api/auth/me', () => HttpResponse.json({ user: mockUser })),
-  http.post('/api/auth/login', () => HttpResponse.json({ user: mockUser })),
+  http.post('/api/auth/login', () =>
+    HttpResponse.json({ message: 'Autenticação por senha foi removida.' }, { status: 410 }),
+  ),
+  http.post('/api/auth/login/request-code', () =>
+    HttpResponse.json({
+      challengeId: '11111111-1111-4111-8111-111111111111',
+      expiresAt: '2026-05-19T00:10:00.000Z',
+      resendAvailableAt: '2026-05-19T00:01:00.000Z',
+      debugCode: '123456',
+    }, { status: 202 }),
+  ),
+  http.post('/api/auth/login/verify-code', () => HttpResponse.json({ user: mockUser })),
   http.post('/api/auth/logout', () => HttpResponse.json({ ok: true })),
   http.post('/api/auth/register', () =>
+    HttpResponse.json({ message: 'Autenticação por senha foi removida.' }, { status: 410 }),
+  ),
+  http.post('/api/auth/register/request-code', () =>
+    HttpResponse.json({
+      challengeId: '22222222-2222-4222-8222-222222222222',
+      expiresAt: '2026-05-19T00:10:00.000Z',
+      resendAvailableAt: '2026-05-19T00:01:00.000Z',
+      debugCode: '123456',
+    }, { status: 202 }),
+  ),
+  http.post('/api/auth/register/verify-code', () =>
     HttpResponse.json({ user: mockUser }, { status: 201 }),
   ),
 ]

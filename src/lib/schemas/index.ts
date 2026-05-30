@@ -1,23 +1,23 @@
 import { z } from 'zod'
 
-export const LoginSchema = z.object({
+export const UserLoginSchema = z.object({
+  email: z.string().email('Email inválido'),
+})
+
+export const AuthCodeSchema = z.object({
+  code: z.string().trim().regex(/^\d{6}$/, 'Código deve ter 6 dígitos'),
+})
+
+export const AdminLoginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(8, 'Mínimo 8 caracteres'),
 })
 
-export const RegisterSchema = z
-  .object({
-    name: z.string().min(2, 'Mínimo 2 caracteres'),
-    email: z.string().email('Email inválido'),
-    password: z.string().min(8, 'Mínimo 8 caracteres'),
-    confirmPassword: z.string(),
-    referralCode: z.string().optional().or(z.literal('')),
-  })
-  .superRefine((data, ctx) => {
-    if (data.password !== data.confirmPassword) {
-      ctx.addIssue({ code: 'custom', path: ['confirmPassword'], message: 'Senhas não conferem' })
-    }
-  })
+export const RegisterSchema = z.object({
+  name: z.string().min(2, 'Mínimo 2 caracteres'),
+  email: z.string().email('Email inválido'),
+  referralCode: z.string().optional().or(z.literal('')),
+})
 
 export const BetFormSchema = z.object({
   homeScore: z.number().int().min(0).max(20),
@@ -48,7 +48,9 @@ export const ResultFormSchema = z.object({
   awayScore: z.number().int().min(0),
 })
 
-export type LoginInput = z.infer<typeof LoginSchema>
+export type LoginInput = z.infer<typeof UserLoginSchema>
+export type AuthCodeInput = z.infer<typeof AuthCodeSchema>
+export type AdminLoginInput = z.infer<typeof AdminLoginSchema>
 export type RegisterInput = z.infer<typeof RegisterSchema>
 export type BetFormInput = z.infer<typeof BetFormSchema>
 export type GroupCreateInput = z.infer<typeof GroupCreateSchema>

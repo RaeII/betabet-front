@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { User, LoginCredentials, RegisterData } from '@/types/auth.types'
+import { useQueryClient } from '@tanstack/react-query'
+import type { AuthCodeChallenge, RegisterData, User, VerifyAuthCodeData } from '@/types/auth.types'
 import * as authService from '@/services/auth.service'
 import { ApiRequestError } from '@/services/api'
 
@@ -8,8 +9,10 @@ interface AuthContextValue {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (credentials: LoginCredentials) => Promise<void>
-  register: (data: RegisterData) => Promise<void>
+  requestLoginCode: (email: string) => Promise<AuthCodeChallenge>
+  verifyLoginCode: (data: VerifyAuthCodeData) => Promise<void>
+  requestRegisterCode: (data: RegisterData) => Promise<AuthCodeChallenge>
+  verifyRegisterCode: (data: VerifyAuthCodeData) => Promise<void>
   logout: () => Promise<void>
   setUser: (user: User | null) => void
 }
@@ -19,6 +22,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     let cancelled = false
@@ -51,24 +55,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  async function login(credentials: LoginCredentials) {
-    const { user } = await authService.login(credentials.email, credentials.password)
+  async function requestLoginCode(email: string) {
+    return authService.requestLoginCode(email)
+  }
+
+  async function verifyLoginCode(data: VerifyAuthCodeData) {
+    queryClient.clear()
+    const { user } = await authService.verifyLoginCode(data)
     setUser(user)
   }
 
-  async function register(data: RegisterData) {
-    const { user } = await authService.register(data)
+  async function requestRegisterCode(data: RegisterData) {
+    return authService.requestRegisterCode(data)
+  }
+
+  async function verifyRegisterCode(data: VerifyAuthCodeData) {
+    queryClient.clear()
+    const { user } = await authService.verifyRegisterCode(data)
     setUser(user)
   }
 
   async function logout() {
     await authService.logout()
     setUser(null)
+    queryClient.clear()
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: user !== null, isLoading, login, register, logout, setUser }}
+      value={{
+        user,
+        isAuthenticated: user !== null,
+        isLoading,
+        requestLoginCode,
+        verifyLoginCode,
+        requestRegisterCode,
+        verifyRegisterCode,
+        logout,
+        setUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

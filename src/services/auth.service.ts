@@ -1,21 +1,24 @@
 import { apiGet, apiPost } from './api'
-import type { User } from '@/types/auth.types'
+import type { AuthCodeChallenge, RegisterData, User, VerifyAuthCodeData } from '@/types/auth.types'
 
 export function getMe(): Promise<{ user: User }> {
   return apiGet('/api/auth/me')
 }
 
-export function login(email: string, password: string): Promise<{ user: User }> {
-  return apiPost('/api/auth/login', { email, password })
+export function requestLoginCode(email: string): Promise<AuthCodeChallenge> {
+  return apiPost('/api/auth/login/request-code', { email })
 }
 
-export function register(data: {
-  name: string
-  email: string
-  password: string
-  referralCode?: string
-}): Promise<{ user: User }> {
-  return apiPost('/api/auth/register', data)
+export function verifyLoginCode(data: VerifyAuthCodeData): Promise<{ user: User }> {
+  return apiPost('/api/auth/login/verify-code', data)
+}
+
+export function requestRegisterCode(data: RegisterData): Promise<AuthCodeChallenge> {
+  return apiPost('/api/auth/register/request-code', data)
+}
+
+export function verifyRegisterCode(data: VerifyAuthCodeData): Promise<{ user: User }> {
+  return apiPost('/api/auth/register/verify-code', data)
 }
 
 export function logout(): Promise<{ ok: boolean }> {
