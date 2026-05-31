@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { getApiRequestMessage } from './authError'
+import { AuthCodeInput } from './components/AuthCodeInput'
+import { AuthCodeStatus } from './components/AuthCodeStatus'
 import { AuthField } from './components/AuthField'
 import { AuthForm } from './components/AuthForm'
 import { InviteGroupCard } from '@/components/group/InviteGroupCard'
@@ -27,6 +30,8 @@ export function LoginPage() {
   const [errors, setErrors] = useState<Partial<LoginCredentials & { code: string }>>({})
   const [serverError, setServerError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+  const codeRequestInFlightRef = useRef(false)
 
   const { data: invitePreview, isError: isInviteInvalid } = useQuery({
     queryKey: ['invite', inviteCode],
@@ -79,6 +84,9 @@ export function LoginPage() {
       setErrors(fieldErrors)
       return
     }
+    if (codeRequestInFlightRef.current) return
+
+    codeRequestInFlightRef.current = true
     setIsSubmitting(true)
     setServerError('')
     try {
@@ -88,12 +96,9 @@ export function LoginPage() {
       setCode('')
       setErrors({})
     } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setServerError(error.message || 'Não foi possível enviar o código. Tente novamente.')
-      } else {
-        setServerError('Não foi possível enviar o código. Tente novamente.')
-      }
+      setServerError(getApiRequestMessage(error, 'Não foi possível enviar o código. Tente novamente.'))
     } finally {
+      codeRequestInFlightRef.current = false
       setIsSubmitting(false)
     }
   }
@@ -121,6 +126,31 @@ export function LoginPage() {
     } catch {
       setServerError('Código inválido ou expirado.')
       setIsSubmitting(false)
+    }
+  }
+
+  async function handleResendCode() {
+    const result = UserLoginSchema.safeParse(values)
+    if (!result.success) {
+      setStep('email')
+      return
+    }
+
+    if (codeRequestInFlightRef.current) return
+
+    codeRequestInFlightRef.current = true
+    setIsResending(true)
+    setServerError('')
+    try {
+      const nextChallenge = await requestLoginCode(result.data.email)
+      setChallenge(nextChallenge)
+      setCode('')
+      setErrors({})
+    } catch (error) {
+      setServerError(getApiRequestMessage(error, 'Não foi possível reenviar o código. Tente novamente.'))
+    } finally {
+      codeRequestInFlightRef.current = false
+      setIsResending(false)
     }
   }
 
@@ -169,32 +199,25 @@ export function LoginPage() {
           </p>
 
           <AuthField errorId="code-error" error={errors.code}>
-            <Input
+            <AuthCodeInput
               id="code"
-              label="Código"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
               value={code}
-              onChange={e => {
-                setCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+              onChange={nextCode => {
+                setCode(nextCode)
                 setErrors(prev => ({ ...prev, code: undefined }))
               }}
-              aria-invalid={!!errors.code}
-              aria-describedby="code-error"
+              invalid={!!errors.code}
+              errorId="code-error"
             />
           </AuthField>
 
-          <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
-            <p
-              className={`text-xs font-medium leading-4 text-[var(--text-muted)] transition duration-150 ${
-                challenge?.debugCode && !serverError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-              }`}
-            >
-              {challenge?.debugCode ? `Código de teste: ${challenge.debugCode}` : ''}
-            </p>
-          </div>
+          <AuthCodeStatus
+            challenge={challenge}
+            serverError={serverError}
+            isSubmitting={isSubmitting}
+            isResending={isResending}
+            onResend={handleResendCode}
+          />
 
           <div className="flex flex-col gap-2">
             <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
@@ -207,13 +230,13 @@ export function LoginPage() {
               </p>
             </div>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Button type="submit" disabled={isSubmitting || isResending} className="w-full">
               {isSubmitting ? 'Validando…' : 'Validar código'}
             </Button>
             <Button
               type="button"
               variant="ghost"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isResending}
               className="w-full"
               onClick={() => {
                 setStep('email')

@@ -44,7 +44,18 @@ sessão local; outros erros tentam novamente com backoff.
 `LoginPage` tem duas etapas:
 
 1. e-mail;
-2. código de 6 dígitos com `inputMode="numeric"` e `autoComplete="one-time-code"`.
+2. código de 6 dígitos em campos individuais com `inputMode="numeric"` e
+   `autoComplete="one-time-code"` no primeiro campo.
+
+Ao digitar, o foco avança automaticamente para o próximo dígito. Ao colar um
+código completo, os dígitos são distribuídos entre os campos.
+
+Na etapa do código, a tela exibe uma contagem regressiva baseada em
+`expiresAt` e a opção de reenviar o código. O botão respeita
+`resendAvailableAt` e chama novamente `POST /api/auth/login/request-code` para
+gerar um novo `challengeId`. Enquanto uma solicitação de envio ou reenvio está
+pendente, a tela mantém uma trava local para evitar chamadas duplicadas por
+duplo clique; a proteção autoritativa continua no backend.
 
 Contratos:
 
@@ -61,7 +72,17 @@ Em sucesso, `verifyLoginCode` salva o usuário no contexto e a tela navega para
 `RegisterPage` tem duas etapas:
 
 1. nome, e-mail e código de indicação opcional;
-2. código de 6 dígitos.
+2. código de 6 dígitos em campos individuais.
+
+Ao digitar, o foco avança automaticamente para o próximo dígito. Ao colar um
+código completo, os dígitos são distribuídos entre os campos.
+
+Na etapa do código, a tela usa `expiresAt` para mostrar a contagem regressiva
+de expiração e permite reenviar o código quando `resendAvailableAt` já passou.
+O reenvio reutiliza `POST /api/auth/register/request-code` e substitui o
+`challengeId` anterior. Enquanto uma solicitação de envio ou reenvio está
+pendente, a tela mantém uma trava local para evitar chamadas duplicadas por
+duplo clique; a proteção autoritativa continua no backend.
 
 Contratos:
 
