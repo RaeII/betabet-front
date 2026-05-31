@@ -1,5 +1,23 @@
 # Docker - betabet front
 
+## Build e push (máquina local)
+
+```bash
+docker build -t ghcr.io/raeii/betabet-front:latest .
+docker push ghcr.io/raeii/betabet-front:latest
+```
+
+```bash
+docker pull ghcr.io/raeii/betabet-front:latest
+docker compose -f front-bolaoclt.yml up -d --no-deps betabet-front
+```
+
+## Logs (VPS)
+
+```bash
+docker compose -f front-bolaoclt.yml logs -f betabet-front
+```
+
 ## Imagem
 
 ```bash
@@ -35,28 +53,6 @@ API_UPSTREAM=http://bolaoclt-api:3000
 
 ```bash
 echo $GITHUB_TOKEN | docker login ghcr.io -u raeii --password-stdin
-```
-
-## Build e push (máquina local)
-
-```bash
-docker build -t ghcr.io/raeii/betabet-front:latest .
-docker push ghcr.io/raeii/betabet-front:latest
-```
-
-## Pull e restart (VPS)
-
-O arquivo usado na VPS, por exemplo `front-bolaoclt.yml`, não pode ter `build:` e precisa apontar para a imagem completa `ghcr.io/raeii/betabet-front:latest`.
-
-```bash
-docker pull ghcr.io/raeii/betabet-front:latest
-docker compose -f front-bolaoclt.yml up -d --no-deps betabet-front
-```
-
-## Logs (VPS)
-
-```bash
-docker compose -f front-bolaoclt.yml logs -f betabet-front
 ```
 
 ## Verificação rápida

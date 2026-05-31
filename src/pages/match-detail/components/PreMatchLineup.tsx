@@ -2,6 +2,11 @@ import { useState } from 'react'
 import { User } from 'lucide-react'
 import type { PreviewLineup, PreviewLineupPlayer } from '@/services/matchPreview.service'
 
+const PITCH_WIDTH = 112
+const PITCH_HEIGHT = 72
+const PLAYER_MIN_Y = 8
+const PLAYER_Y_RANGE = 56
+
 interface PreMatchLineupProps {
   lineups: PreviewLineup[]
   /** Header opcional — default "Escalação provável" (pré-jogo). Em live, passe "Escalação". */
@@ -42,12 +47,12 @@ interface PlayerDotProps {
 function PlayerDot({ player, cx, cy, fill, stroke, textColor }: PlayerDotProps) {
   return (
     <g>
-      <circle cx={cx} cy={cy} r="3.2" fill={fill} stroke={stroke} strokeWidth="0.4" />
+      <circle cx={cx} cy={cy} r="4" fill={fill} stroke={stroke} strokeWidth="0.30" />
       <text
         x={cx}
-        y={cy + 0.7}
+        y={cy + 1}
         textAnchor="middle"
-        fontSize="2.6"
+        fontSize="3.1"
         fontWeight="700"
         fill={textColor}
       >
@@ -55,11 +60,15 @@ function PlayerDot({ player, cx, cy, fill, stroke, textColor }: PlayerDotProps) 
       </text>
       <text
         x={cx}
-        y={cy + 6.2}
+        y={cy + 7.3}
         textAnchor="middle"
-        fontSize="2"
+        fontSize="3"
         fontWeight="600"
         fill="var(--text)"
+        stroke="var(--surface)"
+        strokeWidth="0.55"
+        paintOrder="stroke"
+        strokeLinejoin="round"
       >
         {player.name.length > 12 ? player.name.split(' ').slice(-1)[0] : player.name}
       </text>
@@ -75,15 +84,15 @@ function buildPositions(players: PreviewLineupPlayer[], side: 'home' | 'away'): 
   const parsed = players.map((p) => ({ player: p, grid: parseGrid(p.grid) }))
   const withGrid = parsed.filter((p) => p.grid !== null)
 
-  // Side X: home ocupa 0–50, away 50–100. Goalkeeper sempre na borda externa.
+  // Home ocupa a metade esquerda, away a metade direita. Goleiro sempre na borda externa.
   // grid.row 1 = goleiro; aumenta em direção ao ataque.
   if (withGrid.length === 0) {
     // fallback: distribui em linha
-    const step = 100 / (players.length + 1)
+    const step = PLAYER_Y_RANGE / (players.length + 1)
     return players.map((p, idx) => ({
       player: p,
-      cx: side === 'home' ? 12 + idx * 4 : 88 - idx * 4,
-      cy: step * (idx + 1),
+      cx: side === 'home' ? 10 + idx * 4 : PITCH_WIDTH - 10 - idx * 4,
+      cy: PLAYER_MIN_Y + step * (idx + 1),
     }))
   }
 
@@ -103,9 +112,9 @@ function buildPositions(players: PreviewLineupPlayer[], side: 'home' | 'away'): 
     const cols = rowMap.get(row)!.sort((a, b) => a.col - b.col)
     cols.forEach((entry, idx) => {
       // row 1 (goleiro) fica na borda; rows altos vão pro centro.
-      const xRatio = (row - 1) / Math.max(1, maxRow)
-      const cx = side === 'home' ? 6 + xRatio * 38 : 94 - xRatio * 38
-      const cy = 12 + (idx + 1) * (76 / (cols.length + 1))
+      const xRatio = (row - 1) / Math.max(1, maxRow - 1)
+      const cx = side === 'home' ? 8 + xRatio * 40 : PITCH_WIDTH - 8 - xRatio * 40
+      const cy = PLAYER_MIN_Y + (idx + 1) * (PLAYER_Y_RANGE / (cols.length + 1))
       positions.push({ player: entry.player, cx, cy })
     })
   }
@@ -128,19 +137,21 @@ function PitchSVG({ lineups }: { lineups: PreviewLineup[] }) {
 
   return (
     <svg
-      viewBox="0 0 100 100"
+      viewBox={`0 0 ${PITCH_WIDTH} ${PITCH_HEIGHT}`}
       preserveAspectRatio="xMidYMid meet"
-      className="aspect-[5/3] w-full rounded-[var(--radius-md)]"
+      className="aspect-[14/9] w-full rounded-[var(--radius-md)]"
       style={{ background: 'color-mix(in srgb, var(--brand) 18%, var(--surface-soft))' }}
       role="img"
       aria-label="Campo com escalações"
     >
       {/* Linhas do campo */}
-      <rect x="2" y="2" width="96" height="96" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
-      <line x1="50" y1="2" x2="50" y2="98" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
-      <circle cx="50" cy="50" r="9" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
-      <rect x="2" y="28" width="14" height="44" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
-      <rect x="84" y="28" width="14" height="44" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.4" />
+      <rect x="2" y="2" width="108" height="68" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <line x1="56" y1="2" x2="56" y2="70" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <circle cx="56" cy="36" r="9" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <rect x="2" y="21" width="16" height="30" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <rect x="94" y="21" width="16" height="30" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <rect x="2" y="29" width="7" height="14" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <rect x="103" y="29" width="7" height="14" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
 
       {homePositions.map(({ player, cx, cy }, idx) => (
         <PlayerDot

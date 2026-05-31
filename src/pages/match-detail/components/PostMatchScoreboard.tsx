@@ -1,13 +1,16 @@
 import type { LiveEvent, LiveScoreSplit } from '@/services/liveMatch.service'
+import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 
 interface PostMatchScoreboardProps {
   statusShort: string
   homeTeamName: string
   homeTeamFlag: string
+  homeTeamFlagTeamId?: string | number | null
   homeWinner: boolean | null
   homeGoals: number | null
   awayTeamName: string
   awayTeamFlag: string
+  awayTeamFlagTeamId?: string | number | null
   awayWinner: boolean | null
   awayGoals: number | null
   round: string | null
@@ -27,9 +30,6 @@ const STATUS_LABEL: Record<string, string> = {
   AET: 'Após prorrog.',
   PEN: 'Após pênaltis',
 }
-
-const PLACEHOLDER_FLAG =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3'%3E%3Crect width='5' height='3' fill='%23e5e7eb'/%3E%3C/svg%3E"
 
 function formatGoalMinute(minute: number, extra: number | null): string {
   return extra ? `${minute}'+${extra}` : `${minute}'`
@@ -53,20 +53,22 @@ function buildSegments(score: PostMatchScoreboardProps['score']): Segment[] {
 function TeamScoreIdentity({
   name,
   flagUrl,
+  flagTeamId,
   isWinner,
 }: {
   name: string
   flagUrl: string
+  flagTeamId?: string | number | null
   isWinner: boolean
 }) {
   return (
     <div className="flex h-[76px] min-w-0 flex-col items-center justify-start gap-2">
       <div className="flex h-12 w-16 shrink-0 items-center justify-center">
-        <img
-          src={flagUrl || PLACEHOLDER_FLAG}
+        <TeamFlagImage
+          src={flagUrl}
+          teamId={flagTeamId}
           alt={`Bandeira ${name}`}
           className="max-h-full max-w-full rounded object-contain shadow-sm"
-          loading="lazy"
         />
       </div>
       <span
@@ -87,10 +89,12 @@ export function PostMatchScoreboard({
   statusShort,
   homeTeamName,
   homeTeamFlag,
+  homeTeamFlagTeamId,
   homeWinner,
   homeGoals,
   awayTeamName,
   awayTeamFlag,
+  awayTeamFlagTeamId,
   awayWinner,
   awayGoals,
   round,
@@ -123,7 +127,12 @@ export function PostMatchScoreboard({
       </header>
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-2 gap-y-3">
-        <TeamScoreIdentity name={homeTeamName} flagUrl={homeTeamFlag} isWinner={homeWinner === true} />
+        <TeamScoreIdentity
+          name={homeTeamName}
+          flagUrl={homeTeamFlag}
+          flagTeamId={homeTeamFlagTeamId}
+          isWinner={homeWinner === true}
+        />
 
         <div className="flex h-[76px] flex-col items-center justify-center gap-1">
           <div className="flex items-baseline gap-2 text-4xl font-bold tabular-nums tracking-tight text-[var(--text)]">
@@ -136,7 +145,12 @@ export function PostMatchScoreboard({
           </span>
         </div>
 
-        <TeamScoreIdentity name={awayTeamName} flagUrl={awayTeamFlag} isWinner={awayWinner === true} />
+        <TeamScoreIdentity
+          name={awayTeamName}
+          flagUrl={awayTeamFlag}
+          flagTeamId={awayTeamFlagTeamId}
+          isWinner={awayWinner === true}
+        />
 
         {homeGoalsList.length > 0 || awayGoalsList.length > 0 ? (
           <>

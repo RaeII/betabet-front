@@ -21,7 +21,12 @@ export function MatchCard({ match, groupId }: MatchCardProps) {
       to={href}
       className="flex items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:border-[var(--brand)]/30 hover:bg-[var(--surface-soft)]"
     >
-      <TeamFlag name={match.homeTeam.name} flagUrl={match.homeTeam.flagUrl} size="sm" />
+      <TeamFlag
+        name={match.homeTeam.name}
+        flagUrl={match.homeTeam.flagUrl}
+        teamId={match.homeTeam.id}
+        size="sm"
+      />
 
       <div className="flex flex-1 flex-col items-center gap-1">
         <span className="text-lg font-bold tracking-tight text-[var(--text)]">
@@ -34,7 +39,12 @@ export function MatchCard({ match, groupId }: MatchCardProps) {
         ) : null}
       </div>
 
-      <TeamFlag name={match.awayTeam.name} flagUrl={match.awayTeam.flagUrl} size="sm" />
+      <TeamFlag
+        name={match.awayTeam.name}
+        flagUrl={match.awayTeam.flagUrl}
+        teamId={match.awayTeam.id}
+        size="sm"
+      />
     </Link>
   )
 }

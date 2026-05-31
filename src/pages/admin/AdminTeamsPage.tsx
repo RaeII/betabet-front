@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Plus, X } from 'lucide-react'
 import { getTeams } from '@/services/admin.service'
+import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 import { TeamForm } from './components/TeamForm'
 import { Button } from '@/components/ui/button'
-import { Plus, X } from 'lucide-react'
 
 export function AdminTeamsPage() {
   const qc = useQueryClient()
@@ -51,7 +52,12 @@ export function AdminTeamsPage() {
               <tr key={team.id}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <img src={team.flagUrl} alt={team.name} className="h-5 w-7 rounded object-cover" />
+                    <TeamFlagImage
+                      src={team.flagUrl}
+                      teamId={team.id}
+                      alt={team.name}
+                      className="h-5 w-7 rounded object-contain"
+                    />
                     <span className="font-medium text-[var(--text)]">{team.name}</span>
                   </div>
                 </td>

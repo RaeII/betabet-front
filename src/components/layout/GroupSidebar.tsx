@@ -3,7 +3,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
-import { useGroupMatches } from '@/hooks/useGroupMatches'
+import { useGroupHasLiveMatch } from '@/hooks/useGroupLiveMatch'
 import { useJoinRequests } from '@/hooks/useGroups'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
@@ -34,7 +34,7 @@ export function GroupSidebar() {
   const { groupId, isAdmin } = useActiveGroup()
   const [modalOpen, setModalOpen] = useState(false)
   const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
-  const matchesQuery = useGroupMatches(groupId ?? '')
+  const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '')
 
   if (!groupId) return null
 
@@ -42,7 +42,6 @@ export function GroupSidebar() {
     item => !hiddenSidebarItemIds.has(item.id) && (!item.adminOnly || isAdmin),
   )
   const pendingRequests = requestsQuery.data?.requests.length ?? 0
-  const hasLiveMatch = matchesQuery.data?.matches.some(m => m.status === 'live') ?? false
 
   return (
     <aside className="hidden lg:flex lg:flex-col md:rounded-[var(--radius-sm)] lg:border lg:border-[var(--border)] lg:bg-[var(--surface)] lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] lg:overflow-hidden">

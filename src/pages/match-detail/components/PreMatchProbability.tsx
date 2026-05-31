@@ -41,17 +41,9 @@ export function PreMatchProbability({ prediction, homeName, awayName }: PreMatch
       <header className="flex items-baseline justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-            Previsão da casa
+            Probabilidade
           </p>
-          <h3 className="mt-1 text-base font-semibold tracking-tight text-[var(--text)] sm:text-lg">
-            Quem deve vencer?
-          </h3>
         </div>
-        {prediction.winner?.comment ? (
-          <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            {prediction.winner.comment}
-          </span>
-        ) : null}
       </header>
 
       <div className="space-y-2.5">

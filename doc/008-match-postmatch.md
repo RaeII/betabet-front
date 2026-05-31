@@ -61,6 +61,8 @@ upstream é necessário.
 | [`pages/match-detail/components/PreMatchLineup.tsx`](../src/pages/match-detail/components/PreMatchLineup.tsx)            | **Reusado** com `headerLabel="Escalação"` — escalação final = titulares iniciais (substituições estão nos events) |
 | [`pages/match-detail/MatchDetailPage.tsx`](../src/pages/match-detail/MatchDetailPage.tsx)                                | Composição: troca header padrão por `PostMatchScoreboard` e renderiza a seção pós-jogo |
 | [`pages/home/components/InlineBetCard.tsx`](../src/pages/home/components/InlineBetCard.tsx) | Consome `useMatchLive` para detectar `TERMINAL_STATUSES` no upstream e trocar o badge `Ao vivo` por `Encerrada` no card da home enquanto o admin não confirma o resultado |
+| [`hooks/useGroupLiveMatch.ts`](../src/hooks/useGroupLiveMatch.ts) | Indicador compartilhado que consulta `/live` das partidas candidatas do grupo e só retorna `true` quando `live.isLive=true` |
+| [`components/layout/GroupSidebar.tsx`](../src/components/layout/GroupSidebar.tsx) / [`GroupMobileNav.tsx`](../src/components/layout/GroupMobileNav.tsx) | Consomem `useGroupHasLiveMatch` para mostrar o ponto vermelho em "Jogos" apenas quando há partida realmente em andamento |
 
 ---
 
@@ -202,16 +204,35 @@ partida está em `FT/AET/PEN` upstream:
   enquanto o upstream ainda reportar `1H/2H/HT/ET/…`;
 - `locked` inclui `isUpstreamFinished` para travar o input de palpite no
   mesmo instante que o jogo de fato acaba;
-- Badge dedicado `<EndedDot />` ("Encerrada", em `--text-muted`)
-  substitui o ponto vermelho enquanto o admin não confirma — sem usar
-  `FinishedMatchCard`, que depende dos placares oficiais (`homeScore`/`awayScore`).
+- Badge dedicado `<EndedDot />` ("Encerrado", em `--text-muted`)
+  substitui o ponto vermelho enquanto o admin não confirma, sem trocar para
+  um card separado.
 
 O custo é o mesmo do `MatchDetailPage`: cada card "ao vivo" gera um
 `useMatchLive` próprio, mas o backend cacheia o `/live` por 2 min e o
 hook polla a 60 s — então o pior caso é cache hit. Quando o admin enfim
 confirma o resultado, o `match.status` vira `finished`, `DayMatchList`
-roteia o item para `FinishedMatchCard` e o `useMatchLive` desliga por
-falta de gate.
+mantém o item no mesmo `InlineBetCard` das partidas ao vivo e futuras, e
+o `useMatchLive` desliga por falta de gate.
+
+### Propagação para a navegação de grupo
+
+`GroupSidebar` e `GroupMobileNav` não usam mais apenas
+`matches.some(m => m.status === 'live')` para renderizar o ponto vermelho em
+"Jogos". Esse filtro gerava falso positivo quando o banco ainda mantinha
+`status='live'`, mas o upstream já tinha fechado a partida em `FT/AET/PEN`.
+
+A regra agora fica em `useGroupHasLiveMatch(groupId)`:
+
+```ts
+const candidateMatches = matches.filter(match => match.status === 'live')
+// ...useQueries por candidata com matchKeys.live(match.id)...
+return liveQueries.some(query => query.data?.isLive === true)
+```
+
+Enquanto o `/live` não confirma `isLive=true`, o indicador permanece oculto.
+Assim, partidas encerradas-mas-ainda-não-liquidadas deixam de acender a
+notificação de "Ao vivo" no desktop e no mobile.
 
 ### Layout
 

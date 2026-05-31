@@ -78,9 +78,9 @@ export function DayStrip({ matches, selectedDate, onSelectDate }: DayStripProps)
     if (!el) return
     const selectedItem = el.querySelector<HTMLElement>(`[data-day-date="${selectedDate}"]`)
     if (!selectedItem) return
-    if (typeof selectedItem.scrollIntoView === 'function') {
-      selectedItem.scrollIntoView({ block: 'nearest', inline: 'center' })
-    }
+    const previousItem = selectedItem.previousElementSibling as HTMLElement | null
+    const targetItem = previousItem ?? selectedItem
+    el.scrollLeft = targetItem.offsetLeft
     const rafId = window.requestAnimationFrame(syncHiddenDays)
     return () => window.cancelAnimationFrame(rafId)
   }, [selectedDate, syncHiddenDays])

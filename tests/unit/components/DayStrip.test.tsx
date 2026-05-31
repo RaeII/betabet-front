@@ -130,6 +130,62 @@ describe('DayStrip', () => {
     expect(screen.queryByRole('button', { name: /ver dias passados/i })).not.toBeInTheDocument()
   })
 
+  it('does not add today when there are no matches today', () => {
+    const onSelect = vi.fn()
+    render(
+      <DayStrip
+        matches={[
+          makeMatch('2026-06-10T18:00:00', 'finished'),
+          makeMatch('2026-06-16T18:00:00'),
+        ]}
+        selectedDate={null}
+        onSelectDate={onSelect}
+      />,
+    )
+
+    const tablist = screen.getByRole('tablist', { name: /dias com partidas/i })
+    expect(Array.from(tablist.children).map(child => child.getAttribute('data-day-date'))).toEqual([
+      '2026-06-10',
+      '2026-06-16',
+    ])
+    expect(screen.queryByText('hoje')).not.toBeInTheDocument()
+    expect(onSelect).toHaveBeenCalledWith('2026-06-16')
+  })
+
+  it('starts with only one previous day visible before the selected day', () => {
+    const offsetSpy = vi
+      .spyOn(HTMLElement.prototype, 'offsetLeft', 'get')
+      .mockImplementation(function getOffsetLeft(this: HTMLElement) {
+        const offsets: Record<string, number> = {
+          '2026-06-10': 0,
+          '2026-06-11': 60,
+          '2026-06-16': 120,
+          '2026-06-17': 180,
+        }
+        return offsets[this.dataset.dayDate ?? ''] ?? 0
+      })
+
+    try {
+      render(
+        <DayStrip
+          matches={[
+            makeMatch('2026-06-10T18:00:00', 'finished'),
+            makeMatch('2026-06-11T18:00:00', 'finished'),
+            makeMatch('2026-06-16T18:00:00'),
+            makeMatch('2026-06-17T18:00:00'),
+          ]}
+          selectedDate="2026-06-16"
+          onSelectDate={vi.fn()}
+        />,
+      )
+
+      const tablist = screen.getByRole('tablist', { name: /dias com partidas/i })
+      expect(tablist.scrollLeft).toBe(60)
+    } finally {
+      offsetSpy.mockRestore()
+    }
+  })
+
   it('shows and hides left/right indicators based on scroll position', () => {
     render(
       <DayStrip

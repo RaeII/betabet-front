@@ -100,6 +100,12 @@ Todos seguem [`ui.md`](./ui.md):
 
 ### `PreMatchProbability`
 
+- A probabilidade vem das **odds** das casas de aposta (mercado Match Winner /
+  1X2), calculada no backend em `computeOddsPercent` — **não** mais das
+  `/predictions`. Rótulo do card: "Probabilidade pelas odds".
+- O backend só devolve `prediction` quando há odds; sem odds (jogo a mais de
+  ~14 dias ou upstream sem cotação) `prediction` vem `null` e o card é **omitido**
+  (`{preview.prediction ? <PreMatchProbability/> : null}` na `MatchDetailPage`).
 - 3 barras horizontais (home / empate / away), altura `h-2`, radius pill.
 - A maior probabilidade ganha `bg-[var(--brand)]`; demais ficam em
   `bg-[var(--text-muted)]/45` (neutro, mesmo no tema escuro).
@@ -195,7 +201,7 @@ repassam para `MatchCard`/`MatchSlot`. O href é construído como
 |----------------------------------------------------------|---------------------------------------------------|
 | `match.status !== 'upcoming'`                            | Bloco de pré-jogo nem é carregado (`enabled=false`) |
 | `match.status === 'upcoming'` mas backend devolveu erro  | `preview === undefined` → bloco simplesmente omitido |
-| `prediction === null`                                    | Card `PreMatchProbability` não renderiza          |
+| `prediction === null` (sem odds p/ a fixture)            | Card `PreMatchProbability` não renderiza          |
 | `lineups.length === 0`                                   | Card mostra "Escalações publicadas ~30–60min antes" |
 | `injuries.length === 0`                                  | Card `PreMatchInjuries` não renderiza             |
 | `venue.image === null` e sem nada do venue/referee       | Card `PreMatchVenue` não renderiza                |

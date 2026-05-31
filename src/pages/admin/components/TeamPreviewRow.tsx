@@ -1,4 +1,5 @@
 import { Loader2 } from 'lucide-react'
+import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { TeamPreview } from '@/types/import.types'
@@ -13,10 +14,11 @@ export function TeamPreviewRow({ team, onSave, isSaving }: Props) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
       <div className="flex items-center gap-3">
-        <img
+        <TeamFlagImage
           src={team.flagUrl}
+          teamId={team.apiTeamId}
           alt={`Bandeira de ${team.country}`}
-          className="h-6 w-8 rounded-sm object-cover"
+          className="h-6 w-8 rounded-sm object-contain"
         />
         <div>
           <p className="text-sm font-semibold text-[var(--text)]">{team.name}</p>

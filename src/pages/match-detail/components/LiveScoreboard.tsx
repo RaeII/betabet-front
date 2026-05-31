@@ -1,11 +1,14 @@
 import type { MatchLive } from '@/services/liveMatch.service'
+import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 
 interface LiveScoreboardProps {
   live: MatchLive
   homeTeamName: string
   homeTeamFlag: string
+  homeTeamFlagTeamId?: string | number | null
   awayTeamName: string
   awayTeamFlag: string
+  awayTeamFlagTeamId?: string | number | null
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -23,9 +26,6 @@ const STATUS_LABEL: Record<string, string> = {
   PEN: 'Após pênaltis',
 }
 
-const PLACEHOLDER_FLAG =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3'%3E%3Crect width='5' height='3' fill='%23e5e7eb'/%3E%3C/svg%3E"
-
 function formatClock(elapsed: number | null, extra: number | null, short: string): string {
   if (short === 'HT') return 'INT'
   if (short === 'BT') return 'INT P'
@@ -38,15 +38,23 @@ function formatGoalMinute(minute: number, extra: number | null): string {
   return extra ? `${minute}'+${extra}` : `${minute}'`
 }
 
-function TeamScoreIdentity({ name, flagUrl }: { name: string; flagUrl: string }) {
+function TeamScoreIdentity({
+  name,
+  flagUrl,
+  flagTeamId,
+}: {
+  name: string
+  flagUrl: string
+  flagTeamId?: string | number | null
+}) {
   return (
     <div className="flex h-[76px] min-w-0 flex-col items-center justify-start gap-2">
       <div className="flex h-12 w-16 shrink-0 items-center justify-center">
-        <img
-          src={flagUrl || PLACEHOLDER_FLAG}
+        <TeamFlagImage
+          src={flagUrl}
+          teamId={flagTeamId}
           alt={`Bandeira ${name}`}
           className="max-h-full max-w-full rounded object-contain shadow-sm"
-          loading="lazy"
         />
       </div>
       <span className="line-clamp-1 min-h-4 max-w-full text-center text-xs font-semibold leading-4 text-[var(--text)]">
@@ -60,8 +68,10 @@ export function LiveScoreboard({
   live,
   homeTeamName,
   homeTeamFlag,
+  homeTeamFlagTeamId,
   awayTeamName,
   awayTeamFlag,
+  awayTeamFlagTeamId,
 }: LiveScoreboardProps) {
   const homeScore = live.goals.home ?? 0
   const awayScore = live.goals.away ?? 0
@@ -93,7 +103,11 @@ export function LiveScoreboard({
       </header>
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-2 gap-y-3">
-        <TeamScoreIdentity name={homeTeamName} flagUrl={homeTeamFlag} />
+        <TeamScoreIdentity
+          name={homeTeamName}
+          flagUrl={homeTeamFlag}
+          flagTeamId={homeTeamFlagTeamId}
+        />
 
         <div className="flex h-[76px] flex-col items-center justify-center gap-1">
           <div className="flex items-baseline gap-2 text-4xl font-bold tabular-nums tracking-tight text-[var(--text)]">
@@ -106,7 +120,11 @@ export function LiveScoreboard({
           </span>
         </div>
 
-        <TeamScoreIdentity name={awayTeamName} flagUrl={awayTeamFlag} />
+        <TeamScoreIdentity
+          name={awayTeamName}
+          flagUrl={awayTeamFlag}
+          flagTeamId={awayTeamFlagTeamId}
+        />
 
         {homeGoals.length > 0 || awayGoals.length > 0 ? (
           <>

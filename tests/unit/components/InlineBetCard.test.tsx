@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
+import { MemoryRouter } from 'react-router-dom'
 import { getGroupMatchBets } from '@/services/bets.service'
 
 const placeMutate = vi.fn()
@@ -81,7 +82,11 @@ function renderCard(match: MatchWithUserBet, groupId = 'g1') {
     createElement(
       QueryClientProvider,
       { client: qc },
-      createElement(InlineBetCard, { match, groupId }),
+      createElement(
+        MemoryRouter,
+        null,
+        createElement(InlineBetCard, { match, groupId }),
+      ),
     ),
   )
 }
@@ -196,7 +201,11 @@ describe('InlineBetCard', () => {
       createElement(
         QueryClientProvider,
         { client: qc },
-        createElement(InlineBetCard, { match: matchWithGroupBet, groupId: 'g1' }),
+        createElement(
+          MemoryRouter,
+          null,
+          createElement(InlineBetCard, { match: matchWithGroupBet, groupId: 'g1' }),
+        ),
       ),
     )
 
@@ -208,7 +217,11 @@ describe('InlineBetCard', () => {
       createElement(
         QueryClientProvider,
         { client: qc },
-        createElement(InlineBetCard, { match: makeMatch({ userBet: null }), groupId: 'g2' }),
+        createElement(
+          MemoryRouter,
+          null,
+          createElement(InlineBetCard, { match: makeMatch({ userBet: null }), groupId: 'g2' }),
+        ),
       ),
     )
 
@@ -219,7 +232,9 @@ describe('InlineBetCard', () => {
 
   it('locks input when match is finished', () => {
     renderCard(makeMatch({ status: 'finished' }))
-    expect(screen.getByText(/Apostas encerradas/i)).toBeInTheDocument()
+    const inputs = screen.getAllByRole('textbox', { name: /Palpite / })
+    inputs.forEach(input => expect(input).toBeDisabled())
+    expect(screen.getByText(/Encerrado/i)).toBeInTheDocument()
   })
 
   it('opens match bets modal with all match bets', async () => {

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 
 vi.mock('@/hooks/useActiveGroup', () => ({ useActiveGroup: vi.fn() }))
+vi.mock('@/hooks/useGroupLiveMatch', () => ({ useGroupHasLiveMatch: vi.fn() }))
 vi.mock('@/hooks/useGroups', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/useGroups')>('@/hooks/useGroups')
   return {
@@ -21,9 +22,11 @@ vi.mock('@/hooks/useTheme', () => ({
 
 import { GroupSidebar } from '@/components/layout/GroupSidebar'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { useGroupHasLiveMatch } from '@/hooks/useGroupLiveMatch'
 import { useJoinRequests } from '@/hooks/useGroups'
 
 const mockedActive = useActiveGroup as ReturnType<typeof vi.fn>
+const mockedHasLiveMatch = useGroupHasLiveMatch as ReturnType<typeof vi.fn>
 const mockedRequests = useJoinRequests as ReturnType<typeof vi.fn>
 
 function renderSidebar(path = '/groups/g1') {
@@ -48,6 +51,7 @@ function renderSidebar(path = '/groups/g1') {
 describe('GroupSidebar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockedHasLiveMatch.mockReturnValue(false)
     mockedRequests.mockReturnValue({ data: { requests: [] } })
   })
 
@@ -58,7 +62,7 @@ describe('GroupSidebar', () => {
     expect(screen.getByText('Jogos')).toBeInTheDocument()
     expect(screen.getByText('Ranking')).toBeInTheDocument()
     expect(screen.getByText('Membros')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Grupos/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Bolões/i })).toBeInTheDocument()
     expect(screen.queryByText('Palpites')).not.toBeInTheDocument()
     expect(screen.queryByText('Configurações')).not.toBeInTheDocument()
   })
@@ -83,6 +87,24 @@ describe('GroupSidebar', () => {
     )
   })
 
+  it('shows the live notification only when a match is actually live', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    mockedHasLiveMatch.mockReturnValue(true)
+
+    renderSidebar()
+
+    expect(screen.getByLabelText('Partida ao vivo')).toBeInTheDocument()
+  })
+
+  it('does not show the live notification without an actual live match', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    mockedHasLiveMatch.mockReturnValue(false)
+
+    renderSidebar()
+
+    expect(screen.queryByLabelText('Partida ao vivo')).not.toBeInTheDocument()
+  })
+
   it('renders aria-current on the active destination', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
     renderSidebar('/groups/g1')
@@ -94,7 +116,7 @@ describe('GroupSidebar', () => {
     mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
     renderSidebar()
 
-    fireEvent.click(screen.getByRole('button', { name: /Grupos/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Bolões/i }))
 
     expect(screen.getByRole('dialog', { name: /Seus grupos/i })).toBeInTheDocument()
   })

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { CheckCircle2, ChevronRight, Minus, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 import { useEditBet, usePlaceBet } from '@/hooks/useBets'
 import { useMatchLive } from '@/hooks/useMatches'
 import {
@@ -60,11 +61,12 @@ function EndedDot() {
   )
 }
 
-function FlagOrInitial({ name, flagUrl }: { name: string; flagUrl: string }) {
+function FlagOrInitial({ name, flagUrl, teamId }: { name: string; flagUrl: string; teamId: string }) {
   if (flagUrl) {
     return (
-      <img
+      <TeamFlagImage
         src={flagUrl}
+        teamId={teamId}
         alt={name}
         className="h-11 w-14 object-contain sm:h-12 sm:w-16"
       />
@@ -77,10 +79,10 @@ function FlagOrInitial({ name, flagUrl }: { name: string; flagUrl: string }) {
   )
 }
 
-function TeamIdentity({ name, flagUrl }: { name: string; flagUrl: string }) {
+function TeamIdentity({ name, flagUrl, teamId }: { name: string; flagUrl: string; teamId: string }) {
   return (
     <div className="flex min-w-0 flex-col items-center gap-1.5 text-center">
-      <FlagOrInitial name={name} flagUrl={flagUrl} />
+      <FlagOrInitial name={name} flagUrl={flagUrl} teamId={teamId} />
       <span className="max-w-full truncate text-xs font-semibold leading-4 text-[var(--text)] sm:text-[13px]">
         {name}
       </span>
@@ -293,7 +295,11 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
 
       <div className="grid grid-cols-2 items-start justify-items-center gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-5">
         <div className="min-w-0">
-          <TeamIdentity name={match.homeTeam.name} flagUrl={match.homeTeam.flagUrl} />
+          <TeamIdentity
+            name={match.homeTeam.name}
+            flagUrl={match.homeTeam.flagUrl}
+            teamId={match.homeTeam.id}
+          />
         </div>
 
         <div className="order-last col-span-2 flex items-center gap-2 sm:order-none sm:col-span-1">
@@ -313,7 +319,11 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
         </div>
 
         <div className="min-w-0">
-          <TeamIdentity name={match.awayTeam.name} flagUrl={match.awayTeam.flagUrl} />
+          <TeamIdentity
+            name={match.awayTeam.name}
+            flagUrl={match.awayTeam.flagUrl}
+            teamId={match.awayTeam.id}
+          />
         </div>
       </div>
 
@@ -349,14 +359,14 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
             className={`inline-flex items-center gap-1 text-xs font-semibold transition duration-150 hover:opacity-75 active:scale-95 ${
               isLive
                 ? 'text-red-500'
-                : isUpstreamFinished
+                : isFinishedView
                 ? 'text-[var(--text-muted)]'
                 : 'text-[var(--brand)]'
             }`}
           >
             {isLive ? (
               <LiveDot />
-            ) : isUpstreamFinished ? (
+            ) : isFinishedView ? (
               <EndedDot />
             ) : isPreMatch ? (
               'Pré-jogo'

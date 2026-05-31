@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
-import { useGroupMatches } from '@/hooks/useGroupMatches'
+import { useGroupHasLiveMatch } from '@/hooks/useGroupLiveMatch'
 import { useJoinRequests } from '@/hooks/useGroups'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
@@ -40,7 +40,7 @@ export function GroupMobileNav() {
   const { groupId, isAdmin } = useActiveGroup()
   const [modalOpen, setModalOpen] = useState(false)
   const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
-  const matchesQuery = useGroupMatches(groupId ?? '')
+  const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '')
 
   if (!groupId) return null
 
@@ -50,7 +50,6 @@ export function GroupMobileNav() {
     ),
   )
   const pendingRequests = requestsQuery.data?.requests.length ?? 0
-  const hasLiveMatch = matchesQuery.data?.matches.some(m => m.status === 'live') ?? false
   const totalNavItems = items.length + 1
 
   return (

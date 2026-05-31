@@ -139,10 +139,12 @@ export function MatchDetailPage() {
             statusShort={postSource.statusShort}
             homeTeamName={match.homeTeam.name}
             homeTeamFlag={match.homeTeam.flagUrl}
+            homeTeamFlagTeamId={match.homeTeam.id}
             homeWinner={postSource.homeWinner}
             homeGoals={postSource.goalsHome}
             awayTeamName={match.awayTeam.name}
             awayTeamFlag={match.awayTeam.flagUrl}
+            awayTeamFlagTeamId={match.awayTeam.id}
             awayWinner={postSource.awayWinner}
             awayGoals={postSource.goalsAway}
             round={postSource.round}
@@ -164,8 +166,10 @@ export function MatchDetailPage() {
             live={live}
             homeTeamName={match.homeTeam.name}
             homeTeamFlag={match.homeTeam.flagUrl}
+            homeTeamFlagTeamId={match.homeTeam.id}
             awayTeamName={match.awayTeam.name}
             awayTeamFlag={match.awayTeam.flagUrl}
+            awayTeamFlagTeamId={match.awayTeam.id}
           />
           {liveStadiumName ? (
             <p className="pl-1 text-xs text-[var(--text-muted)]">
@@ -177,7 +181,12 @@ export function MatchDetailPage() {
       ) : (
         <div className="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6">
           <div className="shrink-0">
-            <TeamFlag name={match.homeTeam.name} flagUrl={match.homeTeam.flagUrl} size="lg" />
+            <TeamFlag
+              name={match.homeTeam.name}
+              flagUrl={match.homeTeam.flagUrl}
+              teamId={match.homeTeam.id}
+              size="lg"
+            />
           </div>
 
           <div className="flex flex-col items-center gap-2">
@@ -200,7 +209,12 @@ export function MatchDetailPage() {
           </div>
 
           <div className="shrink-0">
-            <TeamFlag name={match.awayTeam.name} flagUrl={match.awayTeam.flagUrl} size="lg" />
+            <TeamFlag
+              name={match.awayTeam.name}
+              flagUrl={match.awayTeam.flagUrl}
+              teamId={match.awayTeam.id}
+              size="lg"
+            />
           </div>
         </div>
       )}

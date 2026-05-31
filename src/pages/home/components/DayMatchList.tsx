@@ -1,6 +1,5 @@
 import type { MatchWithUserBet } from '@/types/match.types'
 import { InlineBetCard } from './InlineBetCard'
-import { FinishedMatchCard } from './FinishedMatchCard'
 import type { BettingGroup } from '@/types/group.types'
 
 interface DayMatchListProps {
@@ -8,10 +7,11 @@ interface DayMatchListProps {
   group: BettingGroup
 }
 
-// Ordem: ao vivo primeiro, depois mais recente primeiro (scheduledAt desc).
+// Ordem: ao vivo primeiro, depois próximos jogos primeiro, depois encerrados.
 function getMatchPriority(match: MatchWithUserBet): number {
   if (match.status === 'live') return 0
-  return 1
+  if (match.status === 'upcoming') return 1
+  return 2
 }
 
 export function DayMatchList({ matches, group }: DayMatchListProps) {
@@ -26,23 +26,22 @@ export function DayMatchList({ matches, group }: DayMatchListProps) {
   const sorted = [...matches].sort((a, b) => {
     const diff = getMatchPriority(a) - getMatchPriority(b)
     if (diff !== 0) return diff
-    return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+    if (a.status === 'finished' && b.status === 'finished') {
+      return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+    }
+    return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
   })
 
   return (
     <div className="space-y-3">
-      {sorted.map(match =>
-        match.status === 'finished' ? (
-          <FinishedMatchCard key={`${group.id}:${match.id}`} match={match} group={group} />
-        ) : (
-          <InlineBetCard
-            key={`${group.id}:${match.id}`}
-            match={match}
-            groupId={group.id}
-            groupInviteCode={group.inviteCode}
-          />
-        ),
-      )}
+      {sorted.map(match => (
+        <InlineBetCard
+          key={`${group.id}:${match.id}`}
+          match={match}
+          groupId={group.id}
+          groupInviteCode={group.inviteCode}
+        />
+      ))}
     </div>
   )
 }

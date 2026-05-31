@@ -1,4 +1,5 @@
 import { Loader2 } from 'lucide-react'
+import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatMatchDate } from '@/lib/date.utils'
@@ -34,19 +35,21 @@ export function MatchPreviewRow({ match, onSave, isSaving }: Props) {
       <div className="flex flex-col gap-1 min-w-0">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
-            <img
+            <TeamFlagImage
               src={match.homeTeam.flagUrl}
+              teamId={match.homeTeam.apiTeamId}
               alt={match.homeTeam.country}
-              className="h-4 w-6 rounded-sm object-cover"
+              className="h-4 w-6 rounded-sm object-contain"
             />
             <span className="text-sm font-medium text-[var(--text)]">{match.homeTeam.name}</span>
           </div>
           <span className="text-xs text-[var(--text-muted)]">vs</span>
           <div className="flex items-center gap-1.5">
-            <img
+            <TeamFlagImage
               src={match.awayTeam.flagUrl}
+              teamId={match.awayTeam.apiTeamId}
               alt={match.awayTeam.country}
-              className="h-4 w-6 rounded-sm object-cover"
+              className="h-4 w-6 rounded-sm object-contain"
             />
             <span className="text-sm font-medium text-[var(--text)]">{match.awayTeam.name}</span>
           </div>

@@ -1,6 +1,9 @@
+import { TeamFlagImage } from './TeamFlagImage'
+
 interface TeamFlagProps {
   name: string
   flagUrl: string
+  teamId?: string | number | null
   size?: 'sm' | 'md' | 'lg'
 }
 
@@ -10,20 +13,16 @@ const sizes = {
   lg: { img: 'h-10 w-14', text: 'text-base' },
 }
 
-const PLACEHOLDER =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3'%3E%3Crect width='5' height='3' fill='%23e5e7eb'/%3E%3C/svg%3E"
-
-export function TeamFlag({ name, flagUrl, size = 'md' }: TeamFlagProps) {
+export function TeamFlag({ name, flagUrl, teamId, size = 'md' }: TeamFlagProps) {
   const { img, text } = sizes[size]
-  const src = flagUrl || PLACEHOLDER
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <img
-        src={src}
+      <TeamFlagImage
+        src={flagUrl}
+        teamId={teamId}
         alt={`Bandeira ${name}`}
         className={`${img} rounded object-contain shadow-sm`}
-        loading="lazy"
       />
       <span className={`${text} font-semibold text-[var(--text)] text-center leading-tight`}>
         {name}

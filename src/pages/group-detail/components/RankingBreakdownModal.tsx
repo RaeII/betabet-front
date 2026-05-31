@@ -1,6 +1,7 @@
 import { Trophy } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { ReferralUnlockPanel } from '@/components/referral/ReferralUnlockPanel'
+import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 import { useGroupUserBreakdown } from '@/hooks/useRanking'
 import { useReferralInfo } from '@/hooks/useReferral'
 import { useAuth } from '@/hooks/useAuth'
@@ -20,9 +21,6 @@ interface RankingBreakdownModalProps {
   isMe?: boolean
   groupInviteCode?: string
 }
-
-const FLAG_PLACEHOLDER =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3'%3E%3Crect width='5' height='3' fill='%23e5e7eb'/%3E%3C/svg%3E"
 
 /** Pontos definitivos (liquidados) do palpite. `null` enquanto não apurados. */
 function settledPoints(bet: Bet | null): { result: number; exact: number; total: number } | null {
@@ -146,11 +144,21 @@ function BreakdownRow({ match }: { match: MatchWithUserBet }) {
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <TeamSide name={match.homeTeam.name} flagUrl={match.homeTeam.flagUrl} align="start" />
+        <TeamSide
+          name={match.homeTeam.name}
+          flagUrl={match.homeTeam.flagUrl}
+          teamId={match.homeTeam.id}
+          align="start"
+        />
         <span className="shrink-0 px-2 text-base font-bold tabular-nums text-[var(--text)]">
           {formatScore(match.homeScore, match.awayScore)}
         </span>
-        <TeamSide name={match.awayTeam.name} flagUrl={match.awayTeam.flagUrl} align="end" />
+        <TeamSide
+          name={match.awayTeam.name}
+          flagUrl={match.awayTeam.flagUrl}
+          teamId={match.awayTeam.id}
+          align="end"
+        />
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-2 border-t border-[var(--border)] pt-2">
@@ -218,21 +226,23 @@ function PointsBadge({
 function TeamSide({
   name,
   flagUrl,
+  teamId,
   align,
 }: {
   name: string
   flagUrl: string
+  teamId: string
   align: 'start' | 'end'
 }) {
   return (
     <div
       className={`flex min-w-0 flex-1 items-center gap-2 ${align === 'end' ? 'flex-row-reverse text-right' : ''}`}
     >
-      <img
-        src={flagUrl || FLAG_PLACEHOLDER}
+      <TeamFlagImage
+        src={flagUrl}
+        teamId={teamId}
         alt=""
         className="h-4 w-6 shrink-0 rounded object-contain shadow-sm"
-        loading="lazy"
       />
       <span className="min-w-0 truncate text-sm font-medium text-[var(--text)]">{name}</span>
     </div>

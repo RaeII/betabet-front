@@ -5,21 +5,25 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 
 vi.mock('@/hooks/useActiveGroup', () => ({ useActiveGroup: vi.fn() }))
+vi.mock('@/hooks/useGroupLiveMatch', () => ({ useGroupHasLiveMatch: vi.fn() }))
 vi.mock('@/hooks/useGroups', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/useGroups')>('@/hooks/useGroups')
   return {
     ...actual,
     useUserGroups: () => ({ data: { groups: [] } }),
     useJoinRequests: vi.fn(),
+    useMyJoinRequests: () => ({ data: { requests: [] }, isLoading: false }),
   }
 })
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u' } }) }))
 
 import { GroupMobileNav } from '@/components/layout/GroupMobileNav'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { useGroupHasLiveMatch } from '@/hooks/useGroupLiveMatch'
 import { useJoinRequests } from '@/hooks/useGroups'
 
 const mockedActive = useActiveGroup as ReturnType<typeof vi.fn>
+const mockedHasLiveMatch = useGroupHasLiveMatch as ReturnType<typeof vi.fn>
 const mockedRequests = useJoinRequests as ReturnType<typeof vi.fn>
 
 function renderNav() {
@@ -44,6 +48,7 @@ function renderNav() {
 describe('GroupMobileNav', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockedHasLiveMatch.mockReturnValue(false)
     mockedRequests.mockReturnValue({ data: { requests: [] } })
   })
 
@@ -87,6 +92,24 @@ describe('GroupMobileNav', () => {
       'href',
       '/groups/g1/membros?tab=requests',
     )
+  })
+
+  it('shows the live notification only when a match is actually live', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    mockedHasLiveMatch.mockReturnValue(true)
+
+    renderNav()
+
+    expect(screen.getByLabelText('Partida ao vivo')).toBeInTheDocument()
+  })
+
+  it('does not show the live notification without an actual live match', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    mockedHasLiveMatch.mockReturnValue(false)
+
+    renderNav()
+
+    expect(screen.queryByLabelText('Partida ao vivo')).not.toBeInTheDocument()
   })
 
   it('"Grupos" button opens the modal', async () => {
