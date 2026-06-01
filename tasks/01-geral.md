@@ -6,5 +6,12 @@
 [] - tranferir o admin e adicionar outro admin
 [x] - Mudar a indicação para dois
 [] - Melhorar a mensagem de indicação
-[] - testar jogos real
+[x] - testar jogos real
+[] - desligar a replicação de todos os jogos do grupo
+[] - importar palpites de um grupo
+[] - sugestões
 
+[] - logo e nome do bolão
+[] - Adicionar jogo de teste por grupo
+[] - Adicionar seleção campeã para pontuar
+[x] - nome extenço do congo

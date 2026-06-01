@@ -17,7 +17,7 @@ export function PatternBackground({ theme }: PatternBackgroundProps) {
           backgroundRepeat: 'repeat',
           backgroundSize: '220px 220px',
           backgroundPosition: 'top left',
-          opacity: isDark ? 0.12 : 0.09,
+          opacity: isDark ? 0.12 : 0.045,
           filter: isDark ? 'invert(1)' : 'none',
         }}
       />
@@ -26,7 +26,7 @@ export function PatternBackground({ theme }: PatternBackgroundProps) {
         style={{
           backgroundColor: isDark
             ? 'rgba(15, 17, 16, 0.58)'
-            : 'rgba(247, 244, 236, 0.72)',
+            : 'rgba(245, 243, 238, 0.82)',
         }}
       />
     </div>

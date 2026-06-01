@@ -1,5 +1,5 @@
 import { apiDelete, apiGet, apiPost, apiPut } from './api'
-import type { AdminUser, AdminStats, MatchAnalytics, MatchFormData, ResultFormData, TeamFormData, UserStats } from '@/types/admin.types'
+import type { AdminUser, AdminStats, ChampionState, MatchAnalytics, MatchFormData, RemoveChampionResult, ResultFormData, SetChampionResult, TeamFormData, UserStats } from '@/types/admin.types'
 import type { Match } from '@/types/match.types'
 import type { BettingGroup, GroupMembership, RankingEntry } from '@/types/group.types'
 import type { Team } from '@/types/match.types'
@@ -65,4 +65,16 @@ export function getGroupObserver(groupId: string): Promise<{
   ranking: RankingEntry[]
 }> {
   return apiGet(`/api/admin/groups/${groupId}/observer`)
+}
+
+export function getChampion(): Promise<ChampionState> {
+  return apiGet('/api/admin/tournament/champion')
+}
+
+export function setChampion(championTeamId: number): Promise<SetChampionResult> {
+  return apiPost('/api/admin/tournament/champion', { championTeamId })
+}
+
+export function removeChampion(): Promise<RemoveChampionResult> {
+  return apiDelete('/api/admin/tournament/champion')
 }

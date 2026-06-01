@@ -188,8 +188,17 @@ export const mockWorldCupStandingsResponse: WorldCupStandingsResponse = {
           standing(2, { id: 775, name: 'Seleção Internacional de Nome Muito Longo', logo: '/flags/long.svg' }, 0, 'Group B', null),
         ],
         [
-          standing(1, { id: 779, name: 'Japão', logo: '/api-football/jp.png' }, 3, 'Group I', 'Promotion'),
+          standing(1, { id: 779, name: 'Japan', logo: '/api-football/jp.png' }, 3, 'Group I', 'Promotion'),
           standing(2, { id: 780, name: 'Uruguai', logo: '/api-football/uy.png' }, 0, 'Group I', null),
+        ],
+        [
+          standing(
+            1,
+            { id: 999, name: 'Third-placed Teams', logo: '/api-football/third.png' },
+            0,
+            'Ranking of third-placed teams',
+            null,
+          ),
         ],
       ],
     },

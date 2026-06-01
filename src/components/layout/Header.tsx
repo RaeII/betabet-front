@@ -12,7 +12,7 @@ export function Header() {
       style={{
         backgroundColor: isDark
           ? 'rgba(15, 17, 16, 0.86)'
-          : 'rgba(247, 244, 236, 0.86)',
+          : 'rgba(245, 243, 238, 0.9)',
         backdropFilter: 'blur(16px)',
       }}
     >

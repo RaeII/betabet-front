@@ -13,6 +13,7 @@ export interface GroupRound {
 
 export interface GroupTeamAsset {
   flagUrl: string
+  name: string
   teamId: string | number | null
 }
 
@@ -43,7 +44,7 @@ export function normalizeGroupLetter(value: string | null | undefined): string {
   const clean = value.trim().toUpperCase()
   if (GROUP_ORDER.includes(clean)) return clean
   const match = clean.match(/(?:GROUP|GRUPO)\s+([A-L])/) ?? clean.match(/\b([A-L])\b/)
-  return match?.[1] ?? clean
+  return match?.[1] ?? ''
 }
 
 export function sortGroupLetters(a: string, b: string) {
@@ -111,6 +112,7 @@ export function getGroupTeamAssets(matches: GroupMatch[]): Map<string, GroupTeam
     teams.forEach(team => {
       const asset = {
         flagUrl: team.flagUrl,
+        name: team.name,
         teamId: team.id,
       }
       const keys = [teamAssetIdKey(team.id), teamAssetNameKey(team.name)]

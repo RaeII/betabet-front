@@ -23,7 +23,7 @@ export function GroupShell() {
             backgroundImage: 'url(/world-cup-pattern.png)',
             backgroundRepeat: 'repeat',
             backgroundSize: '220px 220px',
-            opacity: isDark ? 0.09 : 0.06,
+            opacity: isDark ? 0.09 : 0.035,
             filter: isDark ? 'invert(1)' : 'none',
           }}
         />
@@ -32,7 +32,7 @@ export function GroupShell() {
           style={{
             backgroundColor: isDark
               ? 'rgba(15, 17, 16, 0.72)'
-              : 'rgba(247, 244, 236, 0.78)',
+              : 'rgba(245, 243, 238, 0.84)',
           }}
         />
       </div>

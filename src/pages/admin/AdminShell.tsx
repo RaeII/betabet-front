@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { BarChart2, Trophy, Users, Download, LogOut, Sun, Moon, Compass } from 'lucide-react'
+import { BarChart2, Trophy, Users, Download, LogOut, Sun, Moon, Compass, Crown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { useTheme } from '@/hooks/useTheme'
@@ -9,6 +9,7 @@ const adminNav = [
   { to: '/admin', end: true, icon: BarChart2, label: 'Dashboard' },
   { to: '/admin/matches', icon: Trophy, label: 'Partidas' },
   { to: '/admin/teams', icon: Users, label: 'Seleções' },
+  { to: '/admin/champion', icon: Crown, label: 'Campeão' },
   { to: '/admin/explorer', icon: Compass, label: 'API-Football Explorer' },
 ]
 

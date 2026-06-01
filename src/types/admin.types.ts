@@ -61,3 +61,17 @@ export interface ResultFormData {
   homeScore: number
   awayScore: number
 }
+
+export interface ChampionState {
+  championTeamId: string | null
+  settledAt: string | null
+}
+
+export interface SetChampionResult {
+  championTeamId: string
+  betsSettled: number
+}
+
+export interface RemoveChampionResult {
+  betsReset: number
+}

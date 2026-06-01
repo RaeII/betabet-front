@@ -1,12 +1,12 @@
 :root {
-  --bg: #f7f4ec;
-  --surface: #ffffff;
-  --surface-soft: #efeadf;
+  --bg: #f5f3ee;
+  --surface: #fffefa;
+  --surface-soft: #ede8df;
   --text: #151713;
   --text-muted: rgba(21, 23, 19, 0.66);
-  --border: rgba(21, 23, 19, 0.13);
+  --border: rgba(21, 23, 19, 0.12);
   --brand: #123d2a;
-  --brand-text: #f7f4ec;
+  --brand-text: #f5f3ee;
   --support: #d8a900;
   --danger: #c0392b;
 

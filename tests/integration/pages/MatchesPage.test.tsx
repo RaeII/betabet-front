@@ -40,6 +40,7 @@ describe('MatchesPage', () => {
       expect(imageSources.some(src => src.endsWith('/flags/br.svg'))).toBe(true)
       expect(imageSources.some(src => src.endsWith('/api-football/br.png'))).toBe(false)
     })
+    expect(screen.queryByText('Brazil')).not.toBeInTheDocument()
     expect(screen.getAllByText('Argentina').length).toBeGreaterThan(0)
   })
 
@@ -65,6 +66,19 @@ describe('MatchesPage', () => {
       expect(imageSources.some(src => src.endsWith('/flags/jp.svg'))).toBe(true)
       expect(imageSources.some(src => src.endsWith('/api-football/jp.png'))).toBe(false)
     })
+    expect(groupI.queryByText('Japan')).not.toBeInTheDocument()
+    expect(groupI.getAllByText('Japão').length).toBeGreaterThan(0)
+  })
+
+  it('does not render aggregate third-placed standings as a group', async () => {
+    render(createElement(MatchesPage), { wrapper: makeWrapper() })
+
+    await waitFor(() => expect(screen.getAllByText('Brasil').length).toBeGreaterThan(0))
+
+    expect(
+      screen.queryByRole('heading', { name: /grupo ranking of third-placed teams/i }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/third-placed teams/i)).not.toBeInTheDocument()
   })
 
   it('renders phase selector tabs', async () => {

@@ -148,6 +148,23 @@ Principais temas:
 - detecção atual de admin de grupo via `role`/fallback `group.adminId === user.id`;
 - ponto de atenção de contrato: o backend atual de `GET /api/groups/:groupId` retorna `{ group }`, sem `role`.
 
+### [011-admin-champion.md](./011-admin-champion.md)
+
+Documenta a página de admin **Campeão da Copa** (`/admin/champion`), que permite
+ao admin definir o time campeão do mundial e liquidar todas as apostas de campeão
+em todos os grupos.
+
+Principais temas:
+
+- banner do campeão atual (bandeira + nome + data de liquidação) quando já definido;
+- grade responsiva de seleções clicáveis com busca local por nome;
+- botão desabilitado quando a seleção já é o campeão atual; `ConfirmDialog` antes de confirmar;
+- toast de sucesso com contagem de apostas liquidadas (`betsSettled`);
+- `getChampion` / `setChampion` em `admin.service.ts`, tipos `ChampionState` e `SetChampionResult`;
+- rota lazy `/admin/champion` e item "Campeão" (ícone `Crown`) no sidebar do `AdminShell`;
+- liquidação idempotente no backend (`champion_first_points` / `champion_second_points` por grupo);
+- pontos de atenção (liquidação manual, idempotência, sessão admin obrigatória).
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

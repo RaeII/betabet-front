@@ -55,6 +55,13 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'champion',
+            lazy: async () => {
+              const { AdminChampionPage } = await import('@/pages/admin/AdminChampionPage')
+              return { Component: AdminChampionPage }
+            },
+          },
+          {
             path: 'explorer',
             lazy: async () => {
               const { AdminApiFootballExplorerPage } = await import('@/pages/admin/AdminApiFootballExplorerPage')

@@ -13,6 +13,16 @@ interface WorldCupStandingsTableProps {
   teamAssets?: Map<string, GroupTeamAsset>
 }
 
+function getStandingTeamAsset(
+  row: WorldCupStanding,
+  teamAssets?: Map<string, GroupTeamAsset>,
+): GroupTeamAsset | undefined {
+  return (
+    teamAssets?.get(teamAssetApiIdKey(row.team.id)) ??
+    teamAssets?.get(teamAssetNameKey(row.team.name))
+  )
+}
+
 function StandingLogo({
   row,
   teamAssets,
@@ -20,16 +30,15 @@ function StandingLogo({
   row: WorldCupStanding
   teamAssets?: Map<string, GroupTeamAsset>
 }) {
-  const teamAsset =
-    teamAssets?.get(teamAssetApiIdKey(row.team.id)) ??
-    teamAssets?.get(teamAssetNameKey(row.team.name))
+  const teamAsset = getStandingTeamAsset(row, teamAssets)
+  const teamName = teamAsset?.name ?? row.team.name
   const src = teamAsset?.flagUrl || row.team.logo
   const teamId = teamAsset?.teamId ?? row.team.id
 
   if (!src) {
     return (
       <span className="flex h-7 w-10 items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-soft)] text-xs font-bold text-[var(--text-muted)]">
-        {row.team.name.charAt(0)}
+        {teamName.charAt(0)}
       </span>
     )
   }
@@ -66,7 +75,7 @@ export function WorldCupStandingsTable({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[38rem] text-left text-sm">
+          <table className="w-full min-w-[34rem] text-left text-sm">
             <thead className="bg-[var(--surface-soft)] text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
               <tr>
                 <th className="w-14 px-4 py-3">Pos</th>
@@ -77,39 +86,38 @@ export function WorldCupStandingsTable({
                 <th className="px-3 py-3 text-center">E</th>
                 <th className="px-3 py-3 text-center">D</th>
                 <th className="px-3 py-3 text-center">SG</th>
-                <th className="px-4 py-3 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
-              {rows.map(row => (
-                <tr key={row.team.id} className="text-[var(--text)]">
-                  <td className="px-4 py-3 font-bold tabular-nums">{row.rank}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <StandingLogo row={row} teamAssets={teamAssets} />
-                      <span className="truncate font-semibold">{row.team.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 text-center font-bold tabular-nums">{row.points}</td>
-                  <td className="px-3 py-3 text-center tabular-nums">{row.all.played}</td>
-                  <td className="px-3 py-3 text-center tabular-nums">{row.all.win}</td>
-                  <td className="px-3 py-3 text-center tabular-nums">{row.all.draw}</td>
-                  <td className="px-3 py-3 text-center tabular-nums">{row.all.lose}</td>
-                  <td className="px-3 py-3 text-center tabular-nums">{row.goalsDiff}</td>
-                  <td className="px-4 py-3 text-center">
-                    {row.description ? (
-                      <span
-                        className="inline-flex rounded-[var(--radius-pill)] bg-[var(--surface-soft)] px-2 py-1 text-xs font-semibold text-[var(--brand)]"
-                        title={row.description}
-                      >
-                        Classifica
-                      </span>
-                    ) : (
-                      <span className="text-xs text-[var(--text-muted)]">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {rows.map(row => {
+                const teamName = getStandingTeamAsset(row, teamAssets)?.name ?? row.team.name
+
+                return (
+                  <tr
+                    key={row.team.id}
+                    className={
+                      row.description
+                        ? 'bg-[var(--brand)]/10 text-[var(--text)]'
+                        : 'text-[var(--text)]'
+                    }
+                    title={row.description ?? undefined}
+                  >
+                    <td className="px-4 py-3 font-bold tabular-nums">{row.rank}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <StandingLogo row={row} teamAssets={teamAssets} />
+                        <span className="truncate font-semibold">{teamName}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-center font-bold tabular-nums">{row.points}</td>
+                    <td className="px-3 py-3 text-center tabular-nums">{row.all.played}</td>
+                    <td className="px-3 py-3 text-center tabular-nums">{row.all.win}</td>
+                    <td className="px-3 py-3 text-center tabular-nums">{row.all.draw}</td>
+                    <td className="px-3 py-3 text-center tabular-nums">{row.all.lose}</td>
+                    <td className="px-3 py-3 text-center tabular-nums">{row.goalsDiff}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

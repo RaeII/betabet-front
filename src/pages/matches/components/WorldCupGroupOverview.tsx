@@ -70,9 +70,6 @@ export function WorldCupGroupOverview({ data, groupId }: WorldCupGroupOverviewPr
                   </p>
                 </div>
               </div>
-              <span className="shrink-0 text-xs font-medium text-[var(--text-muted)]">
-                {matches.length} {matches.length === 1 ? 'jogo' : 'jogos'}
-              </span>
             </header>
 
             <WorldCupStandingsTable

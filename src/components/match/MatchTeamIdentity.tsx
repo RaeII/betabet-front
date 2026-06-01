@@ -51,14 +51,14 @@ export function MatchTeamIdentity({
             classes.flag,
             classes.fallbackText,
             'flex items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-soft)] font-bold text-[var(--brand)]',
-          )}
+          )} 
         >
           {name.charAt(0).toUpperCase()}
         </span>
       )}
       <span
         className={cn(
-          'max-w-full truncate font-semibold leading-4 text-[var(--text)]',
+          'max-w-[120px] truncate font-semibold leading-4 text-[var(--text)]',
           classes.name,
         )}
       >
