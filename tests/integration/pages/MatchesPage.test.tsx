@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
@@ -41,6 +41,30 @@ describe('MatchesPage', () => {
       expect(imageSources.some(src => src.endsWith('/api-football/br.png'))).toBe(false)
     })
     expect(screen.getAllByText('Argentina').length).toBeGreaterThan(0)
+  })
+
+  it('renders group I matches and uses local team flags in standings', async () => {
+    render(createElement(MatchesPage), { wrapper: makeWrapper() })
+
+    const groupISection = (await screen.findByRole('heading', { name: /^grupo i$/i })).closest(
+      'section',
+    )
+    expect(groupISection).toBeInTheDocument()
+
+    const groupI = within(groupISection as HTMLElement)
+    expect(groupI.queryByText(/jogos ainda não importados/i)).not.toBeInTheDocument()
+    expect(
+      groupI.getByRole('link', { name: /ver detalhes de japão contra uruguai/i }),
+    ).toBeInTheDocument()
+
+    await waitFor(() => {
+      const imageSources = [...(groupISection?.querySelectorAll('table img') ?? [])].map(
+        image => image.getAttribute('src') ?? '',
+      )
+
+      expect(imageSources.some(src => src.endsWith('/flags/jp.svg'))).toBe(true)
+      expect(imageSources.some(src => src.endsWith('/api-football/jp.png'))).toBe(false)
+    })
   })
 
   it('renders phase selector tabs', async () => {

@@ -23,7 +23,7 @@ function StandingLogo({
   const teamAsset =
     teamAssets?.get(teamAssetApiIdKey(row.team.id)) ??
     teamAssets?.get(teamAssetNameKey(row.team.name))
-  const src = teamAsset?.flagUrl
+  const src = teamAsset?.flagUrl || row.team.logo
   const teamId = teamAsset?.teamId ?? row.team.id
 
   if (!src) {

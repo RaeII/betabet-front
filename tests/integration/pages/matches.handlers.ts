@@ -44,6 +44,20 @@ const mockTeamLong = {
   flagUrl: '/flags/long.svg',
   group: 'B',
 }
+const mockTeamJP = {
+  id: 't-jp',
+  apiTeamId: 779,
+  name: 'Japão',
+  flagUrl: '/flags/jp.svg',
+  group: 'I',
+}
+const mockTeamUY = {
+  id: 't-uy',
+  apiTeamId: 780,
+  name: 'Uruguai',
+  flagUrl: '/flags/uy.svg',
+  group: 'I',
+}
 const mockStadium = { id: 's-1', name: 'Estádio Nacional', city: 'Brasília' }
 
 export const mockMatch: Match = {
@@ -88,6 +102,20 @@ export const mockSecondRoundMatch: Match = {
   awayScore: null,
 }
 
+export const mockGroupIMatch: Match = {
+  id: 'match-4',
+  homeTeam: mockTeamJP,
+  awayTeam: mockTeamUY,
+  stadium: mockStadium,
+  scheduledAt: new Date(Date.now() + 50 * 60 * 60_000).toISOString(),
+  status: 'upcoming',
+  phase: 'group',
+  groupName: 'I',
+  matchday: 1,
+  homeScore: null,
+  awayScore: null,
+}
+
 export const mockMatchesResponse: MatchesResponse = {
   groupStage: {
     A: {
@@ -96,6 +124,9 @@ export const mockMatchesResponse: MatchesResponse = {
     },
     B: {
       matchday1: [mockFinishedMatch],
+    },
+    I: {
+      matchday1: [mockGroupIMatch],
     },
   },
   knockout: {},
@@ -156,6 +187,10 @@ export const mockWorldCupStandingsResponse: WorldCupStandingsResponse = {
           standing(1, { id: 774, name: 'França', logo: '/flags/fr.svg' }, 3, 'Group B', 'Promotion'),
           standing(2, { id: 775, name: 'Seleção Internacional de Nome Muito Longo', logo: '/flags/long.svg' }, 0, 'Group B', null),
         ],
+        [
+          standing(1, { id: 779, name: 'Japão', logo: '/api-football/jp.png' }, 3, 'Group I', 'Promotion'),
+          standing(2, { id: 780, name: 'Uruguai', logo: '/api-football/uy.png' }, 0, 'Group I', null),
+        ],
       ],
     },
   },
@@ -177,7 +212,7 @@ export const matchesHandlers = [
 
   http.get('/api/matches/:matchId', ({ params }) => {
     const match =
-      [mockMatch, mockFinishedMatch, mockSecondRoundMatch].find(
+      [mockMatch, mockFinishedMatch, mockSecondRoundMatch, mockGroupIMatch].find(
         item => item.id === params.matchId,
       ) ?? mockMatch
     return HttpResponse.json({
