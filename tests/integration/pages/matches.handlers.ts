@@ -2,11 +2,41 @@ import { http, HttpResponse } from 'msw'
 import type { MatchesResponse, Match } from '@/types/match.types'
 import type { WorldCupStandingsResponse, WorldCupStanding } from '@/types/worldCup.types'
 
-const mockTeamBR = { id: 't-br', apiTeamId: 770, name: 'Brasil', flagUrl: '/flags/br.svg', group: 'A' }
-const mockTeamAR = { id: 't-ar', apiTeamId: 771, name: 'Argentina', flagUrl: '/flags/ar.svg', group: 'A' }
-const mockTeamDE = { id: 't-de', apiTeamId: 772, name: 'Alemanha', flagUrl: '/flags/de.svg', group: 'A' }
-const mockTeamES = { id: 't-es', apiTeamId: 773, name: 'Espanha', flagUrl: '/flags/es.svg', group: 'A' }
-const mockTeamFR = { id: 't-fr', apiTeamId: 774, name: 'França', flagUrl: '/flags/fr.svg', group: 'B' }
+const mockTeamBR = {
+  id: 't-br',
+  apiTeamId: 770,
+  name: 'Brasil',
+  flagUrl: '/flags/br.svg',
+  group: 'A',
+}
+const mockTeamAR = {
+  id: 't-ar',
+  apiTeamId: 771,
+  name: 'Argentina',
+  flagUrl: '/flags/ar.svg',
+  group: 'A',
+}
+const mockTeamDE = {
+  id: 't-de',
+  apiTeamId: 772,
+  name: 'Alemanha',
+  flagUrl: '/flags/de.svg',
+  group: 'A',
+}
+const mockTeamES = {
+  id: 't-es',
+  apiTeamId: 773,
+  name: 'Espanha',
+  flagUrl: '/flags/es.svg',
+  group: 'A',
+}
+const mockTeamFR = {
+  id: 't-fr',
+  apiTeamId: 774,
+  name: 'França',
+  flagUrl: '/flags/fr.svg',
+  group: 'B',
+}
 const mockTeamLong = {
   id: 't-long',
   apiTeamId: 775,
@@ -111,7 +141,13 @@ export const mockWorldCupStandingsResponse: WorldCupStandingsResponse = {
       season: 2026,
       standings: [
         [
-          standing(1, { id: 770, name: 'Brazil', logo: '/api-football/br.png' }, 6, 'Group A', 'Promotion'),
+          standing(
+            1,
+            { id: 770, name: 'Brazil', logo: '/api-football/br.png' },
+            6,
+            'Group A',
+            'Promotion',
+          ),
           standing(2, { id: 771, name: 'Argentina', logo: '/flags/ar.svg' }, 3, 'Group A', 'Promotion'),
           standing(3, { id: 772, name: 'Alemanha', logo: '/flags/de.svg' }, 1, 'Group A', null),
           standing(4, { id: 773, name: 'Espanha', logo: '/flags/es.svg' }, 0, 'Group A', null),
