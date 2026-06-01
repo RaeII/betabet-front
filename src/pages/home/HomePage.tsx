@@ -62,12 +62,12 @@ export function HomePage() {
         </p>
       </section>
 
+      <ChampionBetCard groupId={groupId} />
+
       <BettingProgressBar
         progress={progress}
         greeting={firstName ? `${firstName}, seus palpites` : 'Seus palpites'}
       />
-
-      <ChampionBetCard groupId={groupId} />
 
       <DayStrip
         matches={matches}

@@ -125,21 +125,35 @@ export function GroupIdentityStep({
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)]"
-        >
-          <Upload size={14} />
-          {coverUrl ? 'Trocar imagem' : 'Upload de imagem'}
-        </button>
-        {imageError && (
-          <span className="text-xs text-[var(--danger)]">{imageError}</span>
-        )}
+        <div className="relative pt-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full border-[var(--brand)] bg-[var(--surface)] text-[var(--brand)] hover:bg-[var(--surface-soft)]"
+          >
+            <Upload size={16} />
+            {coverUrl ? 'Trocar imagem do grupo' : 'Escolher imagem do grupo'}
+          </Button>
+          <div
+            className="pointer-events-none absolute inset-x-0 top-full mt-1 h-4 overflow-hidden"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <span
+              className={[
+                'block text-xs font-medium leading-4 text-[var(--danger)] transition duration-150',
+                imageError ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0',
+              ].join(' ')}
+            >
+              {imageError}
+            </span>
+          </div>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png"
+          accept="image/jpeg,image/png,image/webp"
           className="hidden"
           onChange={handleFileChange}
         />

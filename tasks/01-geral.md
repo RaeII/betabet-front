@@ -20,3 +20,10 @@
 [] - Melhorar a descrição do botão se subir imagem do grupo
 [] - Melhorar o botão de aumentar os pontos nas configurações de grupo
 [] - Melhor a descrição e um exemplo do campeão na criação do grupo
+[] - testar a visualização de outros grupos com outro usuário
+[] - Mudar horas para dia
+[] - importar jogos de outros grupos, botão na sidebar
+[] - Aba de palpites dentro do jogo
+
+[] - Mensagem de chace
+[] - Exclusão de conta

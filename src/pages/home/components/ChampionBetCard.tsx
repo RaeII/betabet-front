@@ -12,26 +12,30 @@ interface ChampionBetCardProps {
   groupId: string
 }
 
-function PickRow({ rank, team, points, hit }: { rank: 1 | 2; team: Team | null; points: number; hit: boolean | null }) {
+function PickChip({ rank, team, points, hit }: { rank: 1 | 2; team: Team | null; points: number; hit: boolean | null }) {
+  const label = rank === 1 ? 'Opção 1' : 'Opção 2'
+
   return (
-    <div className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-soft)] px-3 py-2.5">
-      <span className="shrink-0 text-xs font-bold text-[var(--text-muted)]">{rank}º</span>
-      <TeamFlagImage
-        src={team?.flagUrl}
-        teamId={team?.id}
-        alt={team?.name ?? ''}
-        className="h-5 w-7 shrink-0 rounded object-contain"
-      />
-      <span className="truncate text-sm font-semibold text-[var(--text)]">
-        {team?.name ?? 'Seleção'}
-      </span>
-      <span
-        className={`ml-auto shrink-0 text-xs font-bold ${
-          hit ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'
-        }`}
-      >
-        {hit === null ? `vale ${points} pts` : hit ? `+${points} pts` : `${points} pts`}
-      </span>
+    <div className="min-w-0 space-y-1">
+      <span className="block px-1 text-[11px] font-bold leading-none text-[var(--text-muted)]">{label}</span>
+      <div className="flex min-w-0 items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-soft)] px-2.5 py-2">
+        <TeamFlagImage
+          src={team?.flagUrl}
+          teamId={team?.id}
+          alt={team?.name ?? ''}
+          className="h-5 w-7 shrink-0 rounded object-contain"
+        />
+        <span className="min-w-0 truncate text-sm font-semibold text-[var(--text)]">
+          {team?.name ?? 'Seleção'}
+        </span>
+        <span
+          className={`ml-auto shrink-0 text-[11px] font-bold ${
+            hit ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'
+          }`}
+        >
+          {hit === null ? `${points} pts` : hit ? `+${points}` : `${points}`}
+        </span>
+      </div>
     </div>
   )
 }
@@ -63,7 +67,7 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
   const earnedPoints = myBet?.points ?? 0
 
   return (
-    <section className="space-y-3 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
+    <section className="mx-auto w-full max-w-[34rem] space-y-2.5 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-3.5">
       <header className="flex items-center gap-2">
         <Crown size={18} className="text-[var(--brand)]" />
         <h3 className="text-sm font-semibold text-[var(--text)]">Campeão da Copa</h3>
@@ -81,14 +85,16 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
 
       {hasBet ? (
         <div className="space-y-2">
-          <PickRow rank={1} team={firstTeam} points={firstPoints} hit={firstHit} />
-          <PickRow rank={2} team={secondTeam} points={secondPoints} hit={secondHit} />
+          <div className="grid grid-cols-2 gap-2">
+            <PickChip rank={1} team={firstTeam} points={firstPoints} hit={firstHit} />
+            <PickChip rank={2} team={secondTeam} points={secondPoints} hit={secondHit} />
+          </div>
 
           {settled ? (
-            <p className={`text-sm font-medium ${earnedPoints > 0 ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`}>
+            <p className={`text-xs font-medium ${earnedPoints > 0 ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`}>
               {earnedPoints > 0
-                ? `Você acertou e ganhou ${earnedPoints} pontos! 🏆`
-                : 'Não foi dessa vez — seu palpite não pontuou.'}
+                ? `Você ganhou ${earnedPoints} pontos.`
+                : 'Seu palpite não pontuou.'}
             </p>
           ) : bettingOpen ? (
             <p className="text-xs text-[var(--text-muted)]">
@@ -103,13 +109,12 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
           )}
         </div>
       ) : bettingOpen ? (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-[var(--text-muted)]">
-            Você ainda não escolheu o campeão. Selecione duas seleções —
-            {' '}{firstPoints} pts se a 1ª for campeã, {secondPoints} pts se for a 2ª.
-            {deadline ? ` Escolha até ${formatMatchDate(deadline)}.` : ''}
+            Escolha 2 opções de campeão: opção 1 vale {firstPoints} pts, opção 2 vale {secondPoints} pts.
+            {deadline ? ` Até ${formatMatchDate(deadline)}.` : ''}
           </p>
-          <Button onClick={() => setModalOpen(true)} className="w-full sm:w-auto">
+          <Button onClick={() => setModalOpen(true)} size="sm" className="w-full shrink-0 sm:w-auto">
             <Crown size={16} />
             Escolher campeão
           </Button>

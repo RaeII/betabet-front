@@ -84,10 +84,20 @@ export interface RegisterFriendlyMatchResponse {
     season: number
     round: string
   }
+  targetGroupIds: string[]
 }
 
-export function registerFriendlyMatch(apiFixtureId: number): Promise<RegisterFriendlyMatchResponse> {
-  return apiPost(`/api/admin/friendly-matches/${apiFixtureId}`)
+/**
+ * Cadastra a partida de teste. `groupIds` vazio = visível a todos os grupos;
+ * com grupos = restrita a esses grupos.
+ */
+export function registerFriendlyMatch(
+  apiFixtureId: number,
+  groupIds: string[] = [],
+): Promise<RegisterFriendlyMatchResponse> {
+  return apiPost(`/api/admin/friendly-matches/${apiFixtureId}`, {
+    groupIds: groupIds.map(Number),
+  })
 }
 
 export function listFixtures(params: {

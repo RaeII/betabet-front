@@ -39,6 +39,32 @@ export function deleteMatch(matchId: string): Promise<void> {
   return apiDelete(`/api/admin/matches/${matchId}`)
 }
 
+export interface AdminGroup {
+  id: string
+  name: string
+  memberCount: number
+}
+
+export function listAdminGroups(): Promise<{ groups: AdminGroup[] }> {
+  return apiGet('/api/admin/groups')
+}
+
+export interface TestMatch {
+  id: string
+  homeTeamName: string
+  awayTeamName: string
+  scheduledAt: string
+  status: string
+  homeScore: number | null
+  awayScore: number | null
+  betCount: number
+  targetGroups: { id: string; name: string }[]
+}
+
+export function getTestMatches(): Promise<{ matches: TestMatch[] }> {
+  return apiGet('/api/admin/friendly-matches')
+}
+
 export function getTeams(): Promise<{ teams: Team[] }> {
   return apiGet('/api/admin/teams')
 }

@@ -17,19 +17,21 @@ A regra de negócio e o endpoint estão documentados em
 ## Comportamento
 
 O botão fica na coluna da direita de cada `FixtureRow`, alinhado verticalmente
-com placar/status. Estados visuais:
+com placar/status. Clicar abre um **modal de seleção de grupos** (`Modal`):
+um checklist de todos os grupos (via `GET /admin/groups`, carregado quando o
+modal abre) com o texto *"Nenhum selecionado = aparece em todos os grupos"*.
+Confirmar dispara o `POST` com os `groupIds` escolhidos. Estados do botão:
 
 | Estado     | Botão                              | Auxiliar                        |
 |------------|------------------------------------|---------------------------------|
-| `idle`     | `+ Cadastrar` (variant `primary`)  | —                               |
+| `idle`     | `+ Cadastrar` (variant `primary`) → abre o modal | —                 |
 | `loading`  | `⟳ Cadastrando…` (disabled)        | —                               |
 | `done`     | `✓ Cadastrada` (variant `secondary`, disabled) | `Match ID <id>` mono abaixo |
 | `error`    | `+ Cadastrar` (clicável novamente) | mensagem em vermelho (10px)     |
 
 O estado é **local ao componente** (não usa React Query mutate) — basta um
-`useState` de `RegState`. O motivo é simplicidade: a página é uma ferramenta
-interna, não precisa de cache global de "fixtures já cadastrados", e cada
-linha é independente. Recarregar a página reseta o botão para `idle`.
+`useState` de `RegState` + `pickerOpen`/`selectedGroups`. A página é uma
+ferramenta interna; recarregar reseta o botão para `idle`.
 
 ### Tratamento de erros
 
@@ -47,33 +49,42 @@ A discriminação de status usa `ApiRequestError` exportado de
 
 ## Onde a UI vive
 
-Tudo dentro do componente `FixtureRow` em
-`src/pages/admin/AdminApiFootballExplorerPage.tsx`. Não criamos arquivo
-novo — o botão é específico do explorer e o resto do `FixtureRow` permanece
-inalterado.
+O **cadastro** (botão + modal de grupos) fica dentro do `FixtureRow` em
+`src/pages/admin/AdminApiFootballExplorerPage.tsx` — ação contextual no
+explorer existente.
 
-A página não tem aba nova nem entrada de menu nova: o cadastro é uma ação
-contextual dentro do explorer existente. O explorer já mostra IDs de liga,
-time e fixture, então o admin já tem o contexto que precisa para decidir
-"vou cadastrar essa para testar".
+O **gerenciamento** (ver lista + excluir) tem página própria:
+`src/pages/admin/AdminTestMatchesPage.tsx`, em `/admin/test-matches`, com
+item **"Partidas de teste"** (ícone `FlaskConical`) no `adminNav` do
+`AdminShell`. Lista cada partida de teste com times, data, status, placar,
+nº de palpites e chips dos grupos-alvo ("Todos os grupos" quando vazio). O
+botão de lixeira abre `ConfirmDialog` → `deleteMatch(id)` (mesmo
+`DELETE /admin/matches/:id` da página de Partidas) → invalida as queries
+`['admin','test-matches']` e `['admin','matches']` + toast.
 
 ---
 
 ## Service
 
-`src/services/apiFootballExplorer.service.ts` ganhou um wrapper único:
+`src/services/apiFootballExplorer.service.ts`:
 
 ```ts
-registerFriendlyMatch(apiFixtureId: number): Promise<RegisterFriendlyMatchResponse>
+registerFriendlyMatch(apiFixtureId: number, groupIds?: string[]): Promise<RegisterFriendlyMatchResponse>
 ```
 
-`RegisterFriendlyMatchResponse` é uma projeção dos campos que a UI usa
-(`match.id`, `match.scheduledAt`, etc. + `league` para contexto). O backend
-retorna mais campos, que são ignorados (mesmo padrão de `ApiFootballLeague`
-e `ApiFootballFixture`).
+`groupIds` vazio = global; com grupos = restrita. A response inclui
+`targetGroupIds`.
 
-Usa `apiPost` de `src/services/api.ts`, que injeta `credentials: 'include'`
-para enviar o cookie `admin_token` e mapeia erros para `ApiRequestError`.
+`src/services/admin.service.ts` ganhou:
+
+```ts
+listAdminGroups(): Promise<{ groups: AdminGroup[] }>     // GET /api/admin/groups
+getTestMatches(): Promise<{ matches: TestMatch[] }>      // GET /api/admin/friendly-matches
+deleteMatch(matchId): Promise<void>                      // (já existia) DELETE /api/admin/matches/:id
+```
+
+Tudo usa `apiGet`/`apiPost`/`apiDelete` de `src/services/api.ts`
+(`credentials: 'include'` + `ApiRequestError`).
 
 ---
 
@@ -81,10 +92,12 @@ para enviar o cookie `admin_token` e mapeia erros para `ApiRequestError`.
 
 | Arquivo | Responsabilidade |
 |---------|------------------|
-| `src/pages/admin/AdminApiFootballExplorerPage.tsx` | Botão **Cadastrar** + estados locais por `FixtureRow` |
-| `src/services/apiFootballExplorer.service.ts` | `registerFriendlyMatch(apiFixtureId)` + tipo `RegisterFriendlyMatchResponse` |
-| `src/services/api.ts` | `apiPost`, `ApiRequestError` (reusados sem alteração) |
-| `src/components/ui/button.tsx` | variants `primary` / `secondary`, size `sm` (reusado) |
+| `src/pages/admin/AdminApiFootballExplorerPage.tsx` | Botão **Cadastrar** + modal de seleção de grupos por `FixtureRow` |
+| `src/pages/admin/AdminTestMatchesPage.tsx` | Página "Partidas de teste": lista + excluir |
+| `src/pages/admin/AdminShell.tsx` · `src/router/index.tsx` | Item de menu + rota `/admin/test-matches` |
+| `src/services/apiFootballExplorer.service.ts` | `registerFriendlyMatch(apiFixtureId, groupIds)` + `RegisterFriendlyMatchResponse` |
+| `src/services/admin.service.ts` | `listAdminGroups`, `getTestMatches`, `deleteMatch` |
+| `src/components/ui/{modal,confirm-dialog,button}.tsx` | `Modal`, `ConfirmDialog`, `Button` (reusados) |
 
 ---
 
@@ -108,13 +121,10 @@ para enviar o cookie `admin_token` e mapeia erros para `ApiRequestError`.
 
 ## Pontos de alteração futura
 
-- **Indicador "Já cadastrada" persistente** — hoje o estado é só
-  `useState` local. Para mostrar o badge mesmo após reload, seria preciso
-  um `GET /admin/friendly-matches?league=...` que devolvesse os
-  `apiFixtureId` já gravados (similar ao `preview` da Copa).
-- **Link "Ver na lista de partidas"** após `done`, levando o admin direto
-  para `/admin/matches?id=<matchId>` para conferir.
-- **Botão "Remover"** alinhado a um eventual `DELETE
-  /admin/friendly-matches/:id` (ver doc do backend).
+- **Indicador "Já cadastrada" persistente** — hoje o estado é só `useState`
+  local; cruzar os `apiFixtureId` já gravados (via `GET /admin/friendly-matches`)
+  marcaria o botão mesmo após reload.
+- **Editar grupos-alvo** na página "Partidas de teste" — hoje é só ver +
+  excluir; os grupos são definidos só no cadastro.
 - **Indicador de progresso** em cadastro de múltiplos fixtures consecutivos
   (fila com retry automático no caso de rate-limit upstream).

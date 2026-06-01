@@ -4,6 +4,7 @@ import { Search, Loader2, Globe, CalendarClock, MapPin, Radio, Plus, Check } fro
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Modal } from '@/components/ui/modal'
 import { cn } from '@/lib/utils'
 import {
   listLeagues,
@@ -12,6 +13,7 @@ import {
   type ApiFootballLeague,
   type ApiFootballFixture,
 } from '@/services/apiFootballExplorer.service'
+import { listAdminGroups } from '@/services/admin.service'
 import { ApiRequestError } from '@/services/api'
 
 type Tab = 'leagues' | 'team'
@@ -417,11 +419,25 @@ function FixtureRow({ fixture, showLeague }: { fixture: ApiFootballFixture; show
     | { status: 'error'; message: string }
   const [reg, setReg] = useState<RegState>({ status: 'idle' })
   const alreadyRegistered = reg.status === 'done'
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
 
-  async function handleRegister() {
+  const groupsQuery = useQuery({
+    queryKey: ['admin', 'groups'],
+    queryFn: listAdminGroups,
+    enabled: pickerOpen,
+    staleTime: 60_000,
+  })
+
+  function toggleGroup(id: string) {
+    setSelectedGroups((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]))
+  }
+
+  async function handleRegister(groupIds: string[]) {
+    setPickerOpen(false)
     setReg({ status: 'loading' })
     try {
-      const out = await registerFriendlyMatch(fx.id)
+      const out = await registerFriendlyMatch(fx.id, groupIds)
       setReg({ status: 'done', matchId: out.match.id })
     } catch (err) {
       const msg =
@@ -481,7 +497,10 @@ function FixtureRow({ fixture, showLeague }: { fixture: ApiFootballFixture; show
             variant={alreadyRegistered ? 'secondary' : 'primary'}
             size="sm"
             disabled={reg.status === 'loading' || alreadyRegistered}
-            onClick={handleRegister}
+            onClick={() => {
+              setSelectedGroups([])
+              setPickerOpen(true)
+            }}
           >
             {reg.status === 'loading' && <Loader2 size={13} className="animate-spin" />}
             {alreadyRegistered && <Check size={13} />}
@@ -501,6 +520,66 @@ function FixtureRow({ fixture, showLeague }: { fixture: ApiFootballFixture; show
           )}
         </div>
       </div>
+
+      <Modal
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        title="Cadastrar partida de teste"
+        description="Selecione em quais grupos a partida deve aparecer. Nenhum selecionado = aparece em todos os grupos."
+      >
+        <div className="space-y-3 px-5 py-4">
+          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] p-2 text-xs text-[var(--text-muted)]">
+            {teams.home.name} <span className="opacity-60">×</span> {teams.away.name}
+          </div>
+
+          {groupsQuery.isLoading && (
+            <p className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+              <Loader2 size={14} className="animate-spin" /> Carregando grupos…
+            </p>
+          )}
+          {groupsQuery.isError && (
+            <p className="text-sm text-red-600">Falha ao carregar grupos.</p>
+          )}
+          {groupsQuery.data && groupsQuery.data.groups.length === 0 && (
+            <p className="text-sm text-[var(--text-muted)]">Nenhum grupo cadastrado.</p>
+          )}
+          {groupsQuery.data && groupsQuery.data.groups.length > 0 && (
+            <ul className="max-h-64 space-y-1 overflow-y-auto">
+              {groupsQuery.data.groups.map((g) => (
+                <li key={g.id}>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm text-[var(--text)] hover:bg-[var(--bg)]">
+                    <input
+                      type="checkbox"
+                      className="accent-[var(--brand)]"
+                      checked={selectedGroups.includes(g.id)}
+                      onChange={() => toggleGroup(g.id)}
+                    />
+                    <span className="flex-1 truncate">{g.name}</span>
+                    <span className="text-xs text-[var(--text-muted)]">{g.memberCount} membros</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span className="text-xs text-[var(--text-muted)]">
+              {selectedGroups.length === 0
+                ? 'Todos os grupos'
+                : `${selectedGroups.length} grupo(s) selecionado(s)`}
+            </span>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setPickerOpen(false)}>
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={() => handleRegister(selectedGroups)}>
+                <Plus size={13} />
+                <span className="ml-1">Cadastrar</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </li>
   )
 }

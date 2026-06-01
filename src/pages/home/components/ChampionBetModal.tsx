@@ -30,7 +30,7 @@ function SlotChip({
   team: Team | null
   onClear: () => void
 }) {
-  const label = rank === 1 ? '1º palpite' : '2º palpite'
+  const label = rank === 1 ? 'Opção 1 de campeão' : 'Opção 2 de campeão'
   return (
     <div className="flex-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-soft)] p-3">
       <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
@@ -128,7 +128,7 @@ export function ChampionBetModal({
       open={open}
       onOpenChange={onOpenChange}
       title="Aposta de campeão"
-      description={`1º palpite vale ${firstPoints} pts · 2º palpite vale ${secondPoints} pts`}
+      description={`Opção 1 vale ${firstPoints} pts · opção 2 vale ${secondPoints} pts se for campeã`}
     >
       <div className="space-y-4 p-5">
         <div className="flex gap-2">
@@ -180,7 +180,7 @@ export function ChampionBetModal({
                   <span className="truncate text-sm font-medium text-[var(--text)]">{team.name}</span>
                   {selected && (
                     <span className="ml-auto shrink-0 rounded-full bg-[var(--brand)] px-1.5 text-[10px] font-bold text-[var(--brand-text)]">
-                      {isFirst ? '1º' : '2º'}
+                      {isFirst ? 'Opção 1' : 'Opção 2'}
                     </span>
                   )}
                 </button>
