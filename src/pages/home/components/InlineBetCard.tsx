@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { CheckCircle2, ChevronRight, Minus, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { MatchTeamIdentity } from '@/components/match/MatchTeamIdentity'
 import { Button } from '@/components/ui/button'
-import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 import { useEditBet, usePlaceBet } from '@/hooks/useBets'
 import { useMatchLive } from '@/hooks/useMatches'
 import {
@@ -58,35 +58,6 @@ function EndedDot() {
       <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-[var(--text-muted)]" />
       Encerrado
     </span>
-  )
-}
-
-function FlagOrInitial({ name, flagUrl, teamId }: { name: string; flagUrl: string; teamId: string }) {
-  if (flagUrl) {
-    return (
-      <TeamFlagImage
-        src={flagUrl}
-        teamId={teamId}
-        alt={name}
-        className="h-11 w-14 object-contain sm:h-12 sm:w-16"
-      />
-    )
-  }
-  return (
-    <span className="flex h-11 w-14 items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-soft)] text-sm font-bold text-[var(--brand)] sm:h-12 sm:w-16">
-      {name.charAt(0).toUpperCase()}
-    </span>
-  )
-}
-
-function TeamIdentity({ name, flagUrl, teamId }: { name: string; flagUrl: string; teamId: string }) {
-  return (
-    <div className="flex min-w-0 flex-col items-center gap-1.5 text-center">
-      <FlagOrInitial name={name} flagUrl={flagUrl} teamId={teamId} />
-      <span className="max-w-full truncate text-xs font-semibold leading-4 text-[var(--text)] sm:text-[13px]">
-        {name}
-      </span>
-    </div>
   )
 }
 
@@ -295,7 +266,7 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
 
       <div className="grid grid-cols-2 items-start justify-items-center gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-5">
         <div className="min-w-0">
-          <TeamIdentity
+          <MatchTeamIdentity
             name={match.homeTeam.name}
             flagUrl={match.homeTeam.flagUrl}
             teamId={match.homeTeam.id}
@@ -319,7 +290,7 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
         </div>
 
         <div className="min-w-0">
-          <TeamIdentity
+          <MatchTeamIdentity
             name={match.awayTeam.name}
             flagUrl={match.awayTeam.flagUrl}
             teamId={match.awayTeam.id}

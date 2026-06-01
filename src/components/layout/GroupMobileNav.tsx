@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useMatch } from 'react-router-dom'
 import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
@@ -39,8 +39,19 @@ function centerHomeItem(items: typeof sidebarDestinations) {
 export function GroupMobileNav() {
   const { groupId, isAdmin } = useActiveGroup()
   const [modalOpen, setModalOpen] = useState(false)
+  const groupMatchesListRoute = useMatch({ path: '/groups/:groupId/jogos', end: true })
+  const globalMatchesListRoute = useMatch({ path: '/matches', end: true })
+  const groupMatchDetailRoute = useMatch({ path: '/groups/:groupId/matches/:matchId', end: true })
+  const globalMatchDetailRoute = useMatch({ path: '/matches/:matchId', end: true })
+  const isMatchesListRoute = Boolean(groupMatchesListRoute || globalMatchesListRoute)
+  const currentMatchId =
+    groupMatchDetailRoute?.params.matchId ?? globalMatchDetailRoute?.params.matchId
   const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
-  const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '')
+  const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '', {
+    enabled: !isMatchesListRoute,
+    suppressWhenViewingMatchId: currentMatchId,
+  })
+  const showLiveMatch = hasLiveMatch && !isMatchesListRoute
 
   if (!groupId) return null
 
@@ -92,7 +103,7 @@ export function GroupMobileNav() {
                         {pendingRequests > 99 ? '99+' : pendingRequests}
                       </span>
                     ) : null}
-                    {item.id === 'jogos' && hasLiveMatch ? (
+                    {item.id === 'jogos' && showLiveMatch ? (
                       <span
                         className="absolute -right-1.5 -top-1 flex h-2.5 w-2.5"
                         aria-label="Partida ao vivo"

@@ -75,10 +75,11 @@ export function useMatchLive(matchId: string, enabled = true) {
 }
 ```
 
-Bate com o TTL backend de 2 min:
+Alinhado ao TTL backend de 1 min:
 
-- 60 s é mais rápido que o cache → na **maioria** dos polls, o segundo
-  hit cai no cache do backend (custo upstream zero).
+- 60 s casa com o cache de 1 min → cada poll tende a encontrar uma
+  entrada recém-expirada e recebe dados frescos, mantendo a defasagem
+  da informação ao vivo em ~1 min.
 - `refetchIntervalInBackground: false` evita gastar quota com aba
   minimizada.
 - `staleTime: 30 s` cobre re-renders próximos sem hit extra.

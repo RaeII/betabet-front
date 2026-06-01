@@ -1,18 +1,38 @@
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { getAdminMatches } from '@/services/admin.service'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Trash2 } from 'lucide-react'
+import { deleteMatch, getAdminMatches } from '@/services/admin.service'
+import { ApiRequestError } from '@/services/api'
 import { MatchResultForm } from './components/MatchResultForm'
 import { MatchStatusBadge } from '@/components/match/MatchStatusBadge'
 import { formatMatchDate } from '@/lib/date.utils'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useToast } from '@/context/toast.context'
+import type { Match } from '@/types/match.types'
 
 export function AdminMatchesPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'matches'],
     queryFn: getAdminMatches,
   })
   const [confirmingMatchId, setConfirmingMatchId] = useState<string | null>(null)
+  const [matchToDelete, setMatchToDelete] = useState<Match | null>(null)
+
+  const removeMatch = useMutation({
+    mutationFn: (matchId: string) => deleteMatch(matchId),
+    onSuccess: () => {
+      setMatchToDelete(null)
+      void qc.invalidateQueries({ queryKey: ['admin', 'matches'] })
+      toast({ title: 'Partida excluída.', variant: 'success' })
+    },
+    onError: err => {
+      const msg = err instanceof ApiRequestError ? err.message : 'Erro ao excluir partida.'
+      toast({ title: msg, variant: 'error' })
+    },
+  })
 
   if (isLoading) {
     return <div className="text-[var(--text-muted)]">Carregando partidas…</div>
@@ -45,6 +65,15 @@ export function AdminMatchesPage() {
                     Confirmar resultado
                   </Button>
                 )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Excluir ${match.homeTeam.name} vs ${match.awayTeam.name}`}
+                  className="text-[var(--text-muted)] hover:text-[var(--danger)]"
+                  onClick={() => setMatchToDelete(match)}
+                >
+                  <Trash2 size={16} />
+                </Button>
               </div>
             </div>
 
@@ -62,6 +91,26 @@ export function AdminMatchesPage() {
           </div>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={matchToDelete !== null}
+        onOpenChange={open => {
+          if (!open) setMatchToDelete(null)
+        }}
+        title="Excluir partida"
+        description={
+          matchToDelete
+            ? `Tem certeza que deseja excluir “${matchToDelete.homeTeam.name} vs ${matchToDelete.awayTeam.name}”? As apostas associadas serão removidas. Esta ação não pode ser desfeita.`
+            : undefined
+        }
+        confirmLabel="Excluir"
+        loadingLabel="Excluindo…"
+        destructive
+        isLoading={removeMatch.isPending}
+        onConfirm={() => {
+          if (matchToDelete) removeMatch.mutate(matchToDelete.id)
+        }}
+      />
     </div>
   )
 }

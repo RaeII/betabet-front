@@ -1,0 +1,19 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - text: 🏆
+    - heading "Bolão da Copa" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Entre na sua conta para apostar
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e12]:
+        - textbox "E-mail" [ref=e13]:
+          - /placeholder: " "
+        - generic: E-mail
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - paragraph
+        - button "Enviar código" [ref=e16]
+    - paragraph [ref=e17]:
+      - text: Não tem conta?
+      - link "Cadastre-se" [ref=e18] [cursor=pointer]:
+        - /url: /auth/register

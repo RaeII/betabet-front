@@ -3,9 +3,9 @@ import { User } from 'lucide-react'
 import type { PreviewLineup, PreviewLineupPlayer } from '@/services/matchPreview.service'
 
 const PITCH_WIDTH = 112
-const PITCH_HEIGHT = 72
-const PLAYER_MIN_Y = 8
-const PLAYER_Y_RANGE = 56
+const PITCH_HEIGHT = 68
+const PLAYER_MIN_Y = 7.5
+const PLAYER_Y_RANGE = 53
 
 interface PreMatchLineupProps {
   lineups: PreviewLineup[]
@@ -47,12 +47,12 @@ interface PlayerDotProps {
 function PlayerDot({ player, cx, cy, fill, stroke, textColor }: PlayerDotProps) {
   return (
     <g>
-      <circle cx={cx} cy={cy} r="4" fill={fill} stroke={stroke} strokeWidth="0.30" />
+      <circle cx={cx} cy={cy} r="3.4" fill={fill} stroke={stroke} strokeWidth="0.5" />
       <text
         x={cx}
-        y={cy + 1}
+        y={cy + 0.75}
         textAnchor="middle"
-        fontSize="3.1"
+        fontSize="2.45"
         fontWeight="700"
         fill={textColor}
       >
@@ -60,13 +60,13 @@ function PlayerDot({ player, cx, cy, fill, stroke, textColor }: PlayerDotProps) 
       </text>
       <text
         x={cx}
-        y={cy + 7.3}
+        y={cy + 6.2}
         textAnchor="middle"
-        fontSize="3"
+        fontSize="2.25"
         fontWeight="600"
         fill="var(--text)"
         stroke="var(--surface)"
-        strokeWidth="0.55"
+        strokeWidth="0.4"
         paintOrder="stroke"
         strokeLinejoin="round"
       >
@@ -139,19 +139,19 @@ function PitchSVG({ lineups }: { lineups: PreviewLineup[] }) {
     <svg
       viewBox={`0 0 ${PITCH_WIDTH} ${PITCH_HEIGHT}`}
       preserveAspectRatio="xMidYMid meet"
-      className="aspect-[14/9] w-full rounded-[var(--radius-md)]"
+      className="aspect-[28/17] w-full rounded-[var(--radius-md)]"
       style={{ background: 'color-mix(in srgb, var(--brand) 18%, var(--surface-soft))' }}
       role="img"
       aria-label="Campo com escalações"
     >
       {/* Linhas do campo */}
-      <rect x="2" y="2" width="108" height="68" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
-      <line x1="56" y1="2" x2="56" y2="70" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
-      <circle cx="56" cy="36" r="9" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
-      <rect x="2" y="21" width="16" height="30" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
-      <rect x="94" y="21" width="16" height="30" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
-      <rect x="2" y="29" width="7" height="14" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
-      <rect x="103" y="29" width="7" height="14" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <rect x="2" y="2" width="108" height="64" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <line x1="56" y1="2" x2="56" y2="66" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <circle cx="56" cy="34" r="8.5" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <rect x="2" y="20" width="16" height="28" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <rect x="94" y="20" width="16" height="28" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <rect x="2" y="28" width="7" height="12" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
+      <rect x="103" y="28" width="7" height="12" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" />
 
       {homePositions.map(({ player, cx, cy }, idx) => (
         <PlayerDot

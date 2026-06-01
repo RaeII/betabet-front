@@ -9,23 +9,29 @@ interface PhaseSelectorProps {
 
 export function PhaseSelector({ value, onChange }: PhaseSelectorProps) {
   return (
-    <div className="flex rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-soft)] p-1" role="tablist">
-      {(['group', 'knockout'] as Phase[]).map(phase => (
-        <button
-          key={phase}
-          role="tab"
-          aria-selected={value === phase}
-          onClick={() => onChange(phase)}
-          className={cn(
-            'flex-1 rounded-[calc(var(--radius)-2px)] px-4 py-2 text-sm font-medium transition-colors',
-            value === phase
-              ? 'bg-[var(--surface)] text-[var(--brand)] shadow-sm'
-              : 'text-[var(--text-muted)] hover:text-[var(--text)]',
-          )}
-        >
-          {phase === 'group' ? 'Fase de Grupos' : 'Mata-mata'}
-        </button>
-      ))}
+    <div className="w-full overflow-x-auto pb-1 sm:w-auto">
+      <div
+        className="flex min-w-max rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface)] p-1"
+        role="tablist"
+        aria-label="Selecionar fase"
+      >
+        {(['group', 'knockout'] as Phase[]).map(phase => (
+          <button
+            key={phase}
+            role="tab"
+            aria-selected={value === phase}
+            onClick={() => onChange(phase)}
+            className={cn(
+              'flex min-h-10 min-w-32 flex-1 items-center justify-center gap-2 rounded-[var(--radius-pill)] px-4 text-sm font-semibold transition duration-150 focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)] sm:min-w-36',
+              value === phase
+                ? 'bg-[var(--brand)] text-[var(--brand-text)]'
+                : 'text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]',
+            )}
+          >
+            <span>{phase === 'group' ? 'Fase de Grupos' : 'Mata-mata'}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

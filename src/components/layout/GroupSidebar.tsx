@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useMatch } from 'react-router-dom'
 import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
@@ -33,8 +33,19 @@ function LiveDot() {
 export function GroupSidebar() {
   const { groupId, isAdmin } = useActiveGroup()
   const [modalOpen, setModalOpen] = useState(false)
+  const groupMatchesListRoute = useMatch({ path: '/groups/:groupId/jogos', end: true })
+  const globalMatchesListRoute = useMatch({ path: '/matches', end: true })
+  const groupMatchDetailRoute = useMatch({ path: '/groups/:groupId/matches/:matchId', end: true })
+  const globalMatchDetailRoute = useMatch({ path: '/matches/:matchId', end: true })
+  const isMatchesListRoute = Boolean(groupMatchesListRoute || globalMatchesListRoute)
+  const currentMatchId =
+    groupMatchDetailRoute?.params.matchId ?? globalMatchDetailRoute?.params.matchId
   const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
-  const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '')
+  const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '', {
+    enabled: !isMatchesListRoute,
+    suppressWhenViewingMatchId: currentMatchId,
+  })
+  const showLiveMatch = hasLiveMatch && !isMatchesListRoute
 
   if (!groupId) return null
 
@@ -81,7 +92,7 @@ export function GroupSidebar() {
                 >
                   <Icon size={18} />
                   <span className="truncate">{item.label}</span>
-                  {item.id === 'jogos' && hasLiveMatch ? <LiveDot /> : null}
+                  {item.id === 'jogos' && showLiveMatch ? <LiveDot /> : null}
                   {item.id === 'membros' && pendingRequests > 0 ? (
                     <span
                       className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-center text-[11px] font-bold leading-none text-[var(--surface)]"

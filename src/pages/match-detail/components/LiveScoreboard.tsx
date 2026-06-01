@@ -1,4 +1,4 @@
-import type { MatchLive } from '@/services/liveMatch.service'
+import type { LiveEvent, MatchLive } from '@/services/liveMatch.service'
 import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 
 interface LiveScoreboardProps {
@@ -36,6 +36,12 @@ function formatClock(elapsed: number | null, extra: number | null, short: string
 
 function formatGoalMinute(minute: number, extra: number | null): string {
   return extra ? `${minute}'+${extra}` : `${minute}'`
+}
+
+// Em gol contra, sufixa "(C)" no nome do jogador para indicar que foi contra.
+function goalScorerLabel(event: LiveEvent): string {
+  const name = event.player || 'Gol'
+  return event.detail === 'Own Goal' ? `${name} (C)` : name
 }
 
 function TeamScoreIdentity({
@@ -80,6 +86,7 @@ export function LiveScoreboard({
   const homeTeamId = live.teams?.home.id ?? null
   const awayTeamId = live.teams?.away.id ?? null
   const goalEvents = live.events.filter((event) => event.type === 'Goal' && event.detail !== 'Missed Penalty')
+  // Gol (inclusive contra) fica no lado do time do jogador que marcou.
   const homeGoals = goalEvents.filter((event) =>
     homeTeamId !== null ? event.teamId === homeTeamId : event.teamName === homeTeamName
   )
@@ -97,9 +104,6 @@ export function LiveScoreboard({
           />
           {statusLabel}
         </span>
-        {live.league?.round ? (
-          <span className="truncate">{live.league.round}</span>
-        ) : null}
       </header>
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-2 gap-y-3">
@@ -131,7 +135,7 @@ export function LiveScoreboard({
           <ul className="min-h-0 space-y-0.5 text-center text-[11px] text-[var(--text-muted)]">
             {homeGoals.map((event, index) => (
               <li key={`home-goal-${event.minute}-${event.extra ?? 0}-${event.player}-${index}`}>
-                <span aria-hidden="true">⚽</span> {event.player || 'Gol'}, {formatGoalMinute(event.minute, event.extra)}
+                <span aria-hidden="true">⚽</span> {goalScorerLabel(event)}, {formatGoalMinute(event.minute, event.extra)}
               </li>
             ))}
           </ul>
@@ -141,7 +145,7 @@ export function LiveScoreboard({
           <ul className="min-h-0 space-y-0.5 text-center text-[11px] text-[var(--text-muted)]">
             {awayGoals.map((event, index) => (
               <li key={`away-goal-${event.minute}-${event.extra ?? 0}-${event.player}-${index}`}>
-                <span aria-hidden="true">⚽</span> {event.player || 'Gol'}, {formatGoalMinute(event.minute, event.extra)}
+                <span aria-hidden="true">⚽</span> {goalScorerLabel(event)}, {formatGoalMinute(event.minute, event.extra)}
               </li>
             ))}
           </ul>

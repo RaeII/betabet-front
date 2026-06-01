@@ -75,6 +75,28 @@ describe('useGroupHasLiveMatch', () => {
     await waitFor(() => expect(result.current).toBe(true))
   })
 
+  it('returns false when the viewed match is the live match', async () => {
+    let liveRequests = 0
+    server.use(
+      http.get('/api/matches/m-live/live', () => {
+        liveRequests += 1
+        return HttpResponse.json(liveResponse('m-live', '2H', true))
+      }),
+      http.get('/api/matches/m-terminal/live', () => {
+        liveRequests += 1
+        return HttpResponse.json(liveResponse('m-terminal', 'FT', false))
+      }),
+    )
+
+    const { result } = renderHook(
+      () => useGroupHasLiveMatch('g1', { suppressWhenViewingMatchId: 'm-live' }),
+      { wrapper: makeWrapper() },
+    )
+
+    await waitFor(() => expect(liveRequests).toBe(2))
+    expect(result.current).toBe(false)
+  })
+
   it('stays false when database-live matches are already terminal upstream', async () => {
     let liveRequests = 0
     server.use(

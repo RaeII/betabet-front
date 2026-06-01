@@ -35,6 +35,12 @@ function formatGoalMinute(minute: number, extra: number | null): string {
   return extra ? `${minute}'+${extra}` : `${minute}'`
 }
 
+// Em gol contra, sufixa "(C)" no nome do jogador para indicar que foi contra.
+function goalScorerLabel(event: LiveEvent): string {
+  const name = event.player || 'Gol'
+  return event.detail === 'Own Goal' ? `${name} (C)` : name
+}
+
 interface Segment {
   label: string
   home: number | null
@@ -105,6 +111,7 @@ export function PostMatchScoreboard({
 }: PostMatchScoreboardProps) {
   const statusLabel = STATUS_LABEL[statusShort] ?? statusShort
   const goalEvents = events.filter((event) => event.type === 'Goal' && event.detail !== 'Missed Penalty')
+  // Gol (inclusive contra) fica no lado do time do jogador que marcou.
   const homeGoalsList = goalEvents.filter((event) =>
     homeTeamId !== null ? event.teamId === homeTeamId : event.teamName === homeTeamName
   )
@@ -157,7 +164,7 @@ export function PostMatchScoreboard({
             <ul className="min-h-0 space-y-0.5 text-center text-[11px] text-[var(--text-muted)]">
               {homeGoalsList.map((event, index) => (
                 <li key={`home-goal-${event.minute}-${event.extra ?? 0}-${event.player}-${index}`}>
-                  <span aria-hidden="true">⚽</span> {event.player || 'Gol'}, {formatGoalMinute(event.minute, event.extra)}
+                  <span aria-hidden="true">⚽</span> {goalScorerLabel(event)}, {formatGoalMinute(event.minute, event.extra)}
                 </li>
               ))}
             </ul>
@@ -167,7 +174,7 @@ export function PostMatchScoreboard({
             <ul className="min-h-0 space-y-0.5 text-center text-[11px] text-[var(--text-muted)]">
               {awayGoalsList.map((event, index) => (
                 <li key={`away-goal-${event.minute}-${event.extra ?? 0}-${event.player}-${index}`}>
-                  <span aria-hidden="true">⚽</span> {event.player || 'Gol'}, {formatGoalMinute(event.minute, event.extra)}
+                  <span aria-hidden="true">⚽</span> {goalScorerLabel(event)}, {formatGoalMinute(event.minute, event.extra)}
                 </li>
               ))}
             </ul>

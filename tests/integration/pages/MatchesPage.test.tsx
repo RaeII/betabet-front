@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -20,11 +21,24 @@ function makeWrapper() {
 describe('MatchesPage', () => {
   beforeEach(() => server.use(...matchesHandlers))
 
-  it('renders group stage tab and match cards', async () => {
+  it('renders group stage standings and match cards', async () => {
     render(createElement(MatchesPage), { wrapper: makeWrapper() })
 
-    await waitFor(() => expect(screen.getByText('Brasil')).toBeInTheDocument())
-    expect(screen.getByText('Argentina')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText('Brasil').length).toBeGreaterThan(0))
+    const groupAClassification = screen.getByRole('heading', {
+      name: /classificação do grupo a/i,
+    }).closest('section')
+
+    expect(groupAClassification).toBeInTheDocument()
+    await waitFor(() => {
+      const classificationImageSources = [
+        ...(groupAClassification?.querySelectorAll('img') ?? []),
+      ].map(image => image.getAttribute('src') ?? '')
+
+      expect(classificationImageSources.some(src => src.endsWith('/flags/br.svg'))).toBe(true)
+      expect(classificationImageSources.some(src => src.endsWith('/api-football/br.png'))).toBe(false)
+    })
+    expect(screen.getAllByText('Argentina').length).toBeGreaterThan(0)
   })
 
   it('renders phase selector tabs', async () => {
@@ -32,5 +46,37 @@ describe('MatchesPage', () => {
 
     expect(screen.getByText(/fase de grupos/i)).toBeInTheDocument()
     expect(screen.getByText(/mata-mata/i)).toBeInTheDocument()
+  })
+
+  it('changes only the selected group round', async () => {
+    const user = userEvent.setup()
+    render(createElement(MatchesPage), { wrapper: makeWrapper() })
+
+    await screen.findByRole('heading', { name: /^grupo a$/i })
+    expect(
+      screen.getByRole('link', { name: /ver detalhes de brasil contra argentina/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /ver detalhes de alemanha contra espanha/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('link', {
+        name: /ver detalhes de frança contra seleção internacional de nome muito longo/i,
+      }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /ver próxima rodada do grupo a/i }))
+
+    expect(
+      screen.getByRole('link', { name: /ver detalhes de alemanha contra espanha/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /ver detalhes de brasil contra argentina/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('link', {
+        name: /ver detalhes de frança contra seleção internacional de nome muito longo/i,
+      }),
+    ).toBeInTheDocument()
   })
 })

@@ -54,9 +54,9 @@ export function useMatchPreview(matchId: string, enabled = true) {
 }
 
 /**
- * Live match data. Polling a cada 60s — o cache do backend é 2 min para
- * status live, então hits mais rápidos só devolvem cache. Atende à
- * recomendação do doc 006 (`polling não precisa ser mais rápido do que 2 min`).
+ * Live match data. Polling a cada 60s, alinhado ao cache do backend de 1 min
+ * para status live — cada poll tende a coincidir com uma entrada de cache
+ * recém-expirada, mantendo o frescor da informação ao vivo em ~1 min.
  */
 export function useMatchLive(matchId: string, enabled = true) {
   return useQuery({

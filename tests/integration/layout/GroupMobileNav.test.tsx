@@ -26,7 +26,7 @@ const mockedActive = useActiveGroup as ReturnType<typeof vi.fn>
 const mockedHasLiveMatch = useGroupHasLiveMatch as ReturnType<typeof vi.fn>
 const mockedRequests = useJoinRequests as ReturnType<typeof vi.fn>
 
-function renderNav() {
+function renderNav(path = '/groups/g1') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     createElement(
@@ -34,11 +34,11 @@ function renderNav() {
       { client: qc },
       createElement(
         MemoryRouter,
-        { initialEntries: ['/groups/g1'] },
+        { initialEntries: [path] },
         createElement(
           Routes,
           null,
-          createElement(Route, { path: '/groups/:groupId', element: createElement(GroupMobileNav) }),
+          createElement(Route, { path: '/groups/:groupId/*', element: createElement(GroupMobileNav) }),
         ),
       ),
     ),
@@ -110,6 +110,31 @@ describe('GroupMobileNav', () => {
     renderNav()
 
     expect(screen.queryByLabelText('Partida ao vivo')).not.toBeInTheDocument()
+  })
+
+  it('does not show the live notification on the matches list', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    mockedHasLiveMatch.mockReturnValue(true)
+
+    renderNav('/groups/g1/jogos')
+
+    expect(screen.queryByLabelText('Partida ao vivo')).not.toBeInTheDocument()
+    expect(mockedHasLiveMatch).toHaveBeenCalledWith(
+      'g1',
+      expect.objectContaining({ enabled: false }),
+    )
+  })
+
+  it('passes the current match id so live detail can suppress the notification', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    mockedHasLiveMatch.mockReturnValue(false)
+
+    renderNav('/groups/g1/matches/m1')
+
+    expect(mockedHasLiveMatch).toHaveBeenCalledWith(
+      'g1',
+      expect.objectContaining({ suppressWhenViewingMatchId: 'm1' }),
+    )
   })
 
   it('"Grupos" button opens the modal', async () => {

@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from './api'
+import { apiDelete, apiGet, apiPost, apiPut } from './api'
 import type { AdminUser, AdminStats, MatchAnalytics, MatchFormData, ResultFormData, TeamFormData, UserStats } from '@/types/admin.types'
 import type { Match } from '@/types/match.types'
 import type { BettingGroup, GroupMembership, RankingEntry } from '@/types/group.types'
@@ -35,12 +35,20 @@ export function confirmResult(
   return apiPost(`/api/admin/matches/${matchId}/result`, data)
 }
 
+export function deleteMatch(matchId: string): Promise<void> {
+  return apiDelete(`/api/admin/matches/${matchId}`)
+}
+
 export function getTeams(): Promise<{ teams: Team[] }> {
   return apiGet('/api/admin/teams')
 }
 
 export function createTeam(data: TeamFormData): Promise<{ team: Team }> {
   return apiPost('/api/admin/teams', data)
+}
+
+export function deleteTeam(teamId: string): Promise<void> {
+  return apiDelete(`/api/admin/teams/${teamId}`)
 }
 
 export function getMatchAnalytics(): Promise<{ analytics: MatchAnalytics[] }> {

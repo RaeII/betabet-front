@@ -41,7 +41,7 @@ function renderSidebar(path = '/groups/g1') {
         createElement(
           Routes,
           null,
-          createElement(Route, { path: '/groups/:groupId', element: createElement(GroupSidebar) }),
+          createElement(Route, { path: '/groups/:groupId/*', element: createElement(GroupSidebar) }),
         ),
       ),
     ),
@@ -103,6 +103,31 @@ describe('GroupSidebar', () => {
     renderSidebar()
 
     expect(screen.queryByLabelText('Partida ao vivo')).not.toBeInTheDocument()
+  })
+
+  it('does not show the live notification on the matches list', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    mockedHasLiveMatch.mockReturnValue(true)
+
+    renderSidebar('/groups/g1/jogos')
+
+    expect(screen.queryByLabelText('Partida ao vivo')).not.toBeInTheDocument()
+    expect(mockedHasLiveMatch).toHaveBeenCalledWith(
+      'g1',
+      expect.objectContaining({ enabled: false }),
+    )
+  })
+
+  it('passes the current match id so live detail can suppress the notification', () => {
+    mockedActive.mockReturnValue({ groupId: 'g1', isAdmin: false })
+    mockedHasLiveMatch.mockReturnValue(false)
+
+    renderSidebar('/groups/g1/matches/m1')
+
+    expect(mockedHasLiveMatch).toHaveBeenCalledWith(
+      'g1',
+      expect.objectContaining({ suppressWhenViewingMatchId: 'm1' }),
+    )
   })
 
   it('renders aria-current on the active destination', () => {

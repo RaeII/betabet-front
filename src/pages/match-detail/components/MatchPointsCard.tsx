@@ -21,7 +21,7 @@ function stateMeta(data: MatchMyPoints): StateMeta {
     return {
       badge: '● Ao vivo',
       badgeClass: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-600',
-      caption: 'ganhando agora — muda com o placar',
+      caption: 'ganhando agora',
       accentClass: 'text-[var(--brand)]',
     }
   }
@@ -35,7 +35,7 @@ function stateMeta(data: MatchMyPoints): StateMeta {
   }
   // finished mas ainda não liquidado (entre o apito e o cron de liquidação)
   return {
-    badge: 'Provisório',
+    badge: 'Confirmando...',
     badgeClass: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-600',
     caption: 'aguardando confirmação',
     accentClass: 'text-[var(--brand)]',
@@ -58,7 +58,7 @@ export function MatchPointsCard({ matchId, groupId }: MatchPointsCardProps) {
         <div className="flex items-center gap-2">
           <Trophy size={16} className="text-[var(--brand)]" aria-hidden />
           <h3 className="text-base font-semibold tracking-tight text-[var(--text)] sm:text-lg">
-            Seus pontos
+            Pontos com a partida
           </h3>
         </div>
         <span
@@ -86,14 +86,6 @@ export function MatchPointsCard({ matchId, groupId }: MatchPointsCardProps) {
                   {bet.homeScore} × {bet.awayScore}
                 </span>
               </p>
-              {liveScore && liveScore.home !== null && liveScore.away !== null ? (
-                <p className="mt-0.5">
-                  Placar{' '}
-                  <span className="font-semibold text-[var(--text)]">
-                    {liveScore.home} × {liveScore.away}
-                  </span>
-                </p>
-              ) : null}
             </div>
           </div>
 
@@ -121,7 +113,7 @@ export function MatchPointsCard({ matchId, groupId }: MatchPointsCardProps) {
       )}
 
       <div className="flex items-center justify-between border-t border-[var(--border)] pt-3 text-xs">
-        <span className="text-[var(--text-muted)]">Total no grupo</span>
+        <span className="text-[var(--text-muted)]">Total no Bolão</span>
         <span className="flex items-baseline gap-1.5 tabular-nums">
           {delta > 0 ? (
             <span className="text-[var(--text-muted)]">{totalBeforeMatch} →</span>

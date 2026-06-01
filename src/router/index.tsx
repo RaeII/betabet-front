@@ -121,6 +121,26 @@ export const router = createBrowserRouter([
             ],
           },
           {
+            path: 'matches',
+            element: <GroupShell />,
+            children: [
+              {
+                index: true,
+                lazy: async () => {
+                  const { MatchesPage } = await import('@/pages/matches/MatchesPage')
+                  return { Component: MatchesPage }
+                },
+              },
+              {
+                path: ':matchId',
+                lazy: async () => {
+                  const { MatchDetailPage } = await import('@/pages/match-detail/MatchDetailPage')
+                  return { Component: MatchDetailPage }
+                },
+              },
+            ],
+          },
+          {
             index: true,
             element: <RootResolver />,
           },
