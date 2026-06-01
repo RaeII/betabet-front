@@ -1,31 +1,16 @@
-import { RefreshCw } from 'lucide-react'
 import { TeamFlagImage } from '@/components/match/TeamFlagImage'
-import { cn } from '@/lib/utils'
 import type { WorldCupStanding } from '@/types/worldCup.types'
 import {
   type GroupTeamAsset,
-  teamAssetIdKey,
+  teamAssetApiIdKey,
   teamAssetNameKey,
 } from './worldCupGroup.utils'
 
 interface WorldCupStandingsTableProps {
-  groupLetter: string
   rows: WorldCupStanding[]
   isLoading: boolean
   isError: boolean
-  isFetching: boolean
-  updatedAt?: string
   teamAssets?: Map<string, GroupTeamAsset>
-}
-
-function formatUpdatedAt(value: string | undefined): string {
-  if (!value) return 'Atualização automática'
-  return new Date(value).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 
 function StandingLogo({
@@ -36,9 +21,9 @@ function StandingLogo({
   teamAssets?: Map<string, GroupTeamAsset>
 }) {
   const teamAsset =
-    teamAssets?.get(teamAssetIdKey(row.team.id)) ??
+    teamAssets?.get(teamAssetApiIdKey(row.team.id)) ??
     teamAssets?.get(teamAssetNameKey(row.team.name))
-  const src = teamAsset?.flagUrl || row.team.logo
+  const src = teamAsset?.flagUrl
   const teamId = teamAsset?.teamId ?? row.team.id
 
   if (!src) {
@@ -60,38 +45,13 @@ function StandingLogo({
 }
 
 export function WorldCupStandingsTable({
-  groupLetter,
   rows,
   isLoading,
   isError,
-  isFetching,
-  updatedAt,
   teamAssets,
 }: WorldCupStandingsTableProps) {
   return (
     <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)]">
-      <header className="flex flex-col gap-2 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)]">
-            Copa do Mundo
-          </p>
-          <h3 className="text-lg font-semibold text-[var(--text)]">
-            Classificação do Grupo {groupLetter}
-          </h3>
-        </div>
-        <div
-          className="flex items-center gap-2 text-xs font-medium text-[var(--text-muted)]"
-          aria-live="polite"
-        >
-          <RefreshCw
-            size={14}
-            className={cn('shrink-0', isFetching && 'animate-spin text-[var(--brand)]')}
-            aria-hidden="true"
-          />
-          <span>{formatUpdatedAt(updatedAt)}</span>
-        </div>
-      </header>
-
       {isLoading ? (
         <div className="flex h-44 items-center justify-center text-sm text-[var(--text-muted)]">
           Carregando classificação...

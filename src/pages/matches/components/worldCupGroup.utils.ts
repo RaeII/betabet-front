@@ -1,5 +1,4 @@
 import type { Match, MatchesResponse } from '@/types/match.types'
-import type { WorldCupStanding } from '@/types/worldCup.types'
 
 export interface GroupMatch {
   matchday: string
@@ -29,6 +28,10 @@ export function normalizeTeamName(value: string): string {
 
 export function teamAssetIdKey(value: string | number): string {
   return `id:${String(value)}`
+}
+
+export function teamAssetApiIdKey(value: string | number): string {
+  return `api:${String(value)}`
 }
 
 export function teamAssetNameKey(value: string): string {
@@ -111,6 +114,9 @@ export function getGroupTeamAssets(matches: GroupMatch[]): Map<string, GroupTeam
         teamId: team.id,
       }
       const keys = [teamAssetIdKey(team.id), teamAssetNameKey(team.name)]
+      if (team.apiTeamId !== null && team.apiTeamId !== undefined) {
+        keys.unshift(teamAssetApiIdKey(team.apiTeamId))
+      }
 
       keys.forEach(key => {
         const current = assets.get(key)
@@ -176,8 +182,4 @@ export function findDefaultGroup(
     .sort((a, b) => a.nextTime - b.nextTime)[0]
 
   return nextGroup?.group ?? groups[0] ?? null
-}
-
-export function rowUpdate(rows: WorldCupStanding[], fallback?: string): string | undefined {
-  return rows.find(row => row.update)?.update ?? fallback
 }

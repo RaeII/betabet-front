@@ -8,7 +8,6 @@ import {
   getGroupMatches,
   getGroupTeamAssets,
   normalizeGroupLetter,
-  rowUpdate,
   sortGroupLetters,
 } from './worldCupGroup.utils'
 
@@ -50,7 +49,6 @@ export function WorldCupGroupOverview({ data, groupId }: WorldCupGroupOverviewPr
         const rows = standingsByGroup.get(groupLetter) ?? []
         const matches = getGroupMatches(data, groupLetter)
         const teamAssets = getGroupTeamAssets(matches)
-        const updatedAt = rowUpdate(rows, standingsQuery.data?.meta.cachedAt)
 
         return (
           <section
@@ -78,12 +76,9 @@ export function WorldCupGroupOverview({ data, groupId }: WorldCupGroupOverviewPr
             </header>
 
             <WorldCupStandingsTable
-              groupLetter={groupLetter}
               rows={rows}
               isLoading={standingsQuery.isLoading}
               isError={standingsQuery.isError}
-              isFetching={standingsQuery.isFetching}
-              updatedAt={updatedAt}
               teamAssets={teamAssets}
             />
 

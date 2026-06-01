@@ -25,18 +25,20 @@ describe('MatchesPage', () => {
     render(createElement(MatchesPage), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(screen.getAllByText('Brasil').length).toBeGreaterThan(0))
-    const groupAClassification = screen.getByRole('heading', {
-      name: /classificação do grupo a/i,
-    }).closest('section')
+    const groupASection = screen.getByRole('heading', { name: /^grupo a$/i }).closest('section')
 
-    expect(groupAClassification).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /classificação do grupo a/i })).toBeNull()
+
     await waitFor(() => {
-      const classificationImageSources = [
-        ...(groupAClassification?.querySelectorAll('img') ?? []),
-      ].map(image => image.getAttribute('src') ?? '')
+      const groupATable = groupASection?.querySelector('table')
+      expect(groupATable).toBeInTheDocument()
 
-      expect(classificationImageSources.some(src => src.endsWith('/flags/br.svg'))).toBe(true)
-      expect(classificationImageSources.some(src => src.endsWith('/api-football/br.png'))).toBe(false)
+      const imageSources = [...(groupATable?.querySelectorAll('img') ?? [])].map(
+        image => image.getAttribute('src') ?? '',
+      )
+
+      expect(imageSources.some(src => src.endsWith('/flags/br.svg'))).toBe(true)
+      expect(imageSources.some(src => src.endsWith('/api-football/br.png'))).toBe(false)
     })
     expect(screen.getAllByText('Argentina').length).toBeGreaterThan(0)
   })

@@ -6,6 +6,9 @@ export type TournamentPhase = 'group' | 'r16' | 'qf' | 'sf' | 'final'
 
 export interface Team {
   id: string
+  /** API-Football team id. Used to reconcile official standings with locally
+   *  cached team flags from match payloads. */
+  apiTeamId?: number | null
   name: string
   /** Data URI (`data:image/svg+xml;base64,...`) or external URL. Empty when the backend
    *  knows the client already has it cached under `flagVersion`. */
