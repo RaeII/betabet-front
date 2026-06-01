@@ -18,6 +18,9 @@ export function GroupsModalCreate({ onBack, onCreated }: GroupsModalCreateProps)
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const [resultPoints, setResultPoints] = useState(1)
   const [exactScorePoints, setExactScorePoints] = useState(3)
+  const [championBetEnabled, setChampionBetEnabled] = useState(true)
+  const [championFirstPoints, setChampionFirstPoints] = useState(15)
+  const [championSecondPoints, setChampionSecondPoints] = useState(10)
   const [nameError, setNameError] = useState('')
 
   function handleNext() {
@@ -36,6 +39,9 @@ export function GroupsModalCreate({ onBack, onCreated }: GroupsModalCreateProps)
       emoji: emoji ?? undefined,
       resultPoints,
       exactScorePoints,
+      championBetEnabled,
+      championFirstPoints,
+      championSecondPoints,
     })
     if (!result.success) return
 
@@ -77,8 +83,14 @@ export function GroupsModalCreate({ onBack, onCreated }: GroupsModalCreateProps)
         <ScoringConfigStep
           resultPoints={resultPoints}
           exactScorePoints={exactScorePoints}
+          championBetEnabled={championBetEnabled}
+          championFirstPoints={championFirstPoints}
+          championSecondPoints={championSecondPoints}
           onResultPointsChange={setResultPoints}
           onExactScorePointsChange={setExactScorePoints}
+          onChampionBetEnabledChange={setChampionBetEnabled}
+          onChampionFirstPointsChange={setChampionFirstPoints}
+          onChampionSecondPointsChange={setChampionSecondPoints}
           onBack={() => setStep(1)}
           onSubmit={handleSubmit}
           isPending={createGroup.isPending}

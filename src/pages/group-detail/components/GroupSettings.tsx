@@ -1,6 +1,7 @@
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ChampionScoringFields } from '@/components/scoring/ChampionScoringFields'
 import { useUpdateGroup } from '@/hooks/useGroups'
 import type { BettingGroup } from '@/types/group.types'
 
@@ -14,18 +15,32 @@ export function GroupSettings({ group }: GroupSettingsProps) {
   const [name, setName] = useState(group.name)
   const [resultPoints, setResultPoints] = useState(group.resultPoints)
   const [exactScorePoints, setExactScorePoints] = useState(group.exactScorePoints)
+  const [championBetEnabled, setChampionBetEnabled] = useState(group.championBetEnabled)
+  const [championFirstPoints, setChampionFirstPoints] = useState(group.championFirstPoints)
+  const [championSecondPoints, setChampionSecondPoints] = useState(group.championSecondPoints)
   const [joinMode, setJoinMode] = useState(group.joinMode)
 
   useEffect(() => {
     setName(group.name)
     setResultPoints(group.resultPoints)
     setExactScorePoints(group.exactScorePoints)
+    setChampionBetEnabled(group.championBetEnabled)
+    setChampionFirstPoints(group.championFirstPoints)
+    setChampionSecondPoints(group.championSecondPoints)
     setJoinMode(group.joinMode)
   }, [group])
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    update.mutate({ name, resultPoints, exactScorePoints, joinMode })
+    update.mutate({
+      name,
+      resultPoints,
+      exactScorePoints,
+      championBetEnabled,
+      championFirstPoints,
+      championSecondPoints,
+      joinMode,
+    })
   }
 
   const status = update.isError
@@ -62,6 +77,15 @@ export function GroupSettings({ group }: GroupSettingsProps) {
           />
         </div>
       </div>
+
+      <ChampionScoringFields
+        enabled={championBetEnabled}
+        firstPoints={championFirstPoints}
+        secondPoints={championSecondPoints}
+        onEnabledChange={setChampionBetEnabled}
+        onFirstPointsChange={setChampionFirstPoints}
+        onSecondPointsChange={setChampionSecondPoints}
+      />
 
       <div className="flex flex-col gap-1">
         <label htmlFor={joinModeId} className="text-sm font-medium text-[var(--text)]">Entrada no bolão</label>

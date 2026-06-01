@@ -15,3 +15,8 @@
 [] - Adicionar jogo de teste por grupo
 [] - Adicionar seleção campeã para pontuar
 [x] - nome extenço do congo
+[] - liberar a visualização
+[] -Adicionar no detalhes de ponto o campeão da copa
+[] - Melhorar a descrição do botão se subir imagem do grupo
+[] - Melhorar o botão de aumentar os pontos nas configurações de grupo
+[] - Melhor a descrição e um exemplo do campeão na criação do grupo

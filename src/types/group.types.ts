@@ -11,6 +11,9 @@ export interface BettingGroup {
   adminId: string
   resultPoints: number
   exactScorePoints: number
+  championBetEnabled: boolean
+  championFirstPoints: number
+  championSecondPoints: number
   showBetsBeforeKickoff: boolean
   joinMode: JoinMode
   memberCount: number
@@ -64,6 +67,9 @@ export interface CreateGroupData {
   coverUrl?: string
   resultPoints?: number
   exactScorePoints?: number
+  championBetEnabled?: boolean
+  championFirstPoints?: number
+  championSecondPoints?: number
   joinMode?: JoinMode
 }
 

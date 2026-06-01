@@ -7,6 +7,7 @@ import { findDefaultMatchday, groupMatchesByDay } from '@/lib/matchday.utils'
 import { DayStrip } from './components/DayStrip'
 import { DayMatchList } from './components/DayMatchList'
 import { BettingProgressBar } from './components/BettingProgressBar'
+import { ChampionBetCard } from './components/ChampionBetCard'
 
 export function HomePage() {
   const { groupId, group } = useActiveGroup()
@@ -65,6 +66,8 @@ export function HomePage() {
         progress={progress}
         greeting={firstName ? `${firstName}, seus palpites` : 'Seus palpites'}
       />
+
+      <ChampionBetCard groupId={groupId} />
 
       <DayStrip
         matches={matches}

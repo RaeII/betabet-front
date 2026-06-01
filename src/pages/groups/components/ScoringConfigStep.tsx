@@ -2,12 +2,19 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScoringExample } from '@/components/scoring/ScoringExample'
+import { ChampionScoringFields } from '@/components/scoring/ChampionScoringFields'
 
 interface ScoringConfigStepProps {
   resultPoints: number
   exactScorePoints: number
+  championBetEnabled: boolean
+  championFirstPoints: number
+  championSecondPoints: number
   onResultPointsChange: (value: number) => void
   onExactScorePointsChange: (value: number) => void
+  onChampionBetEnabledChange: (value: boolean) => void
+  onChampionFirstPointsChange: (value: number) => void
+  onChampionSecondPointsChange: (value: number) => void
   onBack: () => void
   onSubmit: () => void
   isPending: boolean
@@ -17,8 +24,14 @@ interface ScoringConfigStepProps {
 export function ScoringConfigStep({
   resultPoints,
   exactScorePoints,
+  championBetEnabled,
+  championFirstPoints,
+  championSecondPoints,
   onResultPointsChange,
   onExactScorePointsChange,
+  onChampionBetEnabledChange,
+  onChampionFirstPointsChange,
+  onChampionSecondPointsChange,
   onBack,
   onSubmit,
   isPending,
@@ -57,6 +70,15 @@ export function ScoringConfigStep({
       </div>
 
       <ScoringExample resultPoints={resultPoints} exactScorePoints={exactScorePoints} />
+
+      <ChampionScoringFields
+        enabled={championBetEnabled}
+        firstPoints={championFirstPoints}
+        secondPoints={championSecondPoints}
+        onEnabledChange={onChampionBetEnabledChange}
+        onFirstPointsChange={onChampionFirstPointsChange}
+        onSecondPointsChange={onChampionSecondPointsChange}
+      />
 
       {isError && (
         <p className="text-sm text-[var(--danger)]">Erro ao criar grupo. Tente novamente.</p>
