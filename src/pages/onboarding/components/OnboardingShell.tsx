@@ -45,11 +45,11 @@ export function OnboardingShell({
               <ArrowLeft size={16} />
             </Link>
           ) : (
-            <Link to="/onboarding" className="flex items-center gap-2" aria-label="betabet">
+            <Link to="/onboarding" className="flex items-center gap-2" aria-label="Bolão CLT">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--brand-text)]">
                 <Trophy size={16} />
               </span>
-              <span className="text-sm font-bold tracking-tight">betabet</span>
+              <span className="text-sm font-bold tracking-tight">Bolão CLT</span>
             </Link>
           )}
         </div>

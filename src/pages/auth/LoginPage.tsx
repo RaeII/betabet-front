@@ -160,7 +160,11 @@ export function LoginPage() {
   const registerSearch = registerParams.toString()
 
   return (
-    <AuthForm title="Bolão da Copa" subtitle="Entre na sua conta para apostar">
+    <AuthForm
+      title="Bolão CLT"
+      subtitle="Entre na sua conta para apostar"
+      logoSrc="/bolao_clt_logo.png"
+    >
       {step === 'email' ? (
         <form onSubmit={handleRequestCode} className="flex flex-col gap-2" noValidate>
           <AuthField errorId="email-error" error={errors.email}>

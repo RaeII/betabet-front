@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "betabet-front",
+      "name": "bolaoclt-front",
       "dependencies": {
         "@radix-ui/react-avatar": "^1.1.10",
         "@radix-ui/react-dialog": "^1.1.14",
@@ -20,7 +20,7 @@
         "react-dom": "^19.1.0",
         "react-router-dom": "^7.6.0",
         "tailwind-merge": "^3.3.0",
-        "zod": "^3.24.4",
+        "zod": "^3.24.4"
       },
       "devDependencies": {
         "@tailwindcss/vite": "^4.1.8",
@@ -37,9 +37,9 @@
         "tailwindcss": "^4.1.8",
         "typescript": "~5.8.3",
         "vite": "^6.3.5",
-        "vitest": "^3.2.1",
-      },
-    },
+        "vitest": "^3.2.1"
+      }
+    }
   },
   "packages": {
     "@adobe/css-tools": ["@adobe/css-tools@4.4.4", "", {}, "sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg=="],

@@ -96,16 +96,7 @@ function StatRow({ row }: { row: Row }) {
 
 export function LiveStats({ statistics, homeTeamId }: LiveStatsProps) {
   if (statistics.length === 0) {
-    return (
-      <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
-        <header className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          Estatísticas
-        </header>
-        <p className="mt-3 text-sm text-[var(--text-muted)]">
-          As estatísticas começam a aparecer no decorrer do 1º tempo.
-        </p>
-      </section>
-    )
+    return null
   }
 
   const homeStats =
@@ -116,6 +107,10 @@ export function LiveStats({ statistics, homeTeamId }: LiveStatsProps) {
       : statistics[1] ?? null
 
   const rows = buildRows(homeStats, awayStats)
+
+  if (rows.length === 0) {
+    return null
+  }
 
   return (
     <section className="space-y-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">

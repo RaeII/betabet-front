@@ -19,7 +19,7 @@ function stateMeta(data: MatchMyPoints): StateMeta {
   const { state, matchPoints } = data
   if (state === 'live') {
     return {
-      badge: '● Ao vivo',
+      badge: 'Pontos ao vivo',
       badgeClass: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-600',
       caption: 'ganhando agora',
       accentClass: 'text-[var(--brand)]',

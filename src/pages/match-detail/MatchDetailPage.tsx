@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useMatch, useMatchDistribution, useMatchLive, useMatchPostMatch, useMatchPreview } from '@/hooks/useMatches'
@@ -6,8 +7,8 @@ import { useGroupMatches } from '@/hooks/useGroupMatches'
 import { useAuth } from '@/hooks/useAuth'
 import { useLiveMatchNotifications } from '@/hooks/useLiveMatchNotifications'
 import { TeamFlag } from '@/components/match/TeamFlag'
+import { MatchPointsBadge } from '@/components/match/MatchPointsBadge'
 import { MatchStatusBadge } from '@/components/match/MatchStatusBadge'
-import { BetForm } from './components/BetForm'
 import { BetsGrid } from './components/BetsGrid'
 import { DistributionChart } from './components/DistributionChart'
 import { PreMatchProbability } from './components/PreMatchProbability'
@@ -19,8 +20,12 @@ import { LiveEventsTimeline } from './components/LiveEventsTimeline'
 import { LiveStats } from './components/LiveStats'
 import { PostMatchScoreboard } from './components/PostMatchScoreboard'
 import { MatchPointsCard } from './components/MatchPointsCard'
-import { isBetEditable, formatMatchDate, formatCountdown } from '@/lib/date.utils'
+import { formatMatchDate, formatCountdown } from '@/lib/date.utils'
 import { getGroupMatchBets } from '@/services/bets.service'
+
+const MATCH_START_REFRESH_INTERVAL_MS = 30_000
+const MATCH_START_REFRESH_WINDOW_MS = 2 * 60 * 60_000
+const MAX_TIMEOUT_MS = 2_147_483_647
 
 export function MatchDetailPage() {
   const { matchId, groupId } = useParams<{ matchId: string; groupId?: string }>()
@@ -32,6 +37,8 @@ export function MatchDetailPage() {
   const match = groupId ? groupMatch : matchQuery.data
   const isLoading = groupId ? groupMatchesQuery.isLoading : matchQuery.isLoading
   const isError = groupId ? groupMatchesQuery.isError : matchQuery.isError
+  const refetchGroupMatches = groupMatchesQuery.refetch
+  const refetchMatchDetail = matchQuery.refetch
 
   const hasStarted = match && (match.status === 'live' || match.status === 'finished')
   const isUpcoming = match?.status === 'upcoming'
@@ -49,6 +56,53 @@ export function MatchDetailPage() {
     enabled: !!groupId && !!matchId,
   })
 
+  useEffect(() => {
+    if (!match || match.status !== 'upcoming') return
+
+    const kickoff = new Date(match.scheduledAt).getTime()
+    if (Number.isNaN(kickoff)) return
+
+    let timeoutId: ReturnType<typeof window.setTimeout> | undefined
+    let intervalId: ReturnType<typeof window.setInterval> | undefined
+
+    const refetchMatch = () => {
+      if (groupId) {
+        void refetchGroupMatches()
+        return
+      }
+
+      void refetchMatchDetail()
+    }
+
+    const startPolling = () => {
+      const msUntilKickoff = kickoff - Date.now()
+
+      if (msUntilKickoff > 0) {
+        timeoutId = window.setTimeout(startPolling, Math.min(msUntilKickoff, MAX_TIMEOUT_MS))
+        return
+      }
+
+      if (Date.now() - kickoff > MATCH_START_REFRESH_WINDOW_MS) return
+
+      refetchMatch()
+      intervalId = window.setInterval(() => {
+        if (Date.now() - kickoff > MATCH_START_REFRESH_WINDOW_MS) {
+          if (intervalId) window.clearInterval(intervalId)
+          return
+        }
+
+        refetchMatch()
+      }, MATCH_START_REFRESH_INTERVAL_MS)
+    }
+
+    startPolling()
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId)
+      if (intervalId) window.clearInterval(intervalId)
+    }
+  }, [groupId, match?.id, match?.scheduledAt, match?.status, refetchGroupMatches, refetchMatchDetail])
+
   if (isLoading) {
     return (
       <div className="flex h-48 items-center justify-center text-[var(--text-muted)]">
@@ -65,8 +119,6 @@ export function MatchDetailPage() {
     )
   }
 
-  const isLocked = !isBetEditable(match.scheduledAt)
-  const userGroupCount = groupsData?.groups?.length ?? 0
   const activeGroupId = groupId ?? groupsData?.groups?.[0]?.id ?? ''
   const activeGroup = groupsData?.groups?.find(g => g.id === activeGroupId)
 
@@ -220,7 +272,17 @@ export function MatchDetailPage() {
       )}
 
       {showPoints ? (
-        <MatchPointsCard matchId={matchId!} groupId={groupId!} />
+        <div className="space-y-3">
+          <div className="flex justify-center">
+            <MatchPointsBadge
+              matchId={matchId!}
+              groupId={groupId!}
+              status={match.status}
+              userBet={match.userBet}
+            />
+          </div>
+          <MatchPointsCard matchId={matchId!} groupId={groupId!} />
+        </div>
       ) : match.userBet ? (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-soft)] p-3 text-center">
           <p className="text-xs text-[var(--text-muted)]">Seu palpite</p>

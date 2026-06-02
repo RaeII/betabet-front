@@ -58,13 +58,16 @@ export function GroupSidebar() {
     <aside className="hidden lg:flex lg:flex-col md:rounded-[var(--radius-sm)] lg:border lg:border-[var(--border)] lg:bg-[var(--surface)] lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] lg:overflow-hidden">
       <Link
         to="/"
-        aria-label="betabet"
+        aria-label="Bolão CLT"
         className="flex h-16 shrink-0 items-center gap-2 border-b border-[var(--border)] px-4"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--brand-text)]">
-          <Trophy size={16} />
-        </span>
-        <span className="text-sm font-bold tracking-tight">betabet</span>
+        <img
+          src="/bolao_clt_logo.png"
+          alt=""
+          className="h-9 w-9 shrink-0 object-contain"
+          aria-hidden="true"
+        />
+        <span className="text-sm font-bold tracking-tight">Bolão CLT</span>
       </Link>
 
       <nav aria-label="Navegação do grupo" className="flex-1 overflow-y-auto px-3 py-4">

@@ -1,4 +1,3 @@
-import { useMatchMyPoints } from '@/hooks/useMatchPoints'
 import type { Bet } from '@/types/bet.types'
 import type { MatchStatus } from '@/types/match.types'
 
@@ -23,13 +22,6 @@ export function MatchPointsBadge({ matchId, groupId, status, userBet }: MatchPoi
   // andamento quanto a janela entre o apito (upstream FT) e o tick de
   // liquidação, quando o status interno ainda é "live" e os pontos do palpite
   // ainda não foram gravados. Após liquidar, vira "finished" + pontos no bet.
-  const isLive = status === 'live'
-  const { data } = useMatchMyPoints(matchId, groupId, isLive && !!groupId)
-
-  if (isLive) {
-    if (!data || data.state === 'scheduled' || !data.bet) return null
-    return <Pill total={data.matchPoints.total} confirmed={data.matchPoints.confirmed} />
-  }
 
   if (status === 'finished' && userBet && userBet.resultPoints !== null) {
     return <Pill total={userBet.resultPoints + (userBet.exactScorePoints ?? 0)} confirmed />

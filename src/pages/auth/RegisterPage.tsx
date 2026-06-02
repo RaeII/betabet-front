@@ -157,7 +157,11 @@ export function RegisterPage() {
   const loginSearch = loginParams.toString()
 
   return (
-    <AuthForm title="Criar conta" subtitle="Participe do Bolão da Copa">
+    <AuthForm
+      title="Criar conta"
+      subtitle="Participe do Bolão da Copa"
+      logoSrc="/bolao_clt_logo.png"
+    >
       {step === 'data' ? (
         <form onSubmit={handleRequestCode} className="flex flex-col gap-2" noValidate>
           <AuthField errorId="name-error" error={errors.name}>

@@ -17,11 +17,11 @@ export function Header() {
       }}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-        <Link to="/" className="flex items-center gap-2" aria-label="Bolão da Copa">
+        <Link to="/" className="flex items-center gap-2" aria-label="Bolão CLT">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--brand-text)]">
             <Trophy size={16} />
           </span>
-          <span className="text-sm font-bold tracking-tight">Bolão da Copa</span>
+          <span className="text-sm font-bold tracking-tight">Bolão CLT</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-[var(--text-muted)] md:flex">

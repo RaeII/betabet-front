@@ -48,14 +48,7 @@ export function LiveEventsTimeline({ events, homeTeamId }: LiveEventsTimelinePro
   const [isExpanded, setIsExpanded] = useState(false)
 
   if (events.length === 0) {
-    return (
-      <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
-        <header className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          Timeline
-        </header>
-        <p className="mt-3 text-sm text-[var(--text-muted)]">Nenhum evento registrado ainda.</p>
-      </section>
-    )
+    return null
   }
 
   // mostrar do mais recente para o mais antigo
