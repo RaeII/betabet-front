@@ -357,7 +357,7 @@ export function MatchDetailPage() {
       {/* Bets grid (group context only) */}
       {groupId && betsData && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-[var(--text)]">Apostas do grupo</h2>
+          <h2 className="text-base font-semibold text-[var(--text)]">Apostas do bolão</h2>
           <BetsGrid
             bets={betsData.bets}
             canView={betsData.canView}

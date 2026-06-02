@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { LogOut } from 'lucide-react'
+import { LogOut, Pencil } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useAuth } from '@/hooks/useAuth'
 import { useGroupMembers } from '@/hooks/useGroups'
 import { Button } from '@/components/ui/button'
 import { GroupAvatar } from '@/pages/groups/components/GroupAvatar'
+import { GroupImageEditor } from '@/pages/groups/components/GroupImageEditor'
 import { LeaveGroupConfirm } from '@/pages/groups/components/LeaveGroupConfirm'
 import { InvitePanel } from '@/pages/group-detail/components/InvitePanel'
 import { GroupSettings } from '@/pages/group-detail/components/GroupSettings'
@@ -14,6 +15,7 @@ export function GroupDetailsPage() {
   const { user } = useAuth()
   const { data: membersData } = useGroupMembers(groupId ?? '')
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false)
+  const [imageEditorOpen, setImageEditorOpen] = useState(false)
 
   if (!groupId || !group) {
     return (
@@ -41,12 +43,31 @@ export function GroupDetailsPage() {
     <>
       <div className="mx-auto max-w-lg space-y-6">
         <section className="flex flex-col items-center gap-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-6 text-center">
-          <GroupAvatar
-            name={group.name}
-            coverUrl={group.coverUrl}
-            emoji={group.emoji}
-            size="lg"
-          />
+          {isAdmin ? (
+            <button
+              type="button"
+              onClick={() => setImageEditorOpen(true)}
+              className="group relative rounded-[var(--radius-md)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand)]"
+              aria-label="Editar imagem do bolão"
+            >
+              <GroupAvatar
+                name={group.name}
+                coverUrl={group.coverUrl}
+                emoji={group.emoji}
+                size="lg"
+              />
+              <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--brand)] text-[var(--brand-text)] transition group-hover:brightness-110">
+                <Pencil size={13} />
+              </span>
+            </button>
+          ) : (
+            <GroupAvatar
+              name={group.name}
+              coverUrl={group.coverUrl}
+              emoji={group.emoji}
+              size="lg"
+            />
+          )}
           <div className="space-y-1">
             <h1 className="text-2xl font-bold text-[var(--text)]">{group.name}</h1>
             <p className="text-sm text-[var(--text-muted)]">
@@ -122,6 +143,14 @@ export function GroupDetailsPage() {
         groupId={groupId}
         groupName={group.name}
       />
+
+      {isAdmin ? (
+        <GroupImageEditor
+          open={imageEditorOpen}
+          onOpenChange={setImageEditorOpen}
+          group={group}
+        />
+      ) : null}
     </>
   )
 }

@@ -231,4 +231,11 @@ export const router = createBrowserRouter([
       return { Component: InvitePage }
     },
   },
+  {
+    path: '*',
+    lazy: async () => {
+      const { NotFoundPage } = await import('@/pages/not-found/NotFoundPage')
+      return { Component: NotFoundPage }
+    },
+  },
 ])

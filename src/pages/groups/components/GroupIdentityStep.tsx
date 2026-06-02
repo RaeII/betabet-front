@@ -71,7 +71,7 @@ export function GroupIdentityStep({
           placeholder="Nome do bolão"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
-          maxLength={50}
+          maxLength={20}
           autoFocus
         />
         {nameError && <span className="text-xs text-[var(--danger)]">{nameError}</span>}

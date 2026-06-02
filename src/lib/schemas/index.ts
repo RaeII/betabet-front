@@ -26,7 +26,7 @@ export const BetFormSchema = z.object({
 })
 
 export const GroupCreateSchema = z.object({
-  name: z.string().min(3, 'Mínimo 3 caracteres').max(50, 'Máximo 50 caracteres'),
+  name: z.string().min(3, 'Mínimo 3 caracteres').max(20, 'Máximo 20 caracteres'),
   emoji: z.string().emoji('Emoji inválido').optional(),
   resultPoints: z.number().int().min(1).max(10).default(1),
   exactScorePoints: z.number().int().min(1).max(20).default(3),

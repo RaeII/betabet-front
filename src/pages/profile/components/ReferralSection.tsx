@@ -1,34 +1,17 @@
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useReferralInfo, useApplyReferralCode } from '@/hooks/useReferral'
-import { useAuth } from '@/hooks/useAuth'
+import { useReferralInfo } from '@/hooks/useReferral'
 
 export function ReferralSection() {
   const { data, isLoading } = useReferralInfo()
-  const { user } = useAuth()
-  const applyCode = useApplyReferralCode()
-  const [inputCode, setInputCode] = useState('')
   const [copied, setCopied] = useState(false)
-  const [applyError, setApplyError] = useState('')
-
-  const codeAlreadySet = !!user?.referredByCode
 
   async function copyLink() {
     if (!data?.link) return
     await navigator.clipboard.writeText(data.link)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-  }
-
-  async function handleApply(e: React.FormEvent) {
-    e.preventDefault()
-    if (!inputCode.trim()) return
-    setApplyError('')
-    applyCode.mutate(inputCode.trim(), {
-      onError: () => setApplyError('Código inválido ou já utilizado.'),
-    })
   }
 
   if (isLoading) return null
@@ -72,34 +55,6 @@ export function ReferralSection() {
           />
         </div>
       </div>
-
-      {/* Apply referral code */}
-      {!codeAlreadySet && (
-        <form onSubmit={handleApply} className="space-y-2">
-          <div className="flex gap-2">
-            <Input
-              label="Código de quem te indicou"
-              value={inputCode}
-              onChange={e => { setInputCode(e.target.value); setApplyError('') }}
-              placeholder="Ex: ABC12345"
-              disabled={applyCode.isSuccess}
-            />
-            <Button type="submit" size="sm" disabled={applyCode.isPending || applyCode.isSuccess}>
-              {applyCode.isSuccess ? 'Salvo' : 'Aplicar'}
-            </Button>
-          </div>
-          {applyError && <p className="text-xs text-[var(--danger)]">{applyError}</p>}
-          {applyCode.isSuccess && (
-            <p className="text-xs text-[var(--success)]">Código aplicado com sucesso!</p>
-          )}
-        </form>
-      )}
-
-      {codeAlreadySet && (
-        <p className="text-xs text-[var(--text-muted)]">
-          Você já foi indicado por alguém. Código não pode ser alterado.
-        </p>
-      )}
     </div>
   )
 }

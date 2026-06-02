@@ -52,7 +52,7 @@ export function GroupSettings({ group }: GroupSettingsProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex flex-col gap-1">
-        <Input label="Nome do bolão" value={name} onChange={e => setName(e.target.value)} required minLength={3} />
+        <Input label="Nome do bolão" value={name} onChange={e => setName(e.target.value)} required minLength={3} maxLength={20} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">

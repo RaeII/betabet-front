@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Upload } from 'lucide-react'
+import { Camera, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { ReferralSection } from './components/ReferralSection'
 import { Button } from '@/components/ui/button'
@@ -38,7 +38,7 @@ export function ProfilePage() {
     setImageError(null)
 
     try {
-      const dataUri = await resizeToBase64(file)
+      const dataUri = await resizeToBase64(file, 200)
       setAvatarUrl(dataUri)
     } catch {
       setImageError('Erro ao processar a imagem.')
@@ -63,37 +63,53 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-xl space-y-6">
       {/* Editar perfil */}
-      <div className="space-y-5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
+      <div className="space-y-5 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-soft)] text-2xl font-bold text-[var(--brand)]">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={trimmedName || user.name} className="h-full w-full object-cover" />
-            ) : (
-              (trimmedName || user.name).charAt(0).toUpperCase()
-            )}
-          </div>
-          <div className="flex flex-1 flex-col gap-1">
-            <Button
+          <div className="relative h-20 w-20 shrink-0">
+            <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[var(--surface-soft)] text-3xl font-bold text-[var(--brand)]">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={trimmedName || user.name} className="h-full w-full object-cover" />
+              ) : (
+                (trimmedName || user.name).charAt(0).toUpperCase()
+              )}
+            </div>
+            <button
               type="button"
-              variant="secondary"
               onClick={() => fileInputRef.current?.click()}
-              className="border-[var(--brand)] bg-[var(--surface)] text-[var(--brand)] hover:bg-[var(--surface-soft)]"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--brand)] text-[var(--brand-text)] shadow-sm transition duration-150 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--support)]"
+              aria-label={avatarUrl ? 'Trocar foto' : 'Adicionar foto'}
+              title={avatarUrl ? 'Trocar foto' : 'Adicionar foto'}
             >
-              <Upload size={16} />
-              {avatarUrl ? 'Trocar foto' : 'Adicionar foto'}
-            </Button>
-            {avatarUrl && (
-              <button
-                type="button"
-                onClick={() => setAvatarUrl(null)}
-                className="self-start text-xs font-medium text-[var(--text-muted)] hover:text-[var(--danger)]"
-              >
-                Remover foto
-              </button>
+              <Camera size={15} />
+            </button>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Perfil</p>
+            <h1 className="mt-1 truncate text-xl font-semibold leading-tight text-[var(--text)]">
+              {trimmedName || user.name}
+            </h1>
+            <p className="mt-1 truncate text-sm text-[var(--text-muted)]">{user.email}</p>
+            {(avatarUrl || imageError) && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setAvatarUrl(null)}
+                    className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[var(--border)] px-3 text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--danger)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--support)]"
+                  >
+                    <X size={14} />
+                    Remover foto
+                  </button>
+                )}
+                {imageError && (
+                  <p role="alert" className="text-xs font-medium text-[var(--danger)]">
+                    {imageError}
+                  </p>
+                )}
+              </div>
             )}
-            {imageError && <span className="text-xs text-[var(--danger)]">{imageError}</span>}
           </div>
         </div>
 
@@ -105,21 +121,25 @@ export function ProfilePage() {
           onChange={handleFileChange}
         />
 
-        <div className="flex flex-col gap-1">
-          <Input
-            label="Nome"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={120}
-          />
-          {!nameValid && trimmedName.length > 0 && (
-            <span className="text-xs text-[var(--danger)]">O nome deve ter entre 3 e 120 caracteres.</span>
-          )}
-        </div>
+        <div className="space-y-5 border-t border-[var(--border)] pt-5">
+          <div className="flex flex-col gap-1.5">
+            <Input
+              label="Nome"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={120}
+            />
+            {!nameValid && trimmedName.length > 0 && (
+              <span className="text-xs font-medium text-[var(--danger)]">
+                O nome deve ter entre 3 e 120 caracteres.
+              </span>
+            )}
+          </div>
 
-        <div className="flex flex-col gap-1">
-          <Input label="E-mail" value={user.email} disabled readOnly />
-          <span className="text-xs text-[var(--text-muted)]">O e-mail não pode ser alterado.</span>
+          <div className="flex flex-col gap-1.5">
+            <Input label="E-mail" value={user.email} disabled readOnly />
+            <span className="text-xs font-medium text-[var(--text-muted)]">O e-mail não pode ser alterado.</span>
+          </div>
         </div>
 
         {saveError && <span className="text-sm text-[var(--danger)]">{saveError}</span>}
@@ -134,7 +154,7 @@ export function ProfilePage() {
 
       {/* Logout */}
       <Button variant="secondary" className="w-full" onClick={logout}>
-        Sair da conta
+        Sair do app
       </Button>
     </div>
   )
