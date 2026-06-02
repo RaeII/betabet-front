@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, useMatch } from 'react-router-dom'
-import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
+import { Award, Home, Plus, Trophy, Users} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useGroupHasLiveMatch } from '@/hooks/useGroupLiveMatch'

@@ -42,7 +42,7 @@ export function TeamForm({ onSuccess }: TeamFormProps) {
         <Input label="URL da bandeira" value={flagUrl} onChange={e => setFlagUrl(e.target.value)} placeholder="/flags/br.svg" required />
       </div>
       <div className="flex flex-col gap-1">
-        <Input label="Grupo (opcional)" value={group} onChange={e => setGroup(e.target.value)} placeholder="A" maxLength={1} />
+        <Input label="Bolão (opcional)" value={group} onChange={e => setGroup(e.target.value)} placeholder="A" maxLength={1} />
       </div>
       {error && <p className="text-xs text-[var(--danger)]">{error}</p>}
       <Button type="submit" disabled={isSubmitting} className="w-full">

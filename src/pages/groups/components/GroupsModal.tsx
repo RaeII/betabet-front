@@ -50,7 +50,7 @@ export function GroupsModal({ open, onOpenChange, activeGroupId }: GroupsModalPr
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title={mode === 'list' ? 'Seus grupos' : 'Criar novo grupo'}
+      title={mode === 'list' ? 'Seus bolões' : 'Criar novo bolão'}
     >
       {mode === 'list' ? (
         <GroupsModalList

@@ -100,7 +100,7 @@ export function BetForm({ matchId, groupId, existingBet, isLocked, userGroupCoun
             onChange={e => setReplicate(e.target.checked)}
             className="accent-[var(--brand)]"
           />
-          Replicar aposta para todos os meus grupos
+          Replicar aposta para todos os meus bolões
         </label>
       )}
 

@@ -280,14 +280,14 @@ export function RegisterPage() {
         <div className="mt-4">
           <InviteGroupCard
             group={invitePreview.group}
-            hint="Crie sua conta para entrar neste grupo."
+            hint="Crie sua conta para entrar neste bolão."
           />
         </div>
       )}
 
       {inviteCode && isInviteInvalid && (
         <p className="mt-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4 text-sm text-[var(--text)]">
-          Convite inválido ou expirado. Você ainda pode criar sua conta e entrar em um grupo depois.
+          Convite inválido ou expirado. Você ainda pode criar sua conta e entrar em um bolão depois.
         </p>
       )}
 

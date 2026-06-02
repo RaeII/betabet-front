@@ -52,7 +52,7 @@ export function GroupSettings({ group }: GroupSettingsProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex flex-col gap-1">
-        <Input label="Nome do grupo" value={name} onChange={e => setName(e.target.value)} required minLength={3} />
+        <Input label="Nome do bolão" value={name} onChange={e => setName(e.target.value)} required minLength={3} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -95,11 +95,11 @@ export function GroupSettings({ group }: GroupSettingsProps) {
           onChange={e => setJoinMode(e.target.value as 'invite' | 'request')}
           className="min-h-12 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] focus:border-[var(--brand)] focus:outline-none focus:shadow-[0_0_0_2px_color-mix(in_srgb,var(--brand)_10%,transparent)]"
         >
-          <option value="request">Grupo fechado, solicitação para entrar</option>
+          <option value="request">Bolão fechado, solicitação para entrar</option>
           <option value="invite">Aberto, consegue entrar apenas com link do bolão</option>
         </select>
         <p className="text-xs leading-relaxed text-[var(--text-muted)]">
-          Nos dois casos o link identifica o bolão. Em grupos fechados, o admin precisa aprovar a entrada.
+          Nos dois casos o link identifica o bolão. Em bolões fechados, o admin precisa aprovar a entrada.
         </p>
       </div>
 

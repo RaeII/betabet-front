@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Check, Clock3, UserRound, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { useAuth } from '@/hooks/useAuth'
 import { useHandleJoinRequest, useJoinRequests } from '@/hooks/useGroups'
 import { MemberList } from '@/pages/group-detail/components/MemberList'
 import { InvitePanel } from '@/pages/group-detail/components/InvitePanel'
@@ -12,6 +13,7 @@ type MembersTab = 'members' | 'requests'
 
 export function GroupMembersPage() {
   const { groupId, group, role } = useActiveGroup()
+  const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState<MembersTab>(
@@ -45,13 +47,13 @@ export function GroupMembersPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-bold text-[var(--text)]">Membros</h1>
         <p className="text-sm text-[var(--text-muted)]">
-          Gerencie pessoas, convite e solicitações de entrada do grupo.
+          Gerencie pessoas, convite e solicitações de entrada do bolão.
         </p>
       </div>
 
       <section className="space-y-3 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5">
         <h2 className="text-lg font-semibold text-[var(--text)]">Convite</h2>
-        <InvitePanel inviteCode={group.inviteCode} />
+        <InvitePanel inviteCode={group.inviteCode} referralCode={user?.referralCode} />
       </section>
 
       <section className="space-y-3">
@@ -78,7 +80,7 @@ export function GroupMembersPage() {
         </div>
 
         {visibleTab === 'members' ? (
-          <MemberList groupId={groupId} currentUserRole={currentUserRole} />
+          <MemberList groupId={groupId} currentUserRole={currentUserRole} adminId={group.adminId} />
         ) : (
           <JoinRequestsPanel
             groupId={groupId}

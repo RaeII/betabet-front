@@ -117,8 +117,8 @@ export function InvitePage() {
             <InviteGroupCard
               group={group}
               hint={isClosedGroup
-                ? 'Grupo fechado: sua solicitação será enviada para aprovação do admin.'
-                : 'Grupo aberto: confirme para entrar no bolão agora.'}
+                ? 'Bolão fechado: sua solicitação será enviada para aprovação do admin.'
+                : 'Bolão aberto: confirme para entrar no bolão agora.'}
             />
           ) : null}
 
@@ -133,7 +133,7 @@ export function InvitePage() {
               ) : isClosedGroup ? (
                 'Solicitar entrada'
               ) : (
-                'Entrar no grupo'
+                'Entrar no bolão'
               )}
             </Button>
             <Button

@@ -18,28 +18,28 @@ export function GroupDesktopRail({ groups, activeGroupId, isLoading }: GroupDesk
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-              Seus grupos
+              Seus bolões
             </p>
-            <h2 className="text-lg font-semibold text-[var(--text)]">Grupo atual</h2>
+            <h2 className="text-lg font-semibold text-[var(--text)]">Bolão atual</h2>
           </div>
-          <Button asChild size="icon" variant="secondary" aria-label="Criar grupo">
+          <Button asChild size="icon" variant="secondary" aria-label="Criar bolão">
             <Link to="/groups/new">
               <Plus size={16} />
             </Link>
           </Button>
         </div>
 
-        <nav aria-label="Grupos do usuário" className="space-y-2">
+        <nav aria-label="Bolões do usuário" className="space-y-2">
           {isLoading && (
             <GroupStatePanel
-              title="Carregando grupos..."
+              title="Carregando bolões..."
               className="rounded-[var(--radius-lg)] p-4"
             />
           )}
 
           {!isLoading && groups.length === 0 && (
             <GroupStatePanel
-              title="Nenhum grupo"
+              title="Nenhum bolão"
               description="Crie ou aceite um convite para começar."
               className="rounded-[var(--radius-lg)] p-4"
             />

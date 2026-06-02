@@ -1,6 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom'
 import { useGroup } from '@/hooks/useGroups'
 import { GroupSettings } from '@/pages/group-detail/components/GroupSettings'
+import { GroupAdminsSection } from '@/pages/group-detail/components/GroupAdminsSection'
 
 export function GroupSettingsPage() {
   const { groupId } = useParams<{ groupId: string }>()
@@ -22,6 +23,7 @@ export function GroupSettingsPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-[var(--text)]">Configurações</h1>
       <GroupSettings group={data.group} />
+      <GroupAdminsSection group={data.group} />
     </div>
   )
 }

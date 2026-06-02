@@ -78,7 +78,7 @@ export function OnboardingPage() {
               ))}
             </div>
             <p className="text-xs text-[var(--text-muted)]">
-              Assim que o admin aprovar, você será levado automaticamente ao grupo. Enquanto isso, você pode entrar em outro grupo ou criar o seu.
+              Assim que o admin aprovar, você será levado automaticamente ao Bolão. Enquanto isso, você pode entrar em outro Bolão ou criar o seu.
             </p>
           </div>
         )}
@@ -94,7 +94,7 @@ export function OnboardingPage() {
               {requests.length > 0 ? 'Enquanto espera, vamos começar.' : 'Comece seu bolão da Copa.'}
             </h1>
             <p className="max-w-sm text-base leading-relaxed text-[var(--text-muted)]">
-              Crie um grupo com amigos ou entre em um com o código de convite.
+              Crie um Bolão com amigos ou entre em um com o código de convite.
               Sem app extra, sem cadastro complicado.
             </p>
           </div>
@@ -103,20 +103,20 @@ export function OnboardingPage() {
         <div className="space-y-3">
           <OnboardingCard
             icon="🎟️"
-            title="Entrar em um grupo"
+            title="Entrar em um Bolão"
             description="Tenho um código ou link de convite"
             to="/onboarding/join"
           />
           <OnboardingCard
-            icon="✨"
-            title="Criar um grupo"
+            icon="⚽"
+            title="Criar um bolão"
             description="Quero montar o meu próprio bolão"
             to="/groups/new"
           />
         </div>
 
         <p className="text-center text-xs text-[var(--text-muted)]">
-          Você pode trocar de grupo a qualquer momento depois.
+          Você pode trocar de Bolão a qualquer momento depois.
         </p>
       </motion.section>
     </OnboardingShell>

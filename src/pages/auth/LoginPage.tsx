@@ -258,7 +258,7 @@ export function LoginPage() {
         <div className="mt-4">
           <InviteGroupCard
             group={invitePreview.group}
-            hint="Faça login para entrar neste grupo."
+            hint="Faça login para entrar neste bolão."
           />
         </div>
       )}

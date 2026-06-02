@@ -29,7 +29,7 @@ export function Header() {
             Jogos
           </Link>
           <Link to="/groups" className="hover:text-[var(--text)] transition-colors">
-            Grupos
+            Bolões
           </Link>
           <Link to="/profile" className="hover:text-[var(--text)] transition-colors">
             Perfil

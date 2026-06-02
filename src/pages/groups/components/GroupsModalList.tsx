@@ -25,7 +25,7 @@ export function GroupsModalList({
 
   return (
     <div className="space-y-3 p-5">
-      <ul className="space-y-2" aria-label="Lista de grupos">
+      <ul className="space-y-2" aria-label="Lista de bolões">
         {groups.map(group => {
           const isActive = group.id === activeGroupId
           return (
@@ -80,7 +80,7 @@ export function GroupsModalList({
               Carregando solicitações...
             </p>
           ) : (
-            <ul className="space-y-2" aria-label="Grupos aguardando aprovação">
+            <ul className="space-y-2" aria-label="Bolões aguardando aprovação">
               {pendingRequests.map(request => (
                 <li
                   key={request.id}
@@ -126,7 +126,7 @@ export function GroupsModalList({
           className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]"
         >
           <Ticket size={16} />
-          Entrar em um grupo
+          Entrar em um bolão
         </button>
         <button
           type="button"
@@ -134,7 +134,7 @@ export function GroupsModalList({
           className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] border border-dashed border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]"
         >
           <Plus size={16} />
-          Criar novo grupo
+          Criar novo bolão
         </button>
       </div>
     </div>

@@ -109,12 +109,21 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
           )}
         </div>
       ) : bettingOpen ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-[var(--text-muted)]">
-            Escolha 2 opções de campeão: opção 1 vale {firstPoints} pts, opção 2 vale {secondPoints} pts.
-            {deadline ? ` Até ${formatMatchDate(deadline)}.` : ''}
-          </p>
-          <Button onClick={() => setModalOpen(true)} size="sm" className="w-full shrink-0 sm:w-auto">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1 rounded-[var(--radius-lg)] bg-[var(--surface-soft)] px-3 py-2.5">
+            <p className="text-sm leading-5 text-[var(--text-muted)]">
+              <span className="block font-semibold text-[var(--text)]">Escolha 2 opções de campeão:</span>
+              <span className="mt-1 block">
+                opção 1 vale {firstPoints} pts, opção 2 vale {secondPoints} pts.
+              </span>
+              {deadline ? (
+                <span className="mt-2 block border-t border-[var(--border)] pt-2 text-xs font-medium">
+                  Até {formatMatchDate(deadline)}.
+                </span>
+              ) : null}
+            </p>
+          </div>
+          <Button onClick={() => setModalOpen(true)} size="sm" className="w-full shrink-0 sm:w-auto sm:self-center">
             <Crown size={16} />
             Escolher campeão
           </Button>

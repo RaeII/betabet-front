@@ -32,6 +32,11 @@ export interface VerifyAuthCodeData {
   code: string
 }
 
+export interface UpdateProfileData {
+  name?: string
+  avatarUrl?: string | null
+}
+
 export interface AuthCodeChallenge {
   challengeId: string
   expiresAt: string

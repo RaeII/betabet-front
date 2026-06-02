@@ -1,8 +1,12 @@
-import { apiGet, apiPost } from './api'
-import type { AuthCodeChallenge, RegisterData, User, VerifyAuthCodeData } from '@/types/auth.types'
+import { apiGet, apiPost, apiPut } from './api'
+import type { AuthCodeChallenge, RegisterData, UpdateProfileData, User, VerifyAuthCodeData } from '@/types/auth.types'
 
 export function getMe(): Promise<{ user: User }> {
   return apiGet('/api/auth/me')
+}
+
+export function updateProfile(data: UpdateProfileData): Promise<{ user: User }> {
+  return apiPut('/api/auth/me', data)
 }
 
 export function requestLoginCode(email: string): Promise<AuthCodeChallenge> {

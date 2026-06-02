@@ -11,6 +11,7 @@ FROM deps AS build
 
 COPY tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts index.html components.json ./
 COPY src ./src
+COPY public ./public
 
 RUN bun run build
 

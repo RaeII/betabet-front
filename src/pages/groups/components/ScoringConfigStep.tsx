@@ -95,7 +95,7 @@ export function ScoringConfigStep({
           disabled={isPending}
           className="flex-1"
         >
-          {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Criar grupo'}
+          {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Criar bolão'}
         </Button>
       </div>
     </div>

@@ -4,11 +4,18 @@ import { Button } from '@/components/ui/button'
 
 interface InvitePanelProps {
   inviteCode: string
+  referralCode?: string | null
 }
 
-export function InvitePanel({ inviteCode }: InvitePanelProps) {
+function buildInviteUrl(inviteCode: string, referralCode?: string | null) {
+  const baseUrl = `${window.location.origin}/invite/${encodeURIComponent(inviteCode)}`
+  if (!referralCode) return baseUrl
+  return `${baseUrl}?ref=${encodeURIComponent(referralCode)}`
+}
+
+export function InvitePanel({ inviteCode, referralCode }: InvitePanelProps) {
   const [copied, setCopied] = useState(false)
-  const inviteUrl = `${window.location.origin}/invite/${inviteCode}`
+  const inviteUrl = buildInviteUrl(inviteCode, referralCode)
 
   async function copyLink() {
     await navigator.clipboard.writeText(inviteUrl)

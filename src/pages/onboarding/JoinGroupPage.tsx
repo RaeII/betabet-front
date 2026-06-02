@@ -69,10 +69,10 @@ export function JoinGroupPage() {
   }
 
   const isClosedGroup = preview?.group?.joinMode === 'request'
-  const joinButtonLabel = isClosedGroup ? 'Solicitar entrada' : 'Entrar no grupo'
+  const joinButtonLabel = isClosedGroup ? 'Solicitar entrada' : 'Entrar no bolão'
   const joinModeHint = isClosedGroup
-    ? 'Grupo fechado: o admin precisa aprovar sua entrada.'
-    : 'Grupo aberto: quem tem este link consegue entrar no bolão.'
+    ? 'Bolão fechado: o admin precisa aprovar sua entrada.'
+    : 'Bolão aberto: quem tem este link consegue entrar no bolão.'
 
   return (
     <OnboardingShell backTo="/onboarding">
@@ -88,7 +88,7 @@ export function JoinGroupPage() {
             Convite
           </span>
           <h1 className="text-[32px] font-semibold leading-[1.1] tracking-[-0.04em] text-[var(--text)]">
-            Entrar em um grupo
+            Entrar em um bolão
           </h1>
           <p className="text-sm leading-relaxed text-[var(--text-muted)]">
             Cole o link de convite ou digite o código que você recebeu.
@@ -144,7 +144,7 @@ export function JoinGroupPage() {
             </Button>
             {joinByCode.isError && !(joinByCode.error instanceof ApiRequestError && joinByCode.error.status === 409) && (
               <p className="text-sm text-[var(--text-muted)]">
-                Erro ao entrar no grupo. Tente novamente.
+                Erro ao entrar no bolão. Tente novamente.
               </p>
             )}
           </div>

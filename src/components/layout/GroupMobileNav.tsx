@@ -66,7 +66,7 @@ export function GroupMobileNav() {
   return (
     <>
       <nav
-        aria-label="Navegação do grupo (mobile)"
+        aria-label="Navegação do bolão (mobile)"
         className="fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--border)] bg-[var(--surface)] pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
         <ul
@@ -126,7 +126,7 @@ export function GroupMobileNav() {
               className={`${navItemClass} w-full text-[var(--text-muted)] hover:text-[var(--text)]`}
             >
               <Plus size={20} />
-              <span className="block max-w-full truncate text-center leading-3">Grupos</span>
+              <span className="block max-w-full truncate text-center leading-3">Bolões</span>
             </button>
           </li>
         </ul>

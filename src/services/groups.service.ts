@@ -2,6 +2,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from './api'
 import type {
   BettingGroup,
   GroupMembership,
+  GroupRole,
   InvitePreviewGroup,
   JoinRequest,
   LeaveGroupResult,
@@ -15,7 +16,7 @@ export function getUserGroups(): Promise<{ groups: BettingGroup[] }> {
   return apiGet('/api/groups')
 }
 
-export function getGroup(groupId: string): Promise<{ group: BettingGroup; role: string }> {
+export function getGroup(groupId: string): Promise<{ group: BettingGroup; role: GroupRole }> {
   return apiGet(`/api/groups/${groupId}`)
 }
 
@@ -33,6 +34,14 @@ export function getGroupMembers(groupId: string): Promise<{ members: GroupMember
 
 export function removeMember(groupId: string, userId: string): Promise<{ ok: boolean }> {
   return apiDelete(`/api/groups/${groupId}/members/${userId}`)
+}
+
+export function setMemberRole(
+  groupId: string,
+  userId: string,
+  role: GroupRole,
+): Promise<{ ok: boolean }> {
+  return apiPut(`/api/groups/${groupId}/members/${userId}/role`, { role })
 }
 
 export function getGroupRanking(groupId: string): Promise<{ ranking: RankingEntry[]; updatedAt: string }> {

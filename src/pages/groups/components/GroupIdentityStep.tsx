@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { ChevronRight, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { detectMime, resizeToBase64 } from '@/lib/image.utils'
 
 const EMOJI_OPTIONS = ['⚽', '🏆', '🎯', '🔥', '🏅', '🥇', '🎲', '👑']
 
@@ -14,36 +15,6 @@ interface GroupIdentityStepProps {
   onCoverUrlChange: (url: string | null) => void
   onNext: () => void
   nameError: string
-}
-
-async function detectMime(file: File): Promise<'image/jpeg' | 'image/png' | 'image/webp' | null> {
-  const buf = await file.slice(0, 12).arrayBuffer()
-  const b = new Uint8Array(buf)
-  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg'
-  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return 'image/png'
-  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
-      b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return 'image/webp'
-  return null
-}
-
-function resizeToBase64(file: File, maxDim = 256): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      const scale = Math.min(1, maxDim / Math.max(img.width, img.height))
-      const w = Math.round(img.width * scale)
-      const h = Math.round(img.height * scale)
-      const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
-      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
-      resolve(canvas.toDataURL('image/jpeg', 0.8))
-    }
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('invalid')) }
-    img.src = url
-  })
 }
 
 export function GroupIdentityStep({
@@ -80,7 +51,7 @@ export function GroupIdentityStep({
     }
   }
 
-  const displayName = name.trim() || 'Meu Grupo'
+  const displayName = name.trim() || 'Meu Bolão'
   const displayIcon = coverUrl ? (
     <img src={coverUrl} alt="capa" className="h-full w-full rounded-[var(--radius-lg)] object-cover" />
   ) : (
@@ -90,14 +61,14 @@ export function GroupIdentityStep({
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-xl font-bold text-[var(--text)]">Como vai chamar o grupo?</h2>
+        <h2 className="text-xl font-bold text-[var(--text)]">Como vai chamar o bolão?</h2>
         <p className="text-sm text-[var(--text-muted)]">Escolha um nome e uma identidade visual.</p>
       </div>
 
       <div className="flex flex-col gap-1">
         <Input
-          label="Nome do grupo"
-          placeholder="Nome do grupo"
+          label="Nome do bolão"
+          placeholder="Nome do bolão"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
           maxLength={50}
@@ -133,7 +104,7 @@ export function GroupIdentityStep({
             className="w-full border-[var(--brand)] bg-[var(--surface)] text-[var(--brand)] hover:bg-[var(--surface-soft)]"
           >
             <Upload size={16} />
-            {coverUrl ? 'Trocar imagem do grupo' : 'Escolher imagem do grupo'}
+            {coverUrl ? 'Trocar imagem do bolão' : 'Escolher imagem do bolão'}
           </Button>
           <div
             className="pointer-events-none absolute inset-x-0 top-full mt-1 h-4 overflow-hidden"

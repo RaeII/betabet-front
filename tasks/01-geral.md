@@ -27,3 +27,5 @@
 
 [] - Mensagem de chace
 [] - Exclusão de conta
+
+[] - ACRIPT DE TRADUÇÃO

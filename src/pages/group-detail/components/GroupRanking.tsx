@@ -96,8 +96,12 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-soft)] text-xs font-bold text-[var(--brand)]">
-                        {entry.userName.charAt(0).toUpperCase()}
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-soft)] text-xs font-bold text-[var(--brand)]">
+                        {entry.avatarUrl ? (
+                          <img src={entry.avatarUrl} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          entry.userName.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <span className="font-medium text-[var(--text)]">
                         {entry.userName}

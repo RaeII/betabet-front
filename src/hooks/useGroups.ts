@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as groupsService from '@/services/groups.service'
-import type { CreateGroupData, UpdateGroupData } from '@/types/group.types'
+import type { CreateGroupData, GroupRole, UpdateGroupData } from '@/types/group.types'
 
 export const groupKeys = {
   all: ['groups'] as const,
@@ -88,6 +88,18 @@ export function useRemoveMember(groupId: string) {
   return useMutation({
     mutationFn: (userId: string) => groupsService.removeMember(groupId, userId),
     onSuccess: () => qc.invalidateQueries({ queryKey: groupKeys.members(groupId) }),
+  })
+}
+
+export function useSetMemberRole(groupId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: GroupRole }) =>
+      groupsService.setMemberRole(groupId, userId, role),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: groupKeys.members(groupId) })
+      void qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) })
+    },
   })
 }
 

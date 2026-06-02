@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, LogOut, Moon, Sun, Trophy } from 'lucide-react'
+import { ArrowLeft, LogOut, Moon, Sun } from 'lucide-react'
 import { PatternBackground } from '@/components/layout/PatternBackground'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/hooks/useAuth'
@@ -46,9 +46,12 @@ export function OnboardingShell({
             </Link>
           ) : (
             <Link to="/onboarding" className="flex items-center gap-2" aria-label="Bolão CLT">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--brand-text)]">
-                <Trophy size={16} />
-              </span>
+              <img
+                src="/bolao_clt_logo.png"
+                alt=""
+                className="h-9 w-9 shrink-0 object-contain"
+                aria-hidden="true"
+              />
               <span className="text-sm font-bold tracking-tight">Bolão CLT</span>
             </Link>
           )}

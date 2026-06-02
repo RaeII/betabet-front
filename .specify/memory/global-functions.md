@@ -136,3 +136,15 @@ When a new reusable function is created, add it here before closing the feature 
 ### clearLastAccessedGroup(userId: string): void
 
 - **Purpose**: Remove the stored last-accessed groupId for a user; tolerates errors silently.
+
+---
+
+## Image upload — `src/lib/image.utils.ts`
+
+### detectMime(file: File): Promise<'image/jpeg' | 'image/png' | 'image/webp' | null>
+
+- **Purpose**: Detect image MIME by magic-number (first 12 bytes); returns null for unsupported formats.
+
+### resizeToBase64(file: File, maxDim = 256): Promise<string>
+
+- **Purpose**: Downscale an image to `maxDim` and encode it as a JPEG base64 data-URI. Used for user avatars and group covers.

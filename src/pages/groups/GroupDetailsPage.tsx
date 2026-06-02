@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
+import { useAuth } from '@/hooks/useAuth'
 import { useGroupMembers } from '@/hooks/useGroups'
 import { Button } from '@/components/ui/button'
 import { GroupAvatar } from '@/pages/groups/components/GroupAvatar'
@@ -10,6 +11,7 @@ import { GroupSettings } from '@/pages/group-detail/components/GroupSettings'
 
 export function GroupDetailsPage() {
   const { groupId, group, role, isAdmin } = useActiveGroup()
+  const { user } = useAuth()
   const { data: membersData } = useGroupMembers(groupId ?? '')
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false)
 
@@ -58,7 +60,7 @@ export function GroupDetailsPage() {
             <div className="space-y-1">
               <h2 className="text-lg font-semibold text-[var(--text)]">Configurações do Bolão</h2>
               <p className="text-sm text-[var(--text-muted)]">
-                Ajuste as regras, a entrada de novos membros e a identificação do grupo.
+                Ajuste as regras, a entrada de novos membros e a identificação do bolão.
               </p>
             </div>
             <GroupSettings group={group} />
@@ -84,7 +86,7 @@ export function GroupDetailsPage() {
         {role ? (
           <section className="space-y-3 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5">
             <h2 className="text-lg font-semibold text-[var(--text)]">Convite</h2>
-            <InvitePanel inviteCode={group.inviteCode} />
+            <InvitePanel inviteCode={group.inviteCode} referralCode={user?.referralCode} />
           </section>
         ) : null}
 
