@@ -48,18 +48,18 @@ export function ScoringConfigStep({
 
       <div className="grid grid-cols-2 gap-3">
         <Stepper
-          label="Acertar o vencedor"
-          min={1}
-          max={25}
-          value={resultPoints}
-          onChange={onResultPointsChange}
-        />
-        <Stepper
           label="Acertar o placar"
           min={1}
           max={25}
           value={exactScorePoints}
           onChange={onExactScorePointsChange}
+        />
+        <Stepper
+          label="Acertar o vencedor"
+          min={1}
+          max={25}
+          value={resultPoints}
+          onChange={onResultPointsChange}
         />
       </div>
 

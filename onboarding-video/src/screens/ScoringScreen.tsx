@@ -226,13 +226,13 @@ export const ScoringScreen: React.FC<ScoringScreenProps> = ({
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <NumberField label="Acertar o placar" value={10} />
         <NumberField
           label="Acertar o vencedor"
           value={resultPoints}
           focused={resultFocused}
           caretOn={caretOn}
         />
-        <NumberField label="Acertar o placar" value={10} />
       </div>
 
       {/* Scoring example */}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle, LogOut, Pencil } from 'lucide-react'
+import { AlertTriangle, Crown, LogOut, Pencil } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useAuth } from '@/hooks/useAuth'
 import { useGroupMembers } from '@/hooks/useGroups'
@@ -101,16 +101,54 @@ export function GroupDetailsPage() {
             <h2 className="text-lg font-semibold text-[var(--text)]">Pontuação</h2>
             <ul className="space-y-1 text-sm text-[var(--text)]">
               <li>
-                Acertar o vencedor:{' '}
-                <strong>{group.resultPoints} {group.resultPoints === 1 ? 'ponto' : 'pontos'}</strong>
-              </li>
-              <li>
-                Acertar o placar exato (bônus):{' '}
+                Acertar o placar exato:{' '}
                 <strong>
                   +{group.exactScorePoints} {group.exactScorePoints === 1 ? 'ponto' : 'pontos'}
                 </strong>
               </li>
+              <li>
+                Acertar o vencedor:{' '}
+                <strong>{group.resultPoints} {group.resultPoints === 1 ? 'ponto' : 'pontos'}</strong>
+              </li>
             </ul>
+
+            <div className="space-y-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-soft)] p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Crown size={16} className="shrink-0 text-[var(--brand)]" />
+                  <span className="text-sm font-semibold text-[var(--text)]">Campeão da Copa</span>
+                </div>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    group.championBetEnabled
+                      ? 'bg-[color-mix(in_srgb,var(--success)_15%,transparent)] text-[var(--success)]'
+                      : 'bg-[var(--surface)] text-[var(--text-muted)]'
+                  }`}
+                >
+                  {group.championBetEnabled ? 'Habilitado' : 'Desabilitado'}
+                </span>
+              </div>
+              {group.championBetEnabled ? (
+                <ul className="space-y-1 text-sm text-[var(--text)]">
+                  <li>
+                    Acertar o 1º palpite:{' '}
+                    <strong>
+                      {group.championFirstPoints} {group.championFirstPoints === 1 ? 'ponto' : 'pontos'}
+                    </strong>
+                  </li>
+                  <li>
+                    Acertar o 2º palpite:{' '}
+                    <strong>
+                      {group.championSecondPoints} {group.championSecondPoints === 1 ? 'ponto' : 'pontos'}
+                    </strong>
+                  </li>
+                </ul>
+              ) : (
+                <p className="text-sm text-[var(--text-muted)]">
+                  A aposta de campeão não está habilitada neste bolão.
+                </p>
+              )}
+            </div>
           </section>
         )}
 
