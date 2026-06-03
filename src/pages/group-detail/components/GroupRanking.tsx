@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { ChevronRight, TrendingUp } from 'lucide-react'
 import { useGroupRanking } from '@/hooks/useRanking'
 import { useGroupLiveMyPoints } from '@/hooks/useMatchPoints'
-import { useGroup } from '@/hooks/useGroups'
 import { useAuth } from '@/hooks/useAuth'
 import { formatRank } from '@/lib/format.utils'
 import { RankingBreakdownModal } from './RankingBreakdownModal'
@@ -23,7 +22,6 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
   const { data, isLoading } = useGroupRanking(groupId)
   const { user } = useAuth()
   const { liveDelta, hasLiveMatch } = useGroupLiveMyPoints(groupId)
-  const { data: groupData } = useGroup(groupId)
   const [target, setTarget] = useState<BreakdownTarget | null>(null)
 
   if (isLoading) {
@@ -153,7 +151,6 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
           position={target.position}
           totalPoints={target.totalPoints}
           isMe={target.isMe}
-          groupInviteCode={groupData?.group.inviteCode}
         />
       ) : null}
     </div>

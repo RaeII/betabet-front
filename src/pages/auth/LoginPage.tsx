@@ -96,6 +96,14 @@ export function LoginPage() {
       setCode('')
       setErrors({})
     } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 404) {
+        const params = new URLSearchParams()
+        params.set('email', result.data.email)
+        if (inviteCode) params.set('invite', inviteCode)
+        if (referralCode) params.set('ref', referralCode)
+        navigate(`/auth/register?${params.toString()}`)
+        return
+      }
       setServerError(getApiRequestMessage(error, 'Não foi possível enviar o código. Tente novamente.'))
     } finally {
       codeRequestInFlightRef.current = false

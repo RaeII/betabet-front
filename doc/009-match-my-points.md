@@ -64,7 +64,7 @@ exactScorePoints`), evitando uma requisição para partidas encerradas.
 | [`pages/match-detail/components/MatchPointsCard.tsx`](../src/pages/match-detail/components/MatchPointsCard.tsx) | Bloco "Seus pontos" da `MatchDetailPage` (estados live/confirmado/provisório)    |
 | [`components/match/MatchPointsBadge.tsx`](../src/components/match/MatchPointsBadge.tsx)                        | Pílula compacta de pontos, reutilizável em listas e cards                        |
 | [`pages/group-detail/components/GroupRanking.tsx`](../src/pages/group-detail/components/GroupRanking.tsx)     | Ranking do grupo com overlay ao vivo + reordenação + botão de detalhes por linha |
-| [`pages/group-detail/components/RankingBreakdownModal.tsx`](../src/pages/group-detail/components/RankingBreakdownModal.tsx) | Modal: partidas + palpite + pontos de um membro (validação), gated por `canView` |
+| [`pages/group-detail/components/RankingBreakdownModal.tsx`](../src/pages/group-detail/components/RankingBreakdownModal.tsx) | Modal: partidas + palpite + pontos de um membro (validação), livre para todo membro |
 | [`pages/match-detail/MatchDetailPage.tsx`](../src/pages/match-detail/MatchDetailPage.tsx)                     | Composição: renderiza `MatchPointsCard` no gate `showPoints`                     |
 | [`pages/groups/GroupPalpitesPage.tsx`](../src/pages/groups/GroupPalpitesPage.tsx)                            | "Meus palpites": `MatchPointsBadge` por palpite                                  |
 | [`components/match/MatchCard.tsx`](../src/components/match/MatchCard.tsx)                                     | Card genérico de partida: `MatchPointsBadge` (só ao vivo, quando há `groupId`)   |
@@ -293,10 +293,10 @@ services/groups.service.ts → getGroupUserBreakdown
         GET /api/groups/:groupId/users/:userId/breakdown → RankingBreakdown
 ```
 
-- **Mesma regra de visibilidade do `MatchBetsModal`.** Ver o palpite alheio
-  exige `chartUnlocked` (3 indicações). Sem desbloqueio o backend devolve
-  `canView: false` + `matches: []` e o modal renderiza o `ReferralUnlockPanel`.
-  O próprio usuário **sempre** se vê (não precisa desbloquear).
+- **Livre para qualquer membro do grupo.** O detalhamento do ranking **não**
+  exige indicações — diferente do `MatchBetsModal`, que mantém o gate
+  `chartUnlocked` (3 indicações). O backend devolve `canView: true` para todo
+  membro e o modal nunca renderiza o `ReferralUnlockPanel`.
 - **Pontos exibidos são os definitivos do palpite.** O modal lê
   `userBet.resultPoints + userBet.exactScorePoints` (mesma fonte do caminho
   encerrado do `MatchPointsBadge`) — `null` enquanto não apurados, então
@@ -311,7 +311,8 @@ services/groups.service.ts → getGroupUserBreakdown
   os pontos por partida serem os já liquidados.
 
 Companion no backend: a rota vive em `GroupController`
-(`GET /:groupId/users/:targetUserId/breakdown`), gated por `canViewOtherBets`.
+(`GET /:groupId/users/:targetUserId/breakdown`), sem gate de indicações —
+qualquer membro do grupo vê (`canView` sempre `true`).
 
 ---
 

@@ -24,11 +24,12 @@ export function RegisterPage() {
   const joinByCode = useJoinByCode()
   const inviteCode = searchParams.get('invite')
   const referralCode = searchParams.get('ref')
+  const prefillEmail = searchParams.get('email')
 
   const [step, setStep] = useState<'data' | 'code'>('data')
   const [values, setValues] = useState<FormValues>({
     name: '',
-    email: '',
+    email: prefillEmail ?? '',
     referralCode: referralCode ?? '',
   })
   const [code, setCode] = useState('')

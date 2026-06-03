@@ -1,10 +1,7 @@
 import { Trophy } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
-import { ReferralUnlockPanel } from '@/components/referral/ReferralUnlockPanel'
 import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 import { useGroupUserBreakdown } from '@/hooks/useRanking'
-import { useReferralInfo } from '@/hooks/useReferral'
-import { useAuth } from '@/hooks/useAuth'
 import { formatMatchDate } from '@/lib/date.utils'
 import { formatRank, formatScore } from '@/lib/format.utils'
 import type { Bet } from '@/types/bet.types'
@@ -19,7 +16,6 @@ interface RankingBreakdownModalProps {
   position: number
   totalPoints: number
   isMe?: boolean
-  groupInviteCode?: string
 }
 
 /** Pontos definitivos (liquidados) do palpite. `null` enquanto não apurados. */
@@ -60,15 +56,10 @@ export function RankingBreakdownModal({
   position,
   totalPoints,
   isMe = false,
-  groupInviteCode,
 }: RankingBreakdownModalProps) {
-  const { user } = useAuth()
-  const { data: referralInfo } = useReferralInfo(open && !isMe)
   const { data, isLoading, isError } = useGroupUserBreakdown(groupId, userId, open)
 
   const matches = (data?.matches ?? []).filter(isPastOrLive)
-  const referralCount = referralInfo?.count ?? user?.referralCount ?? 0
-  const referralCode = referralInfo?.code ?? user?.referralCode
 
   return (
     <Modal
@@ -105,22 +96,13 @@ export function RankingBreakdownModal({
           </p>
         ) : null}
 
-        {!isLoading && !isError && data && !data.canView ? (
-          <ReferralUnlockPanel
-            featureName="o detalhamento dos pontos dos outros jogadores"
-            referralCount={referralCount}
-            referralCode={referralCode}
-            groupInviteCode={groupInviteCode}
-          />
-        ) : null}
-
-        {!isLoading && !isError && data?.canView && matches.length === 0 ? (
+        {!isLoading && !isError && data && matches.length === 0 ? (
           <p className="py-3 text-center text-sm text-[var(--text-muted)]">
             Nenhuma partida finalizada ou em andamento ainda.
           </p>
         ) : null}
 
-        {!isLoading && !isError && data?.canView && matches.length > 0 ? (
+        {!isLoading && !isError && data && matches.length > 0 ? (
           <ul className="space-y-2">
             {matches.map(match => (
               <BreakdownRow key={match.id} match={match} />
