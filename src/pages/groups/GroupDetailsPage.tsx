@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LogOut, Pencil } from 'lucide-react'
+import { AlertTriangle, LogOut, Pencil } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useAuth } from '@/hooks/useAuth'
 import { useGroupMembers } from '@/hooks/useGroups'
@@ -9,6 +9,7 @@ import { GroupImageEditor } from '@/pages/groups/components/GroupImageEditor'
 import { LeaveGroupConfirm } from '@/pages/groups/components/LeaveGroupConfirm'
 import { InvitePanel } from '@/pages/group-detail/components/InvitePanel'
 import { GroupSettings } from '@/pages/group-detail/components/GroupSettings'
+import { formatGroupConfigDeadline, isGroupConfigLocked } from '@/lib/date.utils'
 
 export function GroupDetailsPage() {
   const { groupId, group, role, isAdmin } = useActiveGroup()
@@ -16,6 +17,7 @@ export function GroupDetailsPage() {
   const { data: membersData } = useGroupMembers(groupId ?? '')
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false)
   const [imageEditorOpen, setImageEditorOpen] = useState(false)
+  const configLocked = isGroupConfigLocked()
 
   if (!groupId || !group) {
     return (
@@ -43,7 +45,7 @@ export function GroupDetailsPage() {
     <>
       <div className="mx-auto max-w-lg space-y-6">
         <section className="flex flex-col items-center gap-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-6 text-center">
-          {isAdmin ? (
+          {isAdmin && !configLocked ? (
             <button
               type="button"
               onClick={() => setImageEditorOpen(true)}
@@ -83,6 +85,14 @@ export function GroupDetailsPage() {
               <p className="text-sm text-[var(--text-muted)]">
                 Ajuste as regras, a entrada de novos membros e a identificação do bolão.
               </p>
+            </div>
+            <div className="flex items-start gap-2 rounded-[var(--radius-md)] border border-[var(--support)] bg-[color-mix(in_srgb,var(--support)_12%,transparent)] px-3 py-2.5 text-xs font-medium leading-relaxed text-[var(--support)]">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+              <span>
+                {configLocked
+                  ? `As configurações foram congeladas em ${formatGroupConfigDeadline()} (início da Copa) e não podem mais ser alteradas.`
+                  : `Atenção: as configurações só podem ser alteradas até ${formatGroupConfigDeadline()} (início da Copa). Depois disso ficam congeladas.`}
+              </span>
             </div>
             <GroupSettings group={group} />
           </section>

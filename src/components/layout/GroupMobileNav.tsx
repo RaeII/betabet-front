@@ -4,7 +4,7 @@ import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useGroupHasLiveMatch } from '@/hooks/useGroupLiveMatch'
-import { useJoinRequests } from '@/hooks/useGroups'
+import { useJoinRequests, useMyJoinRequests } from '@/hooks/useGroups'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
 
@@ -47,6 +47,7 @@ export function GroupMobileNav() {
   const currentMatchId =
     groupMatchDetailRoute?.params.matchId ?? globalMatchDetailRoute?.params.matchId
   const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
+  const myRequestsQuery = useMyJoinRequests(Boolean(groupId))
   const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '', {
     enabled: !isMatchesListRoute,
     suppressWhenViewingMatchId: currentMatchId,
@@ -61,6 +62,7 @@ export function GroupMobileNav() {
     ),
   )
   const pendingRequests = requestsQuery.data?.requests.length ?? 0
+  const pendingApprovals = myRequestsQuery.data?.requests.length ?? 0
   const totalNavItems = items.length + 1
 
   return (
@@ -125,7 +127,17 @@ export function GroupMobileNav() {
               onClick={() => setModalOpen(true)}
               className={`${navItemClass} w-full text-[var(--text-muted)] hover:text-[var(--text)]`}
             >
-              <Plus size={20} />
+              <span className="relative flex h-5 w-5 items-center justify-center">
+                <Plus size={20} />
+                {pendingApprovals > 0 ? (
+                  <span
+                    className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-center text-[10px] font-bold leading-none text-[var(--surface)]"
+                    aria-label={`${pendingApprovals} ${pendingApprovals === 1 ? 'bolão aguardando aprovação' : 'bolões aguardando aprovação'}`}
+                  >
+                    {pendingApprovals > 99 ? '99+' : pendingApprovals}
+                  </span>
+                ) : null}
+              </span>
               <span className="block max-w-full truncate text-center leading-3">Bolões</span>
             </button>
           </li>

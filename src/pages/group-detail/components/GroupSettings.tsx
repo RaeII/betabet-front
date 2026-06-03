@@ -1,8 +1,10 @@
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Stepper } from '@/components/ui/stepper'
 import { ChampionScoringFields } from '@/components/scoring/ChampionScoringFields'
 import { useUpdateGroup } from '@/hooks/useGroups'
+import { isGroupConfigLocked } from '@/lib/date.utils'
 import type { BettingGroup } from '@/types/group.types'
 
 interface GroupSettingsProps {
@@ -19,6 +21,7 @@ export function GroupSettings({ group }: GroupSettingsProps) {
   const [championFirstPoints, setChampionFirstPoints] = useState(group.championFirstPoints)
   const [championSecondPoints, setChampionSecondPoints] = useState(group.championSecondPoints)
   const [joinMode, setJoinMode] = useState(group.joinMode)
+  const locked = isGroupConfigLocked()
 
   useEffect(() => {
     setName(group.name)
@@ -32,6 +35,7 @@ export function GroupSettings({ group }: GroupSettingsProps) {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (locked) return
     update.mutate({
       name,
       resultPoints,
@@ -51,31 +55,26 @@ export function GroupSettings({ group }: GroupSettingsProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <fieldset disabled={locked} className="space-y-4 border-0 p-0 disabled:opacity-60">
       <div className="flex flex-col gap-1">
         <Input label="Nome do bolão" value={name} onChange={e => setName(e.target.value)} required minLength={3} maxLength={20} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
-          <Input
-            label="Pontos por resultado"
-            type="number"
-            min={1}
-            max={10}
-            value={resultPoints}
-            onChange={e => setResultPoints(Number(e.target.value))}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <Input
-            label="Pontos pelo placar"
-            type="number"
-            min={1}
-            max={20}
-            value={exactScorePoints}
-            onChange={e => setExactScorePoints(Number(e.target.value))}
-          />
-        </div>
+        <Stepper
+          label="Pontos por resultado"
+          min={1}
+          max={10}
+          value={resultPoints}
+          onChange={setResultPoints}
+        />
+        <Stepper
+          label="Pontos pelo placar"
+          min={1}
+          max={20}
+          value={exactScorePoints}
+          onChange={setExactScorePoints}
+        />
       </div>
 
       <ChampionScoringFields
@@ -114,10 +113,11 @@ export function GroupSettings({ group }: GroupSettingsProps) {
           </p>
         </div>
 
-        <Button type="submit" disabled={update.isPending} className="w-full">
+        <Button type="submit" disabled={update.isPending || locked} className="w-full">
           {update.isPending ? 'Salvando…' : 'Salvar configurações'}
         </Button>
       </div>
+      </fieldset>
     </form>
   )
 }

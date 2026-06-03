@@ -1,6 +1,6 @@
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Stepper } from '@/components/ui/stepper'
 import { ScoringExample } from '@/components/scoring/ScoringExample'
 import { ChampionScoringFields } from '@/components/scoring/ChampionScoringFields'
 
@@ -47,26 +47,20 @@ export function ScoringConfigStep({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
-          <Input
-            label="Acertar o vencedor"
-            type="number"
-            min={1}
-            max={10}
-            value={resultPoints}
-            onChange={(e) => onResultPointsChange(Math.max(1, Math.min(10, Number(e.target.value))))}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <Input
-            label="Acertar o placar"
-            type="number"
-            min={1}
-            max={20}
-            value={exactScorePoints}
-            onChange={(e) => onExactScorePointsChange(Math.max(1, Math.min(20, Number(e.target.value))))}
-          />
-        </div>
+        <Stepper
+          label="Acertar o vencedor"
+          min={1}
+          max={25}
+          value={resultPoints}
+          onChange={onResultPointsChange}
+        />
+        <Stepper
+          label="Acertar o placar"
+          min={1}
+          max={25}
+          value={exactScorePoints}
+          onChange={onExactScorePointsChange}
+        />
       </div>
 
       <ScoringExample resultPoints={resultPoints} exactScorePoints={exactScorePoints} />

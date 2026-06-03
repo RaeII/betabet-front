@@ -1,5 +1,28 @@
 const BET_LOCK_MINUTES = 15
 
+/**
+ * Prazo final para o admin editar as configurações do bolão. A partir do
+ * primeiro jogo da Copa (11 de jun de 2026, 16:00 horário de Brasília) as
+ * configurações ficam congeladas. O backend é a fonte de verdade — isto é só UX.
+ */
+//export const GROUP_CONFIG_LOCK_DEADLINE = new Date('2026-06-11T16:00:00-03:00')
+export const GROUP_CONFIG_LOCK_DEADLINE = new Date('2026-06-11T16:00:00-03:00')
+
+
+export function isGroupConfigLocked(now: Date = new Date()): boolean {
+  return now.getTime() >= GROUP_CONFIG_LOCK_DEADLINE.getTime()
+}
+
+/** Formata o prazo como "11 de jun, 16:00". */
+export function formatGroupConfigDeadline(): string {
+  return GROUP_CONFIG_LOCK_DEADLINE.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export function minutesUntilKickoff(scheduledAt: string): number {
   const kickoff = new Date(scheduledAt).getTime()
   const now = Date.now()

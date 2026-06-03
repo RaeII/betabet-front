@@ -1,7 +1,16 @@
 import { colors, radius } from "../theme";
 import { ArrowLeft, PrimaryButton, SecondaryButton } from "../ui";
 
-// Filled number input with floating label (read-only visual).
+// Stepper field with −/+ controls and floating label (read-only visual).
+const StepGlyph: React.FC<{ kind: "minus" | "plus" }> = ({ kind }) => (
+  <svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <path d="M5 12h14" stroke={colors.text} strokeWidth={2} strokeLinecap="round" />
+    {kind === "plus" && (
+      <path d="M12 5v14" stroke={colors.text} strokeWidth={2} strokeLinecap="round" />
+    )}
+  </svg>
+);
+
 const NumberField: React.FC<{
   label: string;
   value: number;
@@ -12,32 +21,66 @@ const NumberField: React.FC<{
     <div
       style={{
         display: "flex",
-        alignItems: "center",
+        alignItems: "stretch",
         minHeight: 48,
         borderRadius: radius.md,
+        overflow: "hidden",
         border: `1px solid ${focused ? colors.brand : colors.border}`,
         background: colors.surface,
-        padding: "0 16px",
-        fontSize: 14,
-        color: colors.text,
         boxShadow: focused
           ? `0 0 0 2px color-mix(in srgb, ${colors.brand} 10%, transparent)`
           : "none",
       }}
     >
-      {value}
-      {focused && (
-        <span
-          style={{
-            display: "inline-block",
-            width: 1.5,
-            height: 18,
-            marginLeft: 1,
-            background: colors.text,
-            opacity: caretOn ? 1 : 0,
-          }}
-        />
-      )}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 48,
+          flexShrink: 0,
+          borderRight: `1px solid ${colors.border}`,
+        }}
+      >
+        <StepGlyph kind="minus" />
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 18,
+          fontWeight: 700,
+          color: colors.text,
+        }}
+      >
+        {value}
+        {focused && (
+          <span
+            style={{
+              display: "inline-block",
+              width: 1.5,
+              height: 20,
+              marginLeft: 1,
+              background: colors.brand,
+              opacity: caretOn ? 1 : 0,
+            }}
+          />
+        )}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 48,
+          flexShrink: 0,
+          borderLeft: `1px solid ${colors.border}`,
+        }}
+      >
+        <StepGlyph kind="plus" />
+      </div>
     </div>
     <label
       style={{

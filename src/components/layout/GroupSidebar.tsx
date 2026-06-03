@@ -4,7 +4,7 @@ import { Award, Home, Plus, Trophy, Users} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useGroupHasLiveMatch } from '@/hooks/useGroupLiveMatch'
-import { useJoinRequests } from '@/hooks/useGroups'
+import { useJoinRequests, useMyJoinRequests } from '@/hooks/useGroups'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
 
@@ -41,6 +41,7 @@ export function GroupSidebar() {
   const currentMatchId =
     groupMatchDetailRoute?.params.matchId ?? globalMatchDetailRoute?.params.matchId
   const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
+  const myRequestsQuery = useMyJoinRequests(Boolean(groupId))
   const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '', {
     enabled: !isMatchesListRoute,
     suppressWhenViewingMatchId: currentMatchId,
@@ -53,6 +54,7 @@ export function GroupSidebar() {
     item => !hiddenSidebarItemIds.has(item.id) && (!item.adminOnly || isAdmin),
   )
   const pendingRequests = requestsQuery.data?.requests.length ?? 0
+  const pendingApprovals = myRequestsQuery.data?.requests.length ?? 0
 
   return (
     <aside className="hidden lg:flex lg:flex-col md:rounded-[var(--radius-sm)] lg:border lg:border-[var(--border)] lg:bg-[var(--surface)] lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] lg:overflow-hidden">
@@ -120,6 +122,14 @@ export function GroupSidebar() {
             >
               <Plus size={18} />
               <span className="truncate">Bolões</span>
+              {pendingApprovals > 0 ? (
+                <span
+                  className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-center text-[11px] font-bold leading-none text-[var(--surface)]"
+                  aria-label={`${pendingApprovals} ${pendingApprovals === 1 ? 'bolão aguardando aprovação' : 'bolões aguardando aprovação'}`}
+                >
+                  {pendingApprovals > 99 ? '99+' : pendingApprovals}
+                </span>
+              ) : null}
             </button>
           </li>
         </ul>

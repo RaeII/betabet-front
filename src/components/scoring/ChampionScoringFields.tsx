@@ -1,5 +1,5 @@
 import { Crown } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { Stepper } from '@/components/ui/stepper'
 
 interface ChampionScoringFieldsProps {
   enabled: boolean
@@ -66,21 +66,19 @@ export function ChampionScoringFields({
       {enabled && (
         <>
           <div className="grid grid-cols-2 gap-3">
-            <Input
+            <Stepper
               label="Acertar o 1º palpite"
-              type="number"
               min={1}
               max={100}
               value={firstPoints}
-              onChange={e => handleFirstChange(Number(e.target.value))}
+              onChange={handleFirstChange}
             />
-            <Input
+            <Stepper
               label="Acertar o 2º palpite"
-              type="number"
               min={0}
               max={firstPoints}
               value={secondPoints}
-              onChange={e => onSecondPointsChange(clamp(Number(e.target.value), 0, firstPoints))}
+              onChange={onSecondPointsChange}
             />
           </div>
           <p className="text-xs text-[var(--text-muted)]">

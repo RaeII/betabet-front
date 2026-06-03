@@ -18,11 +18,11 @@ export function CreateGroupPage() {
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState<string | null>('⚽')
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
-  const [resultPoints, setResultPoints] = useState(1)
-  const [exactScorePoints, setExactScorePoints] = useState(3)
+  const [resultPoints, setResultPoints] = useState(7)
+  const [exactScorePoints, setExactScorePoints] = useState(10)
   const [championBetEnabled, setChampionBetEnabled] = useState(true)
-  const [championFirstPoints, setChampionFirstPoints] = useState(15)
-  const [championSecondPoints, setChampionSecondPoints] = useState(10)
+  const [championFirstPoints, setChampionFirstPoints] = useState(25)
+  const [championSecondPoints, setChampionSecondPoints] = useState(15)
   const [nameError, setNameError] = useState('')
 
   const hasGroups = (groupsData?.groups?.length ?? 0) > 0
