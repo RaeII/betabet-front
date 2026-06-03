@@ -25,6 +25,7 @@ export interface RegisterData {
   name: string
   email: string
   referralCode?: string
+  acceptedTerms: boolean
 }
 
 export interface VerifyAuthCodeData {

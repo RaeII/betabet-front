@@ -31,6 +31,7 @@ export function RegisterPage() {
     name: '',
     email: prefillEmail ?? '',
     referralCode: referralCode ?? '',
+    acceptedTerms: false,
   })
   const [code, setCode] = useState('')
   const [challenge, setChallenge] = useState<AuthCodeChallenge | null>(null)
@@ -52,6 +53,12 @@ export function RegisterPage() {
       setValues(prev => ({ ...prev, [field]: e.target.value }))
       setErrors(prev => ({ ...prev, [field]: undefined }))
     }
+  }
+
+  function handleAcceptedTermsChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const checked = e.target.checked
+    setValues(prev => ({ ...prev, acceptedTerms: checked }))
+    setErrors(prev => ({ ...prev, acceptedTerms: undefined }))
   }
 
   async function attemptJoin(code: string): Promise<void> {
@@ -203,6 +210,34 @@ export function RegisterPage() {
             />
           </AuthField>
 
+          <AuthField errorId="terms-error" error={errors.acceptedTerms}>
+            <label
+              htmlFor="acceptedTerms"
+              className="flex cursor-pointer select-none items-start gap-2.5"
+            >
+              <input
+                id="acceptedTerms"
+                type="checkbox"
+                checked={values.acceptedTerms}
+                onChange={handleAcceptedTermsChange}
+                aria-invalid={!!errors.acceptedTerms}
+                aria-describedby="terms-error"
+                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-[var(--border)] accent-[var(--brand)]"
+              />
+              <span className="text-xs leading-5 text-[var(--text-muted)]">
+                Li e aceito os{' '}
+                <Link
+                  to="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-[var(--brand)] hover:underline"
+                >
+                  Termos de Uso e a Política de Privacidade
+                </Link>
+              </span>
+            </label>
+          </AuthField>
+
           <div className="flex flex-col gap-2">
             <div className="min-h-4 overflow-hidden" aria-live="polite" aria-atomic="true">
               <p
@@ -214,7 +249,11 @@ export function RegisterPage() {
               </p>
             </div>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Button
+              type="submit"
+              disabled={isSubmitting || !values.acceptedTerms}
+              className="w-full"
+            >
               {isSubmitting ? 'Enviando…' : 'Enviar código'}
             </Button>
           </div>

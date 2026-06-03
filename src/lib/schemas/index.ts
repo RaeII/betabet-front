@@ -17,6 +17,9 @@ export const RegisterSchema = z.object({
   name: z.string().min(2, 'Mínimo 2 caracteres'),
   email: z.string().email('Email inválido'),
   referralCode: z.string().optional().or(z.literal('')),
+  acceptedTerms: z
+    .boolean()
+    .refine((v) => v === true, 'Você precisa aceitar os Termos de Uso e a Política de Privacidade'),
 })
 
 export const BetFormSchema = z.object({

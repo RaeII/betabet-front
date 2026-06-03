@@ -73,15 +73,11 @@
         }
       }
     </script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FHEMXXLVJ4"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-FHEMXXLVJ4');
-    </script>
+    <!--
+      Google Analytics é carregado dinamicamente em src/lib/analytics.ts,
+      APENAS após o consentimento de cookies (LGPD / Guia de Cookies da ANPD).
+      Não injetar o gtag.js aqui — isso dispararia o GA sem opt-in.
+    -->
   </head>
   <body>
     <div id="root"></div>
