@@ -3,10 +3,16 @@ import type { MatchdayGroup } from '@/types/match.types'
 interface DayStripPillProps {
   matchday: MatchdayGroup
   selected: boolean
+  highlighted?: boolean
   onSelect: () => void
 }
 
-export function DayStripPill({ matchday, selected, onSelect }: DayStripPillProps) {
+export function DayStripPill({
+  matchday,
+  selected,
+  highlighted = false,
+  onSelect,
+}: DayStripPillProps) {
   const date = new Date(`${matchday.date}T12:00:00`)
   const weekday = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace(/\.$/, '')
   const day = String(date.getDate())
@@ -23,13 +29,15 @@ export function DayStripPill({ matchday, selected, onSelect }: DayStripPillProps
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]',
         matchday.isToday && selected
           ? 'border-[var(--support)] bg-[var(--brand)] text-[var(--brand-text)]'
-          : matchday.isToday
-            ? 'border-[var(--support)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--support)]'
-            : selected
-              ? 'border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-text)]'
-              : matchday.isPast
-                ? 'border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-muted)] hover:text-[var(--text)]'
-                : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--brand)]',
+          : selected
+            ? 'border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-text)]'
+            : highlighted
+              ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)] shadow-[0_0_0_1px_color-mix(in_srgb,var(--brand)_22%,transparent)]'
+              : matchday.isToday
+                ? 'border-[var(--support)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--support)]'
+                : matchday.isPast
+                  ? 'border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                  : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--brand)]',
       ].join(' ')}
     >
       <span

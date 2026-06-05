@@ -76,4 +76,14 @@ describe('formatCountdown', () => {
     const ninetyMin = new Date('2026-06-01T13:30:00Z').toISOString()
     expect(formatCountdown(ninetyMin)).toBe('1h 30min')
   })
+
+  it('returns singular day when exactly one day away', () => {
+    const oneDay = new Date('2026-06-02T12:00:00Z').toISOString()
+    expect(formatCountdown(oneDay)).toBe('1 dia')
+  })
+
+  it('returns days when more than one day away', () => {
+    const twoDays = new Date('2026-06-03T12:00:00Z').toISOString()
+    expect(formatCountdown(twoDays)).toBe('2 dias')
+  })
 })

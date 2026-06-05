@@ -89,6 +89,11 @@ export function formatCountdown(isoString: string): string {
   const minutes = minutesUntilKickoff(isoString)
   if (minutes <= 0) return 'Iniciado'
   if (minutes < 60) return `${minutes}min`
+  if (minutes >= 24 * 60) {
+    const days = Math.floor(minutes / (24 * 60))
+    return days === 1 ? '1 dia' : `${days} dias`
+  }
+
   const hours = Math.floor(minutes / 60)
   const remaining = minutes % 60
   return remaining > 0 ? `${hours}h ${remaining}min` : `${hours}h`

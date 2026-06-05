@@ -9,6 +9,7 @@ interface DayStripProps {
   matches: MatchWithUserBet[]
   selectedDate: string | null
   onSelectDate: (date: string) => void
+  highlightedDates?: Set<string>
 }
 
 const easeBrasil = [0.2, 0.8, 0.2, 1] as const
@@ -16,7 +17,12 @@ const dragStartThreshold = 6
 const dragScrollRatio = 0.72
 const fallbackArrowScrollStep = 64
 
-export function DayStrip({ matches, selectedDate, onSelectDate }: DayStripProps) {
+export function DayStrip({
+  matches,
+  selectedDate,
+  onSelectDate,
+  highlightedDates,
+}: DayStripProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const dragRef = useRef<{
     pointerId: number
@@ -228,6 +234,7 @@ export function DayStrip({ matches, selectedDate, onSelectDate }: DayStripProps)
               <DayStripPill
                 matchday={md}
                 selected={md.date === selectedDate}
+                highlighted={highlightedDates?.has(md.date) ?? false}
                 onSelect={() => onSelectDate(md.date)}
               />
             </div>

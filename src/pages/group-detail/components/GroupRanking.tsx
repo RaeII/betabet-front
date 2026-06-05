@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronRight, TrendingUp } from 'lucide-react'
+import { ChevronRight, History, TrendingUp } from 'lucide-react'
 import { useGroupRanking } from '@/hooks/useRanking'
 import { useGroupLiveMyPoints } from '@/hooks/useMatchPoints'
 import { useAuth } from '@/hooks/useAuth'
@@ -68,9 +68,8 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-[var(--text-muted)]">#</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-[var(--text-muted)]">Jogador</th>
               <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-[var(--text-muted)]">Pts</th>
-              <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase text-[var(--text-muted)] sm:table-cell">Placares</th>
               <th className="px-2 py-3">
-                <span className="sr-only">Detalhes</span>
+                <span className="sr-only">Histórico de palpites</span>
               </th>
             </tr>
           </thead>
@@ -113,7 +112,6 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
                       <span className="ml-1 text-xs font-bold text-green-600">+{entry.livePoints}</span>
                     ) : null}
                   </td>
-                  <td className="hidden px-4 py-3 text-right text-[var(--text-muted)] sm:table-cell">{entry.exactScorePredictions}</td>
                   <td className="px-2 py-3 text-right">
                     <button
                       type="button"
@@ -126,10 +124,13 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
                           isMe,
                         })
                       }
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--brand)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]"
-                      aria-label={`Ver de onde vieram os pontos de ${entry.userName}`}
+                      className="group/btn inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-3 py-1.5 text-xs font-bold text-[var(--brand)] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-[var(--brand)]/15 hover:shadow-md active:translate-y-0 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]"
+                      aria-label={`Ver histórico de palpites e pontos de ${entry.userName}`}
+                      title={`Ver histórico de palpites de ${entry.userName}`}
                     >
-                      <ChevronRight size={16} />
+                      <History size={14} className="transition-transform group-hover/btn:-rotate-6" />
+                      Histórico
+                      <ChevronRight size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
                     </button>
                   </td>
                 </tr>
