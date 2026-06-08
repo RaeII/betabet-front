@@ -10,9 +10,11 @@
  *   new flags (non-empty flagUrl + flagVersion) and fills back empty flagUrl
  *   values from the cache before the data reaches any React component.
  *
- * Storage: sessionStorage (persists across same-tab page reloads, cleared when
- * the tab closes — simpler semantics than localStorage and avoids LGPD concerns
- * about long-term data retention).
+ * Storage: localStorage (persistent across tab/window closes and full app
+ * re-entries, so cached flags load instantly instead of being refetched from
+ * the API every session). Team flags are public, non-personal data, so there is
+ * no LGPD concern with long-term retention; LRU eviction + quota handling below
+ * keep the footprint bounded.
  */
 
 const STORAGE_KEY = 'betabet:flag-cache:v1'
@@ -31,7 +33,7 @@ let memoryCache: CacheShape | null = null
 
 function getStorage(): Storage | null {
   try {
-    return typeof sessionStorage !== 'undefined' ? sessionStorage : null
+    return typeof localStorage !== 'undefined' ? localStorage : null
   } catch {
     return null
   }

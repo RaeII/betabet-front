@@ -52,15 +52,6 @@ export function BetsGrid({ bets, canView, groupInviteCode }: BetsGridProps) {
               </p>
             </div>
           </div>
-          {user && (
-            <div className="mt-3">
-              <EmojiPicker
-                betId={bet.id}
-                reactions={bet.reactions}
-                currentUserId={user.id}
-              />
-            </div>
-          )}
         </div>
       ))}
     </div>

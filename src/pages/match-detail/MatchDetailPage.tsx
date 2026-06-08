@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useMatch, useMatchDistribution, useMatchLive, useMatchPostMatch, useMatchPreview } from '@/hooks/useMatches'
@@ -30,6 +30,7 @@ const MAX_TIMEOUT_MS = 2_147_483_647
 export function MatchDetailPage() {
   const { matchId, groupId } = useParams<{ matchId: string; groupId?: string }>()
   const { user } = useAuth()
+  const [activeTab, setActiveTab] = useState<'details' | 'bets'>('details')
   const groupMatchesQuery = useGroupMatches(groupId ?? '')
   const matchQuery = useMatch(matchId ?? '', !groupId)
   const { data: groupsData } = useUserGroups()
@@ -292,79 +293,131 @@ export function MatchDetailPage() {
         </div>
       ) : null}
 
-      {/* Live blocks (em andamento) */}
-      {showLiveBlock && (
-        <div className="space-y-4">
-          <LiveStats statistics={live.statistics} homeTeamId={liveHomeTeamId} />
-          <LiveEventsTimeline events={live.events} homeTeamId={liveHomeTeamId} />
-          {live.lineups.length > 0 ? (
-            <PreMatchLineup
-              lineups={live.lineups}
-              headerLabel="Escalação"
-            />
-          ) : null}
-        </div>
-      )}
-
-      {/* Post-match blocks (encerrada — fonte: snapshot DB ou live cacheado em FT) */}
-      {showPostMatchBlock && postSource && (
-        <div className="space-y-4">
-          <LiveStats statistics={postSource.statistics} homeTeamId={postSource.homeTeamId} />
-          <LiveEventsTimeline events={postSource.events} homeTeamId={postSource.homeTeamId} />
-          {postSource.lineups.length > 0 ? (
-            <PreMatchLineup lineups={postSource.lineups} headerLabel="Escalação" />
-          ) : null}
-        </div>
-      )}
-
-      {/* Distribution chart (unlocked users only, after match starts) */}
-      {distribution && user?.chartUnlocked && (
-        <DistributionChart
-          data={distribution}
-          homeTeamName={match.homeTeam.name}
-          awayTeamName={match.awayTeam.name}
-        />
-      )}
-
-      {/* Pre-match data (probability, lineups, injuries, venue) */}
-      {isUpcoming && preview ? (
-        <div className="space-y-4">
-          {preview.prediction ? (
-            <PreMatchProbability
-              prediction={preview.prediction}
-              homeName={match.homeTeam.name}
-              awayName={match.awayTeam.name}
-            />
-          ) : null}
-
-          {preview.lineups.length > 0 ? <PreMatchLineup lineups={preview.lineups} /> : null}
-
-          <PreMatchInjuries
-            injuries={preview.injuries}
-            homeTeamName={match.homeTeam.name}
-            awayTeamName={match.awayTeam.name}
-          />
-
-          <PreMatchVenue
-            venue={preview.venue}
-            referee={preview.referee}
-            fallbackStadiumName={match.stadium?.name ?? null}
-            fallbackStadiumCity={match.stadium?.city ?? null}
-          />
+      {/* Abas (contexto de grupo) — separa os detalhes da partida dos palpites */}
+      {groupId ? (
+        <div
+          className="inline-flex rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface)] p-1"
+          role="tablist"
+          aria-label="Seções da partida"
+        >
+          <MatchTabButton active={activeTab === 'details'} onClick={() => setActiveTab('details')}>
+            Detalhes da partida
+          </MatchTabButton>
+          <MatchTabButton active={activeTab === 'bets'} onClick={() => setActiveTab('bets')}>
+            Palpites
+          </MatchTabButton>
         </div>
       ) : null}
 
-      {/* Bets grid (group context only) */}
-      {groupId && betsData && (
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold text-[var(--text)]">Apostas do bolão</h2>
-          <BetsGrid
-            bets={betsData.bets}
-            canView={betsData.canView}
-            groupInviteCode={activeGroup?.inviteCode}
-          />
-        </section>
-      )}
+      {/* Aba: Detalhes da partida (fora de grupo, sempre exibida) */}
+      {!groupId || activeTab === 'details' ? (
+        <div className="space-y-6">
+          {/* Live blocks (em andamento) */}
+          {showLiveBlock && (
+            <div className="space-y-4">
+              <LiveStats statistics={live.statistics} homeTeamId={liveHomeTeamId} />
+              <LiveEventsTimeline events={live.events} homeTeamId={liveHomeTeamId} />
+              {live.lineups.length > 0 ? (
+                <PreMatchLineup
+                  lineups={live.lineups}
+                  headerLabel="Escalação"
+                />
+              ) : null}
+            </div>
+          )}
+
+          {/* Post-match blocks (encerrada — fonte: snapshot DB ou live cacheado em FT) */}
+          {showPostMatchBlock && postSource && (
+            <div className="space-y-4">
+              <LiveStats statistics={postSource.statistics} homeTeamId={postSource.homeTeamId} />
+              <LiveEventsTimeline events={postSource.events} homeTeamId={postSource.homeTeamId} />
+              {postSource.lineups.length > 0 ? (
+                <PreMatchLineup lineups={postSource.lineups} headerLabel="Escalação" />
+              ) : null}
+            </div>
+          )}
+
+          {/* Distribution chart (unlocked users only, after match starts) */}
+          {distribution && user?.chartUnlocked && (
+            <DistributionChart
+              data={distribution}
+              homeTeamName={match.homeTeam.name}
+              awayTeamName={match.awayTeam.name}
+            />
+          )}
+
+          {/* Pre-match data (probability, lineups, injuries, venue) */}
+          {isUpcoming && preview ? (
+            <div className="space-y-4">
+              {preview.prediction ? (
+                <PreMatchProbability
+                  prediction={preview.prediction}
+                  homeName={match.homeTeam.name}
+                  awayName={match.awayTeam.name}
+                />
+              ) : null}
+
+              {preview.lineups.length > 0 ? <PreMatchLineup lineups={preview.lineups} /> : null}
+
+              <PreMatchInjuries
+                injuries={preview.injuries}
+                homeTeamName={match.homeTeam.name}
+                awayTeamName={match.awayTeam.name}
+              />
+
+              <PreMatchVenue
+                venue={preview.venue}
+                referee={preview.referee}
+                fallbackStadiumName={match.stadium?.name ?? null}
+                fallbackStadiumCity={match.stadium?.city ?? null}
+              />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Aba: Palpites (group context only) */}
+      {groupId && activeTab === 'bets' ? (
+        betsData ? (
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-[var(--text)]">Apostas do bolão</h2>
+            <BetsGrid
+              bets={betsData.bets}
+              canView={betsData.canView}
+              groupInviteCode={activeGroup?.inviteCode}
+            />
+          </section>
+        ) : (
+          <div className="flex h-32 items-center justify-center text-sm text-[var(--text-muted)]">
+            Carregando palpites…
+          </div>
+        )
+      ) : null}
     </div>
+  )
+}
+
+interface MatchTabButtonProps {
+  active: boolean
+  children: string
+  onClick: () => void
+}
+
+function MatchTabButton({ active, children, onClick }: MatchTabButtonProps) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={[
+        'flex min-h-10 items-center rounded-[var(--radius-pill)] px-4 text-sm font-semibold transition',
+        active
+          ? 'bg-[var(--brand)] text-[var(--brand-text)]'
+          : 'text-[var(--text-muted)] hover:text-[var(--text)]',
+      ].join(' ')}
+    >
+      {children}
+    </button>
   )
 }
