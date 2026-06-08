@@ -46,6 +46,39 @@ export interface PreviewInjury {
   reason: string | null
 }
 
+export interface PreviewRecentFormGame {
+  fixtureId: number
+  date: string
+  statusShort: string
+  league: {
+    id: number
+    name: string
+    logo: string | null
+    season: number | null
+    round: string | null
+  }
+  venue: 'home' | 'away'
+  /** O adversário daquele jogo. `logo` é a URL da API-Football. */
+  opponent: { id: number; name: string; logo: string | null }
+  goalsFor: number | null
+  goalsAgainst: number | null
+  result: 'W' | 'D' | 'L' | null
+}
+
+export interface PreviewRecentFormSide {
+  teamId: number
+  played: number
+  wins: number
+  draws: number
+  losses: number
+  games: PreviewRecentFormGame[]
+}
+
+export interface PreviewRecentForm {
+  home: PreviewRecentFormSide | null
+  away: PreviewRecentFormSide | null
+}
+
 export interface MatchPreview {
   matchId: string
   hasApiFixtureId: boolean
@@ -54,6 +87,7 @@ export interface MatchPreview {
   referee: string | null
   lineups: PreviewLineup[]
   injuries: PreviewInjury[]
+  recentForm: PreviewRecentForm
 }
 
 export function getMatchPreview(matchId: string): Promise<MatchPreview> {

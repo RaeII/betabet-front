@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(rtk proxy *)",
-      "Bash(rtk tsc *)"
+      "Bash(rtk tsc *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(bun test *)",
+      "Bash(rtk wc *)"
     ]
   }
 }

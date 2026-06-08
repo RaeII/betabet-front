@@ -14,6 +14,7 @@ import { DistributionChart } from './components/DistributionChart'
 import { PreMatchProbability } from './components/PreMatchProbability'
 import { PreMatchLineup } from './components/PreMatchLineup'
 import { PreMatchInjuries } from './components/PreMatchInjuries'
+import { PreMatchRecentForm } from './components/PreMatchRecentForm'
 import { PreMatchVenue } from './components/PreMatchVenue'
 import { LiveScoreboard } from './components/LiveScoreboard'
 import { LiveEventsTimeline } from './components/LiveEventsTimeline'
@@ -346,7 +347,7 @@ export function MatchDetailPage() {
             />
           )}
 
-          {/* Pre-match data (probability, lineups, injuries, venue) */}
+          {/* Pre-match data (probability, recent form, lineups, injuries, venue) */}
           {isUpcoming && preview ? (
             <div className="space-y-4">
               {preview.prediction ? (
@@ -356,6 +357,20 @@ export function MatchDetailPage() {
                   awayName={match.awayTeam.name}
                 />
               ) : null}
+
+              <PreMatchRecentForm
+                recentForm={preview.recentForm}
+                homeTeam={{
+                  id: match.homeTeam.id,
+                  name: match.homeTeam.name,
+                  flagUrl: match.homeTeam.flagUrl,
+                }}
+                awayTeam={{
+                  id: match.awayTeam.id,
+                  name: match.awayTeam.name,
+                  flagUrl: match.awayTeam.flagUrl,
+                }}
+              />
 
               {preview.lineups.length > 0 ? <PreMatchLineup lineups={preview.lineups} /> : null}
 

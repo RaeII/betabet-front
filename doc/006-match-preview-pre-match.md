@@ -1,4 +1,4 @@
-# 006 - Tela de pré-jogo (probabilidade, escalação, desfalques, estádio)
+# 006 - Tela de pré-jogo (probabilidade, forma recente, escalação, desfalques, estádio)
 
 ## Objetivo
 
@@ -24,6 +24,8 @@ respeita o contexto de grupo (`/groups/:groupId/matches/:matchId`).
 3. Se a partida está `upcoming`, o componente abaixo do `BetForm` carrega
    os dados de pré-jogo:
    - Probabilidade de cada time vencer + xG + recomendação textual.
+   - **Forma recente**: placar dos últimos 10 jogos de cada seleção, com
+     resultado (V/E/D), adversário, mando (Casa/Fora) e data.
    - Escalação provável em campo 2D (com cores do uniforme) ou em lista.
    - Banco de reservas + técnico (foto + nome) por time.
    - Desfalques separados por time (foto + motivo + badge "Fora" ou "Dúvida").
@@ -38,8 +40,9 @@ Se a partida está `live` ou `finished` o preview **não** é carregado
 
 | Arquivo                                                                                | Responsabilidade                                                |
 |----------------------------------------------------------------------------------------|------------------------------------------------------------------|
-| [`services/matchPreview.service.ts`](../src/services/matchPreview.service.ts)          | Tipos `MatchPreview/*` + `getMatchPreview(matchId)` (`apiGet`)   |
+| [`services/matchPreview.service.ts`](../src/services/matchPreview.service.ts)          | Tipos `MatchPreview/*` (inclui `PreviewRecentForm*`) + `getMatchPreview(matchId)` (`apiGet`) |
 | [`pages/match-detail/components/PreMatchProbability.tsx`](../src/pages/match-detail/components/PreMatchProbability.tsx) | Barras `home/draw/away` + xG + advice                            |
+| [`pages/match-detail/components/PreMatchRecentForm.tsx`](../src/pages/match-detail/components/PreMatchRecentForm.tsx) | Últimos 10 jogos por seleção: pill V/E/D + bandeira do adversário + placar |
 | [`pages/match-detail/components/PreMatchLineup.tsx`](../src/pages/match-detail/components/PreMatchLineup.tsx) | Campo 2D em SVG, toggle Campo/Lista, banco + técnico             |
 | [`pages/match-detail/components/PreMatchInjuries.tsx`](../src/pages/match-detail/components/PreMatchInjuries.tsx) | Duas colunas: foto + motivo + badge "Fora"/"Dúvida"              |
 | [`pages/match-detail/components/PreMatchVenue.tsx`](../src/pages/match-detail/components/PreMatchVenue.tsx) | Foto do estádio com gradiente + cidade + capacidade + árbitro    |
@@ -52,7 +55,7 @@ Se a partida está `live` ou `finished` o preview **não** é carregado
 | [`pages/matches/components/GroupStageGrid.tsx`](../src/pages/matches/components/GroupStageGrid.tsx) | Aceita `groupId?` e repassa para `MatchCard`                |
 | [`pages/matches/components/KnockoutBracket.tsx`](../src/pages/matches/components/KnockoutBracket.tsx) | `MatchSlot` aceita `groupId?` e constrói href com prefixo de grupo |
 | [`hooks/useMatches.ts`](../src/hooks/useMatches.ts)                                    | Hook `useMatchPreview(matchId, enabled)` com `staleTime: 1h`     |
-| [`pages/match-detail/MatchDetailPage.tsx`](../src/pages/match-detail/MatchDetailPage.tsx) | Integra os 4 componentes quando `status === 'upcoming'`     |
+| [`pages/match-detail/MatchDetailPage.tsx`](../src/pages/match-detail/MatchDetailPage.tsx) | Integra os 5 componentes quando `status === 'upcoming'` (forma recente logo após a probabilidade) |
 
 ---
 
@@ -115,6 +118,31 @@ Todos seguem [`ui.md`](./ui.md):
   (`underOver`). Só renderiza se `expectedGoals` ou `underOver` tiver dado.
 - Bloco `advice` no rodapé (`Recomendação: ...`) — texto em inglês vindo
   da API; não traduzimos por enquanto.
+
+### `PreMatchRecentForm`
+
+- Renderiza logo abaixo do `PreMatchProbability` (blocos analíticos juntos).
+- Consome `preview.recentForm.{home,away}` — cada lado é independente e pode
+  vir `null` (time sem `api_team_id` ou upstream falhou); **não** renderiza
+  o card inteiro só quando os **dois** lados são `null`.
+- Layout `grid sm:grid-cols-2`: uma coluna por seleção. Header de cada coluna:
+  bandeira da seleção + nome + resumo `NV NE ND`.
+- 🏳️ **Regra das bandeiras (importante):**
+  - A **seleção cadastrada** (a do match) mantém o **sistema de bandeiras** —
+    usa `TeamFlagImage` com `src={match.{home,away}Team.flagUrl}` e
+    `teamId={match.{home,away}Team.id}` (resolve base64/fundo branco, igual ao
+    resto do app). O componente recebe esses dados via prop `homeTeam`/`awayTeam`.
+  - O **adversário** de cada jogo é renderizado pela **URL da API-Football**
+    (`game.opponent.logo`) num `<img>` simples (`OpponentFlag`); se vier `null`,
+    cai pra inicial em `surface-soft`.
+- Cada linha de jogo (`GameRow`): pill `V/E/D` colorido + bandeira do
+  adversário + nome + `Casa/Fora · dd/mês` + **placar** `golsPró × golsContra`
+  (fonte mono, `tabular-nums`). Sem placar (jogo não-terminal) → `—`.
+- Cores do pill: vitória `--success` (texto branco), derrota `--danger`
+  (texto branco), empate neutro (`surface-soft` + `text-muted`). **Não** usa
+  `--support` (reservado a "Dúvida" nos desfalques).
+- Placar e resultado já vêm **sob a ótica da seleção** do backend
+  (`goalsFor`/`goalsAgainst`/`result`) — o front não recalcula nada.
 
 ### `PreMatchLineup`
 
@@ -204,9 +232,11 @@ repassam para `MatchCard`/`MatchSlot`. O href é construído como
 | `prediction === null` (sem odds p/ a fixture)            | Card `PreMatchProbability` não renderiza          |
 | `lineups.length === 0`                                   | Card mostra "Escalações publicadas ~30–60min antes" |
 | `injuries.length === 0`                                  | Card `PreMatchInjuries` não renderiza             |
+| `recentForm.home` **e** `recentForm.away` ambos `null`   | Card `PreMatchRecentForm` não renderiza           |
+| Só um lado de `recentForm` é `null`                      | Card mostra apenas a coluna disponível            |
 | `venue.image === null` e sem nada do venue/referee       | Card `PreMatchVenue` não renderiza                |
 | Time tem `colors === null`                               | Fallback `--brand` (home) / `--support` (away)    |
-| Partida sem `api_fixture_id` (cadastrada manual)         | `hasApiFixtureId=false` → todos os cards omitidos |
+| Partida sem `api_fixture_id` (cadastrada manual)         | `hasApiFixtureId=false` → probabilidade/escalação/desfalques/venue omitidos, **mas a forma recente ainda aparece** (usa `api_team_id`, não a fixture) |
 
 Tudo isso é projetado pelo backend (DTO já chega com `null` / `[]`
 quando não há dado). O front não precisa fazer try/catch além do que o
@@ -238,6 +268,10 @@ quando não há dado). O front não precisa fazer try/catch além do que o
    um detalhe novo.
 4. **A foto do estádio é cacheada pelo navegador** — não passamos por
    nenhum proxy. URL externa de `media.api-sports.io`.
+4b. **Bandeiras da forma recente seguem a origem do dado:** seleção
+   cadastrada → sistema de bandeiras (`TeamFlagImage` + `teamId`);
+   adversário → URL crua da API (`opponent.logo`). Não misturar: o front
+   não tenta resolver a bandeira cadastrada do adversário.
 5. **`groupId` opcional** em `GroupStageGrid`/`KnockoutBracket` mantém
    compat com uso fora de grupo (não usado hoje, mas preserva o
    `MatchCard` existente).
@@ -248,7 +282,11 @@ quando não há dado). O front não precisa fazer try/catch além do que o
 
 - Mostrar a "tabela do grupo" do jogo (já temos `/api-football/standings`
   proxiado — basta um card abaixo do venue).
-- Mostrar **head-to-head** dos últimos 5 confrontos (também já proxiado).
+- Mostrar **head-to-head** dos últimos 5 confrontos (também já proxiado) —
+  complementa a forma recente (que olha cada seleção isoladamente).
+- Quando o adversário da forma recente também for um time **cadastrado**
+  (matchable por `api_team_id`), usar o sistema de bandeiras nele também,
+  em vez da URL da API.
 - Tradução simples do `winner.comment` ("Win" → "Vitória", "Win or draw"
   → "Vitória ou empate") — mapa estático de 3-4 entradas.
 - Posicionar reservas no banco virtual (faixa lateral do campo 2D) em
