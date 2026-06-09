@@ -53,7 +53,7 @@ export function CookieConsent() {
       <div className="mx-auto flex max-w-3xl flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-2xl sm:flex-row sm:items-center sm:gap-6">
         <p className="text-sm leading-relaxed text-[var(--text-muted)]">
           Usamos cookies essenciais para o funcionamento da plataforma e, com seu
-          consentimento, cookies de análise (Google Analytics) para entender o uso
+          consentimento, cookies de análise para entender o uso
           e melhorar sua experiência. Você pode aceitar ou recusar os cookies não
           essenciais. Saiba mais nos{' '}
           <a

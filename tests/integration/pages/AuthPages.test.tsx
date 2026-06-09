@@ -107,6 +107,18 @@ describe('Auth pages', () => {
     )
   })
 
+  it('login exibe conteudo de entrada para visitantes', () => {
+    renderUserAuthPage(createElement(LoginPage))
+
+    expect(screen.getByRole('heading', { name: /bolão clt/i, level: 1 })).toBeInTheDocument()
+    expect(screen.getByText(/100% gratuito/i)).toBeInTheDocument()
+    expect(screen.getByText(/bolão mais clássico que existe/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/totalmente gratuito/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/placar, pontos e ranking em tempo real/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/participantes ilimitados/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/aposte no campeão do mundo/i)).toBeInTheDocument()
+  })
+
   it('login de usuário usa código de e-mail sem campo de senha', async () => {
     const user = userEvent.setup()
     renderUserAuthPage(createElement(LoginPage))
@@ -208,6 +220,7 @@ describe('Auth pages', () => {
 
     await user.type(screen.getByLabelText(/nome/i), 'Test User')
     await user.type(screen.getByLabelText(/e-mail/i), 'test@example.com')
+    await user.click(screen.getByLabelText(/li e aceito/i))
     await user.click(screen.getByRole('button', { name: /enviar código/i }))
 
     const codeDigits = await screen.findAllByLabelText(/código dígito/i)

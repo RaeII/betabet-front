@@ -5,7 +5,7 @@ import { getApiRequestMessage } from './authError'
 import { AuthCodeInput } from './components/AuthCodeInput'
 import { AuthCodeStatus } from './components/AuthCodeStatus'
 import { AuthField } from './components/AuthField'
-import { AuthForm } from './components/AuthForm'
+import { LoginLandingLayout } from './components/LoginLandingLayout'
 import { InviteGroupCard } from '@/components/group/InviteGroupCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -168,7 +168,7 @@ export function LoginPage() {
   const registerSearch = registerParams.toString()
 
   return (
-    <AuthForm
+    <LoginLandingLayout
       title="Bolão CLT"
       subtitle="Entre na sua conta para apostar"
       logoSrc="/bolao_clt_logo.png"
@@ -286,6 +286,6 @@ export function LoginPage() {
           Cadastre-se
         </Link>
       </p>
-    </AuthForm>
+    </LoginLandingLayout>
   )
 }
