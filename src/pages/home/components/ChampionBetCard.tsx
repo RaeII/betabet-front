@@ -40,6 +40,32 @@ function PickChip({ rank, team, points, hit }: { rank: 1 | 2; team: Team | null;
   )
 }
 
+/** Frase com os dois prazos: 1º palpite (fim da 1ª rodada) e 2º (fim dos grupos). */
+function DeadlineNote({
+  firstOpen,
+  firstDeadline,
+  secondDeadline,
+}: {
+  firstOpen: boolean
+  firstDeadline: string | null
+  secondDeadline: string | null
+}) {
+  if (!firstDeadline && !secondDeadline) {
+    return <>Você pode trocar até o início da Copa.</>
+  }
+  const opcao1 = !firstOpen
+    ? 'travada'
+    : firstDeadline
+      ? `até ${formatMatchDate(firstDeadline)}`
+      : 'em aberto'
+  const opcao2 = secondDeadline ? `até ${formatMatchDate(secondDeadline)}` : 'em aberto'
+  return (
+    <>
+      Opção 1 (fim da 1ª rodada) {opcao1} · opção 2 (fim da fase de grupos) {opcao2}.
+    </>
+  )
+}
+
 export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
   const { data: state, isLoading } = useChampionBet(groupId)
   const [modalOpen, setModalOpen] = useState(false)
@@ -61,7 +87,11 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
 
   if (isLoading || !state || !state.enabled) return null
 
-  const { bettingOpen, deadline, firstPoints, secondPoints, championTeamId, myBet } = state
+  const { bettingOpen, firstOpen, firstDeadline, secondDeadline, firstPoints, secondPoints, championTeamId, myBet } =
+    state
+  // Apostar de novo exige o 1º palpite em aberto; trocar uma aposta existente
+  // basta o 2º (bettingOpen). Sem 1º palpite, um novato não consegue apostar.
+  const canCreate = !hasBet && firstOpen
   const firstHit = settled && myBet ? championTeamId === myBet.firstTeamId : null
   const secondHit = settled && myBet ? championTeamId === myBet.secondTeamId : null
   const earnedPoints = myBet?.points ?? 0
@@ -98,9 +128,11 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
             </p>
           ) : bettingOpen ? (
             <p className="text-xs text-[var(--text-muted)]">
-              {deadline
-                ? `Você pode trocar até ${formatMatchDate(deadline)}.`
-                : 'Você pode trocar até o início da Copa.'}
+              <DeadlineNote
+                firstOpen={firstOpen}
+                firstDeadline={firstDeadline}
+                secondDeadline={secondDeadline}
+              />
             </p>
           ) : (
             <p className="text-xs text-[var(--text-muted)]">
@@ -108,7 +140,7 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
             </p>
           )}
         </div>
-      ) : bettingOpen ? (
+      ) : canCreate ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1 rounded-[var(--radius-lg)] bg-[var(--surface-soft)] px-3 py-2.5">
             <p className="text-sm leading-5 text-[var(--text-muted)]">
@@ -116,11 +148,13 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
               <span className="mt-1 block">
                 opção 1 vale {firstPoints} pts, opção 2 vale {secondPoints} pts.
               </span>
-              {deadline ? (
-                <span className="mt-2 block border-t border-[var(--border)] pt-2 text-xs font-medium">
-                  Até {formatMatchDate(deadline)}.
-                </span>
-              ) : null}
+              <span className="mt-2 block border-t border-[var(--border)] pt-2 text-xs font-medium">
+                <DeadlineNote
+                  firstOpen={firstOpen}
+                  firstDeadline={firstDeadline}
+                  secondDeadline={secondDeadline}
+                />
+              </span>
             </p>
           </div>
           <Button onClick={() => setModalOpen(true)} size="sm" className="w-full shrink-0 sm:w-auto sm:self-center">
@@ -138,6 +172,7 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
         open={modalOpen}
         onOpenChange={setModalOpen}
         groupId={groupId}
+        firstOpen={firstOpen}
         firstPoints={firstPoints}
         secondPoints={secondPoints}
         initialFirstId={myBet?.firstTeamId ?? null}

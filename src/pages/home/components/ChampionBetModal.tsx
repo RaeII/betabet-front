@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, Search, X } from 'lucide-react'
+import { Loader2, Lock, Search, X } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,8 @@ interface ChampionBetModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   groupId: string
+  /** 1º palpite ainda em aberto; quando `false`, o slot da opção 1 fica travado. */
+  firstOpen: boolean
   firstPoints: number
   secondPoints: number
   initialFirstId: string | null
@@ -24,17 +26,20 @@ interface ChampionBetModalProps {
 function SlotChip({
   rank,
   team,
+  locked,
   onClear,
 }: {
   rank: 1 | 2
   team: Team | null
+  locked: boolean
   onClear: () => void
 }) {
   const label = rank === 1 ? 'Opção 1 de campeão' : 'Opção 2 de campeão'
   return (
     <div className="flex-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-soft)] p-3">
-      <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+      <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
         {label}
+        {locked && <Lock size={10} aria-label="Travada" />}
       </p>
       {team ? (
         <div className="flex items-center gap-2">
@@ -45,14 +50,16 @@ function SlotChip({
             className="h-5 w-7 shrink-0 rounded object-contain"
           />
           <span className="truncate text-sm font-semibold text-[var(--text)]">{team.name}</span>
-          <button
-            type="button"
-            onClick={onClear}
-            aria-label={`Remover ${label}`}
-            className="ml-auto shrink-0 text-[var(--text-muted)] transition hover:text-[var(--text)]"
-          >
-            <X size={14} />
-          </button>
+          {!locked && (
+            <button
+              type="button"
+              onClick={onClear}
+              aria-label={`Remover ${label}`}
+              className="ml-auto shrink-0 text-[var(--text-muted)] transition hover:text-[var(--text)]"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       ) : (
         <p className="text-sm text-[var(--text-muted)]">Toque em uma seleção</p>
@@ -65,6 +72,7 @@ export function ChampionBetModal({
   open,
   onOpenChange,
   groupId,
+  firstOpen,
   firstPoints,
   secondPoints,
   initialFirstId,
@@ -97,6 +105,12 @@ export function ChampionBetModal({
   }, [teams, search])
 
   function handlePick(id: string) {
+    // 1º palpite travado (1ª rodada encerrou): só o 2º pode mudar.
+    if (!firstOpen) {
+      if (id === firstId) return
+      if (id === secondId) return setSecondId(null)
+      return setSecondId(id)
+    }
     if (id === firstId) return setFirstId(null)
     if (id === secondId) return setSecondId(null)
     if (firstId === null) return setFirstId(id)
@@ -132,9 +146,16 @@ export function ChampionBetModal({
     >
       <div className="space-y-4 p-5">
         <div className="flex gap-2">
-          <SlotChip rank={1} team={firstTeam} onClear={() => setFirstId(null)} />
-          <SlotChip rank={2} team={secondTeam} onClear={() => setSecondId(null)} />
+          <SlotChip rank={1} team={firstTeam} locked={!firstOpen} onClear={() => setFirstId(null)} />
+          <SlotChip rank={2} team={secondTeam} locked={false} onClear={() => setSecondId(null)} />
         </div>
+
+        {!firstOpen && (
+          <p className="rounded-[var(--radius-md)] bg-[var(--surface-soft)] px-3 py-2 text-xs text-[var(--text-muted)]">
+            A 1ª rodada já terminou: a opção 1 está travada. Você ainda pode trocar a opção 2 até o
+            fim da fase de grupos.
+          </p>
+        )}
 
         <div className="relative">
           <Search

@@ -69,8 +69,9 @@ interface ScoreInputProps {
 }
 
 function getSteppedScore(value: string, direction: -1 | 1): string {
-  const current = value === '' ? 0 : clampScore(Number(value))
-  return String(clampScore(current + direction))
+  // Sem palpite ainda: o primeiro clique para no 0 (em vez de pular pro 1).
+  if (value === '') return '0'
+  return String(clampScore(clampScore(Number(value)) + direction))
 }
 
 function ScoreInput({ label, value, onChange, disabled }: ScoreInputProps) {
