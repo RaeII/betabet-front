@@ -64,6 +64,10 @@ export class FootballScene {
   private width = 0
   private height = 0
 
+  // o teto (parede superior) só passa a valer depois que a bola entra na tela
+  // pela primeira vez, preservando a animação inicial de cair de fora pelo topo
+  private enteredField = false
+
   // giro como estado físico: velocidade angular (rad/s) em eixos de mundo.
   // O eixo fica no plano da tela (X/Y), então a bola "tomba" e revela seu
   // volume 3D em vez de girar achatada em torno de Z.
@@ -246,7 +250,7 @@ export class FootballScene {
     this.x += this.vx * dt
     this.y += this.vy * dt
 
-    // paredes da viewport (esquerda, direita, chão)
+    // paredes da viewport (esquerda, direita, teto e chão)
     const r = this.radius
     if (this.x < r) {
       this.x = r
@@ -260,6 +264,18 @@ export class FootballScene {
       this.inContact = true
       this.contactNX = -1
       this.contactNY = 0
+    }
+    // teto: borda superior da tela (worldY = 0 => centro máx. em -r). Só vale
+    // depois que a bola entrou na tela, para não bloquear a queda inicial.
+    const ceiling = -r
+    if (!this.enteredField && this.y <= ceiling) this.enteredField = true
+    if (this.enteredField && this.y > ceiling) {
+      this.y = ceiling
+      if (this.vy > 0) this.vy = -this.vy * RESTITUTION
+      this.vx *= TANGENT_FRICTION
+      this.inContact = true
+      this.contactNX = 0
+      this.contactNY = -1
     }
     const floor = -this.height + r
     if (this.y < floor) {
@@ -396,7 +412,7 @@ export class FootballScene {
     this.y = -e.clientY
     // mantém dentro da viewport
     this.x = Math.max(this.radius, Math.min(this.x, this.width - this.radius))
-    this.y = Math.max(-this.height + this.radius, Math.min(this.y, this.radius + 200))
+    this.y = Math.max(-this.height + this.radius, Math.min(this.y, -this.radius))
     if (dt > 0) {
       this.vx = (e.clientX - this.lastPointer.x) / dt
       this.vy = -(e.clientY - this.lastPointer.y) / dt

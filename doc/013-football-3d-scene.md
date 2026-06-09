@@ -80,8 +80,12 @@ exatamente com os retângulos do DOM e mantém a stack em three.js puro).
   retângulo ao centro da bola; se houver penetração, corrige a posição e reflete a
   velocidade pela normal com restituição `0,62` e atrito tangencial `0,82`.
   Quando o centro entra no retângulo, empurra pelo eixo de menor penetração.
-- **Paredes**: esquerda, direita e chão da viewport (o topo fica aberto para a
-  bola cair de fora).
+- **Paredes**: esquerda, direita, **teto** e chão da viewport. A bola quica em
+  todas com a mesma restituição. O **teto** (borda superior da tela) impede que a
+  bola suba para fora pelo topo, mas só passa a valer **depois** que a bola entra
+  na tela pela primeira vez (`enteredField`) — assim a animação inicial de cair
+  de fora pelo topo é preservada. O arrasto também é travado no topo (não dá para
+  puxar a bola acima da borda superior).
 - **Anti-jitter / repouso**: zera micro-velocidades quando a bola está
   praticamente parada sobre **qualquer superfície de apoio** — chão ou card
   (contato com normal apontando para cima), não só o chão.
