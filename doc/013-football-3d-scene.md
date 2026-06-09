@@ -91,16 +91,18 @@ exatamente com os retângulos do DOM e mantém a stack em three.js puro).
   (contato com normal apontando para cima), não só o chão.
 - **Rotação (giro) como estado físico**: a engine mantém uma velocidade angular
   `omega` (rad/s, eixos de mundo) integrada a cada frame, em vez de derivar o
-  spin direto da velocidade. O giro é um **tombamento 3D**: o eixo fica no
-  **plano da tela** (X/Y), perpendicular ao movimento (`ω = (vy/R, -vx/R, 0)`),
-  então a esfera rola revelando seu volume — não fica achatada girando em torno
-  de Z (que dá aparência 2D). Para não exagerar no quique, o alvo usa **só a
-  componente tangencial** à superfície de contato: a componente **normal** (o
-  impacto vertical do pique) **não** gera giro, então um quique reto não tomba a
-  bola, mas qualquer movimento lateral a faz rolar. A intensidade é regulada por
-  `SPIN_SCALE` (giro leve). Comportamento:
-  - **Em contato**: tomba conforme a velocidade tangencial à superfície.
-  - **Sendo arrastada**: tomba seguindo o movimento da mão.
+  spin direto da velocidade. Como a cena é uma **vista frontal** (plano XY), o
+  rolamento realista é em torno do eixo **Z** (perpendicular à tela), como uma
+  moeda/roda rolando de lado: `ω_z = (vy·nx − vx·ny) / R · SPIN_SCALE` — para um
+  piso (`n = (0,1)`) isso dá `ω_z = −vx/R`, ou seja, mover para a direita rola no
+  sentido horário, e o pattern da bola passa por cima na direção do movimento (a
+  bola **rola**, não escorrega). `SPIN_SCALE = 1` => rolagem sem escorregar. Para
+  não exagerar no quique, o alvo usa **só a componente tangencial** à superfície
+  de contato: a componente **normal** (o impacto vertical do pique) **não** gera
+  giro, então um quique reto não gira a bola, mas qualquer movimento ao longo da
+  superfície a faz rolar. Comportamento:
+  - **Em contato**: rola conforme a velocidade tangencial à superfície.
+  - **Sendo arrastada**: rola seguindo o movimento horizontal da mão.
   - **Em voo**: conserva o giro com leve amortecimento do ar, então um arremesso
     continua girando enquanto está no ar.
   - **Em repouso**: o giro é freado rapidamente, então a **bola parada não gira**.
@@ -125,18 +127,17 @@ troca de etapa do formulário (e-mail → código), que altera a altura do card.
 
 ## Inclinação do aparelho (apenas mobile)
 
-No mobile, a **gravidade** da física passa a seguir a orientação do celular —
-modelo "bola num labirinto". O vetor de gravidade deixa de apontar fixo para
-baixo e é recalculado a partir do `deviceorientation`:
+No mobile, a inclinação **esquerda/direita** do celular empurra a bola para os
+lados, mantendo a queda realista. A gravidade vertical continua cheia para baixo
+(`-GRAVITY`) — a bola cai e assenta nos cards normalmente — e o `gamma` do
+`deviceorientation` apenas adiciona uma componente horizontal:
 
 - **`gamma`** (inclinação esquerda/direita): virar o aparelho para a direita
-  empurra a bola para a direita (`+X`), e vice-versa.
-- **`beta`** (inclinação frente/trás, relativa à vertical/retrato): inclinar
-  para frente leva a bola para cima; para trás, para baixo.
-- Mantém-se uma fração constante para baixo (`TILT_BASE_DOWN`) para a bola
-  assentar nos cards quando o celular está parado em pé.
-- A leitura é suavizada por um filtro passa-baixa (`TILT_SMOOTH`) e cada eixo é
-  limitado a `TILT_MAX_DEG`.
+  rola a bola para a direita (`+X`), para a esquerda rola para a esquerda.
+- Frente/trás (`beta`) **não** é usado, para evitar a bola flutuar.
+- O mapeamento é **linear**: inclinar `TILT_MAX_DEG` (35°) já atinge a autoridade
+  máxima (`TILT_GRAVITY`) — bem sensível —, saturando além disso.
+- A leitura é suavizada por um filtro passa-baixa (`TILT_SMOOTH`).
 
 Detecção e permissão:
 

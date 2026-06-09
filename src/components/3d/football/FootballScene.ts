@@ -34,19 +34,18 @@ const AIR_DAMPING = 0.25 // amortecimento do ar (por segundo)
 const REST_SPEED = 12 // abaixo disso, considera parada (anti-jitter)
 const FIXED_DT = 1 / 120 // passo fixo de simulação
 const MAX_FRAME_DT = 0.05 // evita "espiral da morte" após abas inativas
-const SPIN_BLEND = 12 // rapidez com que o giro casa com a rolagem na superfície
+const SPIN_BLEND = 14 // rapidez com que o giro casa com a rolagem na superfície
 const SPIN_AIR_DAMPING = 0.2 // amortecimento do giro em voo (por segundo)
 const SPIN_REST_DAMPING = 16 // freia o giro quando a bola está em repouso
 const DRAG_STALE = 0.04 // s sem mover o ponteiro => arrasto considerado parado
-const SPIN_SCALE = 0.7 // intensidade do tombamento (1 = rolagem física pura)
+const SPIN_SCALE = 1 // rolagem sem escorregar (1 = rolagem física pura)
 
-// inclinação do aparelho (apenas mobile): a gravidade segue a orientação do
-// celular como uma bola num labirinto — vira para a direita, a bola vai para a
-// direita; inclina para frente/trás, a bola sobe/desce.
-const TILT_GRAVITY = 2600 // autoridade da gravidade por inclinação (px/s²)
-const TILT_BASE_DOWN = 0.25 // fração de gravidade sempre para baixo (assenta a bola)
-const TILT_SMOOTH = 0.12 // suavização (passa-baixa) da leitura do sensor
-const TILT_MAX_DEG = 60 // limita a inclinação considerada em cada eixo
+// inclinação do aparelho (apenas mobile): a gravidade continua puxando para
+// baixo (queda realista), mas a inclinação esquerda/direita do celular adiciona
+// uma componente horizontal — vira para a direita, a bola rola para a direita.
+const TILT_GRAVITY = 4200 // autoridade horizontal da inclinação (px/s²)
+const TILT_SMOOTH = 0.2 // suavização (passa-baixa) da leitura do sensor
+const TILT_MAX_DEG = 35 // inclinação (graus) que já atinge a autoridade máxima
 
 export class FootballScene {
   private readonly renderer: THREE.WebGLRenderer
@@ -353,17 +352,18 @@ export class FootballScene {
   /**
    * Evolui a velocidade angular (`omega`) e a aplica ao pivô.
    *
-   * O giro é um **tombamento 3D**: o eixo fica no plano da tela, perpendicular
-   * ao movimento, então a esfera rola revelando seu volume (não fica achatada
-   * girando em torno de Z). O alvo segue ω = (vy/R, -vx/R, 0).
+   * Como a cena é uma vista frontal (2D no plano XY), o rolamento realista é em
+   * torno do eixo **Z** (perpendicular à tela), como uma moeda/roda rolando de
+   * lado: ω_z = -(velocidade tangencial) / R. A bola rola sem escorregar
+   * (`SPIN_SCALE = 1`) e o pattern passa por cima na direção do movimento.
    *
    * Para não exagerar no quique, usa-se apenas a velocidade **tangencial** à
    * superfície de contato: a componente normal (o impacto vertical do pique)
-   * NÃO gera giro. Assim um quique reto não tomba a bola, mas qualquer
-   * movimento lateral a faz rolar de forma natural.
+   * NÃO gera giro. Assim um quique reto não gira a bola, mas qualquer movimento
+   * ao longo da superfície a faz rolar.
    *
-   * - Em contato: tomba conforme a velocidade tangencial à superfície.
-   * - Arrastada: tomba seguindo o movimento da mão.
+   * - Em contato: rola conforme a velocidade tangencial à superfície.
+   * - Arrastada: rola seguindo o movimento horizontal da mão.
    * - Em voo: conserva o giro com leve amortecimento do ar.
    * - Em repouso: o giro é freado rapidamente, então a bola parada não gira.
    */
@@ -372,12 +372,14 @@ export class FootballScene {
 
     const k = Math.min(1, SPIN_BLEND * dt)
     if (this.dragging) {
-      // arrasto: tomba seguindo o movimento da mão
-      this.approachRoll(this.vx, this.vy, k)
+      // arrasto: rola como se estivesse sobre um piso (normal para cima)
+      this.approachRoll(this.vx, this.vy, 0, 1, k)
     } else if (this.inContact) {
       // rolagem: só a componente tangencial à superfície gera giro
-      const vn = this.vx * this.contactNX + this.vy * this.contactNY
-      this.approachRoll(this.vx - vn * this.contactNX, this.vy - vn * this.contactNY, k)
+      const nx = this.contactNX
+      const ny = this.contactNY
+      const vn = this.vx * nx + this.vy * ny
+      this.approachRoll(this.vx - vn * nx, this.vy - vn * ny, nx, ny, k)
     } else {
       // em voo: conserva o giro com leve amortecimento do ar
       this.omega.multiplyScalar(Math.max(0, 1 - SPIN_AIR_DAMPING * dt))
@@ -395,14 +397,18 @@ export class FootballScene {
     this.pivot.quaternion.premultiply(this.tmpQuat)
   }
 
-  /** Aproxima `omega` da rolagem 3D para a velocidade (vx, vy): eixo no plano,
-   * perpendicular ao movimento — ω = (vy/R, -vx/R, 0) * SPIN_SCALE. */
-  private approachRoll(vx: number, vy: number, k: number) {
-    const tx = (vy / this.radius) * SPIN_SCALE
-    const ty = (-vx / this.radius) * SPIN_SCALE
-    this.omega.x += (tx - this.omega.x) * k
-    this.omega.y += (ty - this.omega.y) * k
-    this.omega.z += -this.omega.z * k
+  /**
+   * Aproxima `omega` da rolagem em torno de Z para uma velocidade tangencial
+   * (vx, vy) sobre uma superfície de normal (nx, ny). A taxa de rolamento é
+   * ω_z = (vy·nx − vx·ny) / R · SPIN_SCALE — para um piso (n = (0,1)) isso dá
+   * ω_z = −vx/R, ou seja, mover para a direita rola no sentido horário. As
+   * componentes X/Y do giro decaem para zero (sem tombamento que pareça 2D).
+   */
+  private approachRoll(vx: number, vy: number, nx: number, ny: number, k: number) {
+    const tz = ((vy * nx - vx * ny) / this.radius) * SPIN_SCALE
+    this.omega.z += (tz - this.omega.z) * k
+    this.omega.x += -this.omega.x * k
+    this.omega.y += -this.omega.y * k
   }
 
   private readonly loop = () => {
@@ -534,27 +540,20 @@ export class FootballScene {
   }
 
   /**
-   * Converte a orientação do aparelho num vetor de gravidade na tela
-   * (modelo "labirinto", com neutro = celular em pé / retrato):
-   * - `gamma` (inclinação esquerda/direita): vira à direita => gravidade +X.
-   * - `beta` (inclinação frente/trás, relativa à vertical): inclina para frente
-   *   => gravidade para cima; para trás => para baixo.
-   * Mantém-se uma fração constante para baixo (`TILT_BASE_DOWN`) para a bola
-   * assentar nos cards quando o celular está parado em pé. Suavizado por um
-   * filtro passa-baixa para tirar o tremor do sensor.
+   * Usa a inclinação esquerda/direita do aparelho (`gamma`) para adicionar uma
+   * componente horizontal à gravidade: virar o celular para a direita rola a
+   * bola para a direita, para a esquerda rola para a esquerda. A gravidade
+   * vertical permanece cheia para baixo (`-GRAVITY`), então a bola cai e assenta
+   * nos cards normalmente. Suavizado por um filtro passa-baixa contra o tremor.
    */
   private readonly onDeviceOrientation = (e: DeviceOrientationEvent) => {
-    if (e.gamma == null || e.beta == null) return
-    const deg = Math.PI / 180
-    const clamp = (v: number) => Math.max(-TILT_MAX_DEG, Math.min(TILT_MAX_DEG, v))
-    const gamma = clamp(e.gamma) * deg // esquerda/direita
-    const beta = clamp(e.beta - 90) * deg // frente/trás, neutro na vertical
-
-    const targetGX = Math.sin(gamma) * TILT_GRAVITY
-    const targetGY = -Math.sin(beta) * TILT_GRAVITY - TILT_BASE_DOWN * GRAVITY
-
+    if (e.gamma == null) return
+    // mapeamento linear: inclinar TILT_MAX_DEG graus já atinge a autoridade
+    // máxima (mais sensível e previsível que sin); fora disso, satura.
+    const t = Math.max(-1, Math.min(1, e.gamma / TILT_MAX_DEG))
+    const targetGX = t * TILT_GRAVITY
     this.gravX += (targetGX - this.gravX) * TILT_SMOOTH
-    this.gravY += (targetGY - this.gravY) * TILT_SMOOTH
+    // gravidade vertical intocada: queda realista
   }
 
   dispose() {
