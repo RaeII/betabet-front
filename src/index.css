@@ -40,3 +40,131 @@ body {
   background: var(--support);
   color: #151713;
 }
+
+.pwa-install-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--brand) 38%, var(--border));
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.pwa-install-button:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--brand) 58%, var(--border));
+  background-color: color-mix(in srgb, var(--brand) 8%, var(--surface));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+.pwa-install-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.pwa-install-button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pwa-install-icon {
+  flex-shrink: 0;
+  animation: pwa-install-icon-drop 33s ease-in-out infinite;
+}
+
+.pwa-install-label {
+  color: var(--brand);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .pwa-install-label {
+    background-image: linear-gradient(
+      90deg,
+      var(--brand) 0%,
+      var(--brand) 36%,
+      color-mix(in srgb, var(--support) 68%, var(--brand)) 50%,
+      var(--brand) 64%,
+      var(--brand) 100%
+    );
+    background-position: 100% 0;
+    background-size: 300% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: pwa-install-wave 33s ease-in-out infinite;
+  }
+}
+
+@supports ((-webkit-mask-composite: xor) or (mask-composite: exclude)) {
+  .pwa-install-button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent 34%,
+      color-mix(in srgb, var(--support) 82%, var(--brand)) 50%,
+      transparent 66%,
+      transparent 100%
+    );
+    background-position: 100% 0;
+    background-size: 300% 100%;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: pwa-install-wave 33s ease-in-out infinite;
+  }
+}
+
+@keyframes pwa-install-wave {
+  0% {
+    background-position: 100% 0;
+  }
+
+  8% {
+    background-position: 0 0;
+  }
+
+  16%,
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+@keyframes pwa-install-icon-drop {
+  0%,
+  16%,
+  100% {
+    transform: translateY(0);
+  }
+
+  4%,
+  12% {
+    transform: translateY(2px);
+  }
+
+  8% {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwa-install-label,
+  .pwa-install-icon,
+  .pwa-install-button::after {
+    animation: none;
+  }
+}

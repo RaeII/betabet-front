@@ -165,6 +165,19 @@ Principais temas:
 - liquidação idempotente no backend (`champion_first_points` / `champion_second_points` por grupo);
 - pontos de atenção (liquidação manual, idempotência, sessão admin obrigatória).
 
+### [012-pwa.md](./012-pwa.md)
+
+Plano detalhado para transformar o frontend em um **PWA instalável** (Android, iOS e desktop), com app shell offline, ícone na tela inicial, splash screen e fluxo de atualização — sem alterar a stack nem a autenticação por cookie.
+
+Principais temas:
+
+- diagnóstico do código atual e avaliação de dificuldade (nível baixo-médio: Vite + SPA já favorecem PWA);
+- decisões de arquitetura: `vite-plugin-pwa` (Workbox), modo `generateSW`, `registerType: 'prompt'`;
+- plano por fases: dependência/config Vite, `manifest.webmanifest`, ícones (incl. maskable e apple-touch), service worker e estratégias de cache, registro + prompt de atualização, meta tags iOS, headers de nginx, build/Docker e testes;
+- regra de ouro de cache: `/api/*` em `NetworkOnly` (preserva sessão por cookie e dados ao vivo), shell em precache, imagens em StaleWhileRevalidate;
+- riscos e pontos de atenção (auth por cookie, dados ao vivo, versão presa em cache, limitações do iOS, LGPD/GA fora do SW);
+- matriz de cache, critérios de aceite, resumo de arquivos afetados e estimativa (~1 a 1,5 dia para o MVP instalável).
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

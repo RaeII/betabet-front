@@ -11,7 +11,7 @@ server {
   gzip on;
   gzip_comp_level 5;
   gzip_min_length 1024;
-  gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+  gzip_types text/plain text/css application/javascript application/json image/svg+xml application/manifest+json;
 
   location = /health {
     access_log off;
@@ -43,6 +43,18 @@ server {
     try_files $uri =404;
     expires 1y;
     add_header Cache-Control "public, immutable";
+  }
+
+  # Service worker e manifest: nunca devem ficar presos em cache, senão o
+  # usuário fica preso numa versão antiga do app shell.
+  location = /sw.js {
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    expires off;
+  }
+
+  location = /manifest.webmanifest {
+    types { } default_type application/manifest+json;
+    add_header Cache-Control "no-cache";
   }
 
   location / {

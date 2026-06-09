@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Check, Copy, Share2 } from 'lucide-react'
+import { Check, Copy, Download, Share2 } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useAuth } from '@/hooks/useAuth'
+import { usePwaInstall } from '@/hooks/usePwaInstall'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { GroupAvatar } from '@/pages/groups/components/GroupAvatar'
@@ -17,6 +18,8 @@ function buildGroupInviteLink(inviteCode: string, referralCode?: string | null) 
 export function GroupHeader() {
   const { group } = useActiveGroup()
   const { user } = useAuth()
+  const { canInstall, installMode, promptInstall } = usePwaInstall()
+  const [iosInstallOpen, setIosInstallOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [includeReferral, setIncludeReferral] = useState(true)
   const [copied, setCopied] = useState(false)
@@ -31,6 +34,15 @@ export function GroupHeader() {
     setIncludeReferral(true)
     setCopied(false)
     setShareOpen(true)
+  }
+
+  function handleInstallClick() {
+    if (installMode === 'ios-manual') {
+      setIosInstallOpen(true)
+      return
+    }
+
+    void promptInstall()
   }
 
   async function copyInviteLink() {
@@ -69,6 +81,21 @@ export function GroupHeader() {
 
           {group ? (
             <div className="flex shrink-0 items-center gap-2">
+              {canInstall ? (
+                <button
+                  type="button"
+                  aria-label={
+                    installMode === 'ios-manual'
+                      ? 'Ver instruções para instalar aplicativo'
+                      : 'Instalar aplicativo'
+                  }
+                  onClick={handleInstallClick}
+                  className="pwa-install-button inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--brand)] focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]"
+                >
+                  <Download aria-hidden="true" size={16} className="pwa-install-icon" />
+                  <span className="pwa-install-label">Instalar</span>
+                </button>
+              ) : null}
               <button
                 type="button"
                 aria-label="Compartilhar link do bolão"
@@ -82,6 +109,46 @@ export function GroupHeader() {
           ) : null}
         </div>
       </header>
+
+      <Modal
+        open={iosInstallOpen}
+        onOpenChange={setIosInstallOpen}
+        title="Instalar no iPhone"
+        description="No Safari, a instalação é feita pelo menu de compartilhamento."
+      >
+        <div className="space-y-4 p-5">
+          <ol className="space-y-3 text-sm text-[var(--text)]">
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-xs font-bold text-[var(--brand)]">
+                1
+              </span>
+              <span className="min-w-0">
+                Toque em <span className="font-semibold">Compartilhar</span> na barra do Safari.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-xs font-bold text-[var(--brand)]">
+                2
+              </span>
+              <span className="min-w-0">
+                Escolha <span className="font-semibold">Adicionar à Tela de Início</span>.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-xs font-bold text-[var(--brand)]">
+                3
+              </span>
+              <span className="min-w-0">
+                Confirme em <span className="font-semibold">Adicionar</span>.
+              </span>
+            </li>
+          </ol>
+
+          <p className="rounded-[var(--radius-md)] bg-[var(--surface-soft)] px-3 py-2 text-xs text-[var(--text-muted)]">
+            Depois disso, abra pelo ícone do Bolão CLT na tela inicial.
+          </p>
+        </div>
+      </Modal>
 
       <Modal
         open={shareOpen}

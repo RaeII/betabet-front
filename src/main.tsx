@@ -6,8 +6,12 @@ import { AuthProvider } from '@/context/auth.context'
 import { AdminAuthProvider } from '@/context/admin.context'
 import { ToastProvider } from '@/context/toast.context'
 import { CookieConsent } from '@/components/legal/CookieConsent'
+import { PwaUpdatePrompt } from '@/components/pwa/PwaUpdatePrompt'
+import { startPwaInstallListener } from '@/hooks/usePwaInstall'
 import { router } from '@/router'
 import './index.css'
+
+startPwaInstallListener()
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
           <ToastProvider>
             <RouterProvider router={router} />
             <CookieConsent />
+            <PwaUpdatePrompt />
           </ToastProvider>
         </AdminAuthProvider>
       </AuthProvider>

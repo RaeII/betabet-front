@@ -5,7 +5,8 @@
       "Bash(rtk tsc *)",
       "Bash(echo \"EXIT: $?\")",
       "Bash(bun test *)",
-      "Bash(rtk wc *)"
+      "Bash(rtk wc *)",
+      "Bash(chmod +x /var/www/betabet-front/deploy.sh)"
     ]
   }
 }
