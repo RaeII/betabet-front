@@ -40,6 +40,14 @@ const SPIN_REST_DAMPING = 16 // freia o giro quando a bola está em repouso
 const DRAG_STALE = 0.04 // s sem mover o ponteiro => arrasto considerado parado
 const SPIN_SCALE = 0.7 // intensidade do tombamento (1 = rolagem física pura)
 
+// inclinação do aparelho (apenas mobile): a gravidade segue a orientação do
+// celular como uma bola num labirinto — vira para a direita, a bola vai para a
+// direita; inclina para frente/trás, a bola sobe/desce.
+const TILT_GRAVITY = 2600 // autoridade da gravidade por inclinação (px/s²)
+const TILT_BASE_DOWN = 0.25 // fração de gravidade sempre para baixo (assenta a bola)
+const TILT_SMOOTH = 0.12 // suavização (passa-baixa) da leitura do sensor
+const TILT_MAX_DEG = 60 // limita a inclinação considerada em cada eixo
+
 export class FootballScene {
   private readonly renderer: THREE.WebGLRenderer
   private readonly scene: THREE.Scene
@@ -61,6 +69,14 @@ export class FootballScene {
   private y = 0
   private vx = 0
   private vy = 0
+
+  // vetor de gravidade (coordenadas de mundo, Y para cima). Por padrão aponta
+  // direto para baixo; no mobile passa a seguir a inclinação do aparelho.
+  private gravX = 0
+  private gravY = -GRAVITY
+  // handler de gesto usado para pedir permissão de sensor no iOS (gambiarra do
+  // requestPermission, que exige interação do usuário). Guardado p/ remoção.
+  private tiltGestureHandler: (() => void) | null = null
 
   // arrasto
   private dragging = false
@@ -135,6 +151,8 @@ export class FootballScene {
     // impede a seleção de texto enquanto arrasta a bola
     window.addEventListener('selectstart', this.onSelectStart)
     document.addEventListener('visibilitychange', this.onVisibility)
+    // no mobile, a gravidade passa a seguir a inclinação do celular
+    this.maybeEnableDeviceTilt()
 
     this.prevTime = performance.now()
     this.rafId = requestAnimationFrame(this.loop)
@@ -272,8 +290,9 @@ export class FootballScene {
     this.onSurface = false
     this.inContact = false
 
-    // gravidade + amortecimento do ar
-    this.vy -= GRAVITY * dt
+    // gravidade (direção segue a inclinação do aparelho no mobile) + ar
+    this.vx += this.gravX * dt
+    this.vy += this.gravY * dt
     const damp = Math.max(0, 1 - AIR_DAMPING * dt)
     this.vx *= damp
     this.vy *= damp
@@ -476,6 +495,68 @@ export class FootballScene {
     if (!document.hidden) this.prevTime = performance.now()
   }
 
+  /**
+   * Habilita o controle por inclinação do aparelho — **apenas no mobile**.
+   * No iOS 13+ o acesso ao sensor exige `requestPermission()` disparado por um
+   * gesto do usuário, então adiamos o pedido para o primeiro toque/clique.
+   */
+  private maybeEnableDeviceTilt() {
+    if (typeof DeviceOrientationEvent === 'undefined') return
+    // só dispositivos de ponteiro grosseiro (touch) => mobile/tablet
+    const coarse = window.matchMedia?.('(pointer: coarse)').matches
+    if (!coarse) return
+
+    const DOE = DeviceOrientationEvent as unknown as {
+      requestPermission?: () => Promise<'granted' | 'denied'>
+    }
+
+    if (typeof DOE.requestPermission === 'function') {
+      // iOS: pede permissão no primeiro gesto e só então escuta o sensor
+      const onGesture = () => {
+        DOE.requestPermission?.()
+          .then(state => {
+            if (state === 'granted') {
+              window.addEventListener('deviceorientation', this.onDeviceOrientation)
+            }
+          })
+          .catch(() => {})
+        window.removeEventListener('pointerdown', onGesture)
+        window.removeEventListener('touchend', onGesture)
+        this.tiltGestureHandler = null
+      }
+      this.tiltGestureHandler = onGesture
+      window.addEventListener('pointerdown', onGesture)
+      window.addEventListener('touchend', onGesture)
+    } else {
+      // Android/Chrome: o evento dispara sem permissão explícita (sob HTTPS)
+      window.addEventListener('deviceorientation', this.onDeviceOrientation)
+    }
+  }
+
+  /**
+   * Converte a orientação do aparelho num vetor de gravidade na tela
+   * (modelo "labirinto", com neutro = celular em pé / retrato):
+   * - `gamma` (inclinação esquerda/direita): vira à direita => gravidade +X.
+   * - `beta` (inclinação frente/trás, relativa à vertical): inclina para frente
+   *   => gravidade para cima; para trás => para baixo.
+   * Mantém-se uma fração constante para baixo (`TILT_BASE_DOWN`) para a bola
+   * assentar nos cards quando o celular está parado em pé. Suavizado por um
+   * filtro passa-baixa para tirar o tremor do sensor.
+   */
+  private readonly onDeviceOrientation = (e: DeviceOrientationEvent) => {
+    if (e.gamma == null || e.beta == null) return
+    const deg = Math.PI / 180
+    const clamp = (v: number) => Math.max(-TILT_MAX_DEG, Math.min(TILT_MAX_DEG, v))
+    const gamma = clamp(e.gamma) * deg // esquerda/direita
+    const beta = clamp(e.beta - 90) * deg // frente/trás, neutro na vertical
+
+    const targetGX = Math.sin(gamma) * TILT_GRAVITY
+    const targetGY = -Math.sin(beta) * TILT_GRAVITY - TILT_BASE_DOWN * GRAVITY
+
+    this.gravX += (targetGX - this.gravX) * TILT_SMOOTH
+    this.gravY += (targetGY - this.gravY) * TILT_SMOOTH
+  }
+
   dispose() {
     this.disposed = true
     cancelAnimationFrame(this.rafId)
@@ -487,6 +568,12 @@ export class FootballScene {
     window.removeEventListener('touchmove', this.onTouchMove)
     window.removeEventListener('selectstart', this.onSelectStart)
     document.removeEventListener('visibilitychange', this.onVisibility)
+    window.removeEventListener('deviceorientation', this.onDeviceOrientation)
+    if (this.tiltGestureHandler) {
+      window.removeEventListener('pointerdown', this.tiltGestureHandler)
+      window.removeEventListener('touchend', this.tiltGestureHandler)
+      this.tiltGestureHandler = null
+    }
     // garante que a seleção de texto volte ao normal
     document.body.style.userSelect = ''
 

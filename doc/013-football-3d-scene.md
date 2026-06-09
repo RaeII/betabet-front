@@ -123,6 +123,32 @@ troca de etapa do formulário (e-mail → código), que altera a altura do card.
   `preventDefault()` **apenas enquanto arrasta**, impedindo o scroll da página sem
   atrapalhar gestos normais.
 
+## Inclinação do aparelho (apenas mobile)
+
+No mobile, a **gravidade** da física passa a seguir a orientação do celular —
+modelo "bola num labirinto". O vetor de gravidade deixa de apontar fixo para
+baixo e é recalculado a partir do `deviceorientation`:
+
+- **`gamma`** (inclinação esquerda/direita): virar o aparelho para a direita
+  empurra a bola para a direita (`+X`), e vice-versa.
+- **`beta`** (inclinação frente/trás, relativa à vertical/retrato): inclinar
+  para frente leva a bola para cima; para trás, para baixo.
+- Mantém-se uma fração constante para baixo (`TILT_BASE_DOWN`) para a bola
+  assentar nos cards quando o celular está parado em pé.
+- A leitura é suavizada por um filtro passa-baixa (`TILT_SMOOTH`) e cada eixo é
+  limitado a `TILT_MAX_DEG`.
+
+Detecção e permissão:
+
+- Só é ativado em ponteiro grosseiro (`(pointer: coarse)`) — ou seja, mobile;
+  no **desktop** a gravidade segue fixa para baixo e nada muda.
+- No **iOS 13+**, `DeviceOrientationEvent.requestPermission()` exige um gesto do
+  usuário: o pedido é adiado para o primeiro toque/clique na tela. No
+  **Android/Chrome** (sob HTTPS) o evento dispara sem permissão explícita.
+
+O arrasto por toque continua funcionando e tem prioridade: enquanto a bola é
+arrastada, a física (e portanto a gravidade por inclinação) fica suspensa.
+
 ## Ciclo de vida e robustez
 
 - `FootballOverlay` instancia a engine no `useEffect` e chama `dispose()` na
