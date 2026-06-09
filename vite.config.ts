@@ -95,6 +95,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      host: true, // escuta em 0.0.0.0 — permite acesso externo (rede local / IP público)
       proxy: {
         '/api': {
           target: env.VITE_API_URL ?? 'http://localhost:3000',

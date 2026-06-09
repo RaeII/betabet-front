@@ -49,6 +49,13 @@ export class FootballScene {
   private pivot: THREE.Group | null = null
   private radius = 46
 
+  // lançamento inicial: a bola entra pelo topo com um deslocamento horizontal
+  // (esquerda → direita), descrevendo uma curva para o lado enquanto cai.
+  // Os valores são definidos por breakpoint em applyLaunchPreset().
+  private startXFrac = 0.3 // posição horizontal inicial (fração da largura)
+  private launchVX = 420 // velocidade horizontal inicial (px/s, + = direita)
+  private launchVY = 0 // velocidade vertical inicial (px/s, + = para cima)
+
   // estado físico (coordenadas de mundo)
   private x = 0
   private y = 0
@@ -112,10 +119,9 @@ export class FootballScene {
 
     this.resize()
 
-    // estado inicial: bola acima do topo da tela, no centro horizontal
     this.radius = Math.min(46, this.width * 0.11)
-    this.x = this.width / 2
-    this.y = this.radius + 60 // > 0 => acima da viewport (cai para dentro)
+    this.applyLaunchPreset()
+    this.launchBall()
 
     this.loadBall(options.ballUrl)
 
@@ -132,6 +138,31 @@ export class FootballScene {
 
     this.prevTime = performance.now()
     this.rafId = requestAnimationFrame(this.loop)
+  }
+
+  /** Define os parâmetros de lançamento conforme o breakpoint (desktop ≥ 768px). */
+  private applyLaunchPreset() {
+    const desktop = this.width >= 768
+    if (desktop) {
+      this.startXFrac = 0.17
+      this.launchVX = 570
+      this.launchVY = 1020
+    } else {
+      this.startXFrac = 0.17
+      this.launchVX = -460
+      this.launchVY = 380
+    }
+  }
+
+  /** (Re)posiciona a bola acima do topo e aplica a velocidade inicial de queda,
+   * fazendo-a entrar pela esquerda e curvar para o lado conforme cai. */
+  private launchBall() {
+    this.enteredField = false
+    this.x = this.width * this.startXFrac
+    this.y = this.radius + 60 // > 0 => acima da viewport (cai para dentro)
+    this.vx = this.launchVX
+    this.vy = this.launchVY
+    this.omega.set(0, 0, 0)
   }
 
   private loadBall(url: string) {
