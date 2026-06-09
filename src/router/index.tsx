@@ -1,17 +1,21 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter, useLocation } from 'react-router-dom'
 import { GroupShell } from '@/components/layout/GroupShell'
 import { AuthGuard } from './guards/AuthGuard'
 import { AdminGuard } from './guards/AdminGuard'
 import { OnboardingGuard } from './guards/OnboardingGuard'
-import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { RootResolver } from './RootResolver'
+
+function LegacyLoginRedirect() {
+  const location = useLocation()
+  return <Navigate to={`/${location.search}`} replace />
+}
 
 export const router = createBrowserRouter([
   {
     path: '/auth',
     children: [
-      { path: 'login', element: <LoginPage /> },
+      { path: 'login', element: <LegacyLoginRedirect /> },
       { path: 'register', element: <RegisterPage /> },
     ],
   },

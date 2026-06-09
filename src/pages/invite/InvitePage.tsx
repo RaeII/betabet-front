@@ -74,7 +74,7 @@ export function InvitePage() {
     const params = new URLSearchParams()
     params.set('invite', code)
     if (referralCode) params.set('ref', referralCode)
-    return <Navigate to={`/auth/login?${params.toString()}`} replace />
+    return <Navigate to={`/?${params.toString()}`} replace />
   }
 
   if (isInviteLoading) {

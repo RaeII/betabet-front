@@ -334,7 +334,7 @@ export function RegisterPage() {
       <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
         Já tem conta?{' '}
         <Link
-          to={`/auth/login${loginSearch ? `?${loginSearch}` : ''}`}
+          to={`/${loginSearch ? `?${loginSearch}` : ''}`}
           className="font-medium text-[var(--brand)] hover:underline"
         >
           Entrar

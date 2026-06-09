@@ -3,6 +3,7 @@ import { JoinRequestStatusHost } from '@/components/group/JoinRequestStatusHost'
 import { PendingJoinHost } from '@/components/group/PendingJoinHost'
 import { ReferralApplyHost } from '@/components/referral/ReferralApplyHost'
 import { useAuth } from '@/hooks/useAuth'
+import { LoginPage } from '@/pages/auth/LoginPage'
 
 export function AuthGuard() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -10,7 +11,10 @@ export function AuthGuard() {
 
   if (isLoading) return null
 
-  if (!isAuthenticated) return <Navigate to={`/auth/login${location.search}`} replace />
+  if (!isAuthenticated) {
+    if (location.pathname === '/') return <LoginPage />
+    return <Navigate to={`/${location.search}`} replace />
+  }
 
   return (
     <>
