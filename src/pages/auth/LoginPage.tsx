@@ -91,20 +91,16 @@ export function LoginPage() {
     setIsSubmitting(true)
     setServerError('')
     try {
+      // Anti-enumeração (backend 017/F4): a API responde 202 exista ou não a
+      // conta — sem 404 para redirecionar ao cadastro. Quem não tem conta cai
+      // no passo do código (que nunca chega) com o aviso condicional abaixo e
+      // o link "Cadastre-se" sempre visível.
       const nextChallenge = await requestLoginCode(result.data.email)
       setChallenge(nextChallenge)
       setStep('code')
       setCode('')
       setErrors({})
     } catch (error) {
-      if (error instanceof ApiRequestError && error.status === 404) {
-        const params = new URLSearchParams()
-        params.set('email', result.data.email)
-        if (inviteCode) params.set('invite', inviteCode)
-        if (referralCode) params.set('ref', referralCode)
-        navigate(`/auth/register?${params.toString()}`)
-        return
-      }
       setServerError(getApiRequestMessage(error, 'Não foi possível enviar o código. Tente novamente.'))
     } finally {
       codeRequestInFlightRef.current = false
@@ -210,7 +206,9 @@ export function LoginPage() {
       ) : (
         <form onSubmit={handleVerifyCode} className="flex flex-col gap-2" noValidate>
           <p className="text-sm text-[var(--text-muted)]">
-            Enviamos um código para <span className="font-medium text-[var(--text)]">{values.email}</span>.
+            Se houver uma conta para{' '}
+            <span className="font-medium text-[var(--text)]">{values.email}</span>, você receberá um
+            código por e-mail. Não tem conta? Cadastre-se pelo link abaixo.
           </p>
 
           <AuthField errorId="code-error" error={errors.code}>

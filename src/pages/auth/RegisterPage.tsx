@@ -264,7 +264,10 @@ export function RegisterPage() {
       ) : (
         <form onSubmit={handleVerifyCode} className="flex flex-col gap-2" noValidate>
           <p className="text-sm text-[var(--text-muted)]">
-            Enviamos um código para <span className="font-medium text-[var(--text)]">{values.email}</span>.
+            {/* Anti-enumeração (backend 017/F4): e-mail já cadastrado recebe a
+                mesma resposta 202, mas sem código — daí o aviso condicional. */}
+            Se <span className="font-medium text-[var(--text)]">{values.email}</span> ainda não tiver
+            cadastro, você receberá um código por e-mail. Já tem conta? Entre pelo link abaixo.
           </p>
 
           <AuthField errorId="code-error" error={errors.code}>
