@@ -101,8 +101,12 @@ exatamente com os retângulos do DOM e mantém a stack em three.js puro).
   de contato: a componente **normal** (o impacto vertical do pique) **não** gera
   giro, então um quique reto não gira a bola, mas qualquer movimento ao longo da
   superfície a faz rolar. Comportamento:
-  - **Em contato**: rola conforme a velocidade tangencial à superfície.
-  - **Sendo arrastada**: rola seguindo o movimento horizontal da mão.
+  - **Em contato**: rola conforme a velocidade tangencial à superfície (em
+    torno de Z).
+  - **Sendo arrastada**: como não há superfície fixa, rola seguindo a mão em
+    **qualquer direção** — o movimento horizontal gira em torno de Z (rolagem de
+    piso) e o vertical tomba em torno de X (o pattern passa por cima), então a
+    bola rola para cima/baixo também, não só para os lados.
   - **Em voo**: conserva o giro com leve amortecimento do ar, então um arremesso
     continua girando enquanto está no ar.
   - **Em repouso**: o giro é freado rapidamente, então a **bola parada não gira**.

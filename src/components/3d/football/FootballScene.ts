@@ -372,8 +372,15 @@ export class FootballScene {
 
     const k = Math.min(1, SPIN_BLEND * dt)
     if (this.dragging) {
-      // arrasto: rola como se estivesse sobre um piso (normal para cima)
-      this.approachRoll(this.vx, this.vy, 0, 1, k)
+      // arrasto livre (sem superfície fixa): rola seguindo a mão em qualquer
+      // direção — o movimento horizontal gira em torno de Z (rolagem de piso) e
+      // o vertical tomba em torno de X (o pattern passa por cima), então a bola
+      // rola para cima/baixo também, não só para os lados.
+      const tz = (-this.vx / this.radius) * SPIN_SCALE
+      const tx = (-this.vy / this.radius) * SPIN_SCALE
+      this.omega.z += (tz - this.omega.z) * k
+      this.omega.x += (tx - this.omega.x) * k
+      this.omega.y += -this.omega.y * k
     } else if (this.inContact) {
       // rolagem: só a componente tangencial à superfície gera giro
       const nx = this.contactNX
