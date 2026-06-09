@@ -102,12 +102,12 @@ export class FootballScene {
     this.camera = new THREE.OrthographicCamera(0, 1, 0, -1, 0.1, 1000)
     this.camera.position.z = 500
 
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.1))
-    const key = new THREE.DirectionalLight(0xffffff, 2.2)
-    key.position.set(-0.6, 1, 0.8)
+    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.9))
+    const key = new THREE.DirectionalLight(0xffffff, 2.55)
+    key.position.set(0.2, -0.3, 0.1)
     this.scene.add(key)
-    const fill = new THREE.DirectionalLight(0xffffff, 0.8)
-    fill.position.set(0.8, -0.4, 0.5)
+    const fill = new THREE.DirectionalLight(0xffffff, 1.85)
+    fill.position.set(0, -0.3, -0.05)
     this.scene.add(fill)
 
     this.resize()

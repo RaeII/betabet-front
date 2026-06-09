@@ -138,7 +138,7 @@ export function LoginLandingLayout({
                   id="login-about-title"
                   className="max-w-xl text-[2rem] font-semibold leading-tight text-[var(--text)] sm:text-[2.5rem] lg:text-[3rem]"
                 >
-                  O bolão mais clássico que existe, agora gratuito e em tempo real.
+                  O bolão mais clássico que existe, gratuito e atualização em tempo real.
                 </h2>
                 <p className="max-w-2xl text-base leading-7 text-[var(--text-muted)] sm:text-lg sm:leading-8">
                   O Bolão CLT leva o formato tradicional dos palpites da Copa do Mundo
