@@ -178,6 +178,20 @@ Principais temas:
 - riscos e pontos de atenção (auth por cookie, dados ao vivo, versão presa em cache, limitações do iOS, LGPD/GA fora do SW);
 - matriz de cache, critérios de aceite, resumo de arquivos afetados e estimativa (~1 a 1,5 dia para o MVP instalável).
 
+### [013-football-3d-scene.md](./013-football-3d-scene.md)
+
+Documenta a cena 3D auto-contida que sobrepõe uma bola de futebol (`trionda.glb`) às telas de login (`/`) e cadastro (`/auth/register`), em three.js puro, com física realista, colisão com cards/formulário e arrasto por mouse e toque.
+
+Principais temas:
+
+- pasta isolada `src/components/3d/football/` (`FootballScene.ts`, `FootballOverlay.tsx`, `index.tsx`) e os pontos de montagem nas duas páginas;
+- code-splitting via `React.lazy` — three.js + `GLTFLoader` + `.glb` ficam num chunk próprio, fora do bundle das demais rotas (verificado no build);
+- câmera ortográfica mapeada 1:1 com pixels da viewport (mundo com Y invertido) e conversão dos `getBoundingClientRect` dos colliders;
+- física 2D em passo fixo (gravidade, restituição, atrito, colisão círculo × AABB, anti-jitter, spin de rolagem) com colliders relidos do DOM a cada frame;
+- arrasto/arremesso por ponteiro na window (canvas com `pointer-events: none`) e `touchmove` não-passivo só durante o arrasto;
+- ciclo de vida/`dispose`, fallback sem WebGL, `prefers-reduced-motion` e marcação de colisão via `[data-football-collider]` (sem mudança visual de layout);
+- pontos de atenção (`.glb` não pré-cacheado, releitura por frame) e melhorias futuras.
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

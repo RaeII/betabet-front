@@ -6,6 +6,7 @@ import { AuthCodeInput } from './components/AuthCodeInput'
 import { AuthCodeStatus } from './components/AuthCodeStatus'
 import { AuthField } from './components/AuthField'
 import { AuthForm } from './components/AuthForm'
+import { FootballField } from '@/components/3d/football'
 import { InviteGroupCard } from '@/components/group/InviteGroupCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -165,11 +166,13 @@ export function RegisterPage() {
   const loginSearch = loginParams.toString()
 
   return (
-    <AuthForm
-      title="Criar conta"
-      subtitle="Participe do Bolão da Copa"
-      logoSrc="/bolao_clt_logo.png"
-    >
+    <>
+      <FootballField />
+      <AuthForm
+        title="Criar conta"
+        subtitle="Participe do Bolão da Copa"
+        logoSrc="/bolao_clt_logo.png"
+      >
       {step === 'data' ? (
         <form onSubmit={handleRequestCode} className="flex flex-col gap-2" noValidate>
           <AuthField errorId="name-error" error={errors.name}>
@@ -338,8 +341,9 @@ export function RegisterPage() {
           className="font-medium text-[var(--brand)] hover:underline"
         >
           Entrar
-        </Link>
-      </p>
-    </AuthForm>
+          </Link>
+        </p>
+      </AuthForm>
+    </>
   )
 }

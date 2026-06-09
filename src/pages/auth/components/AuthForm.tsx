@@ -32,7 +32,10 @@ export function AuthForm({ title, subtitle, logoSrc, children }: AuthFormProps) 
             <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>
           )}
         </div>
-        <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-lg">
+        <div
+          data-football-collider
+          className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-lg"
+        >
           {children}
         </div>
       </div>

@@ -6,6 +6,7 @@ import { AuthCodeInput } from './components/AuthCodeInput'
 import { AuthCodeStatus } from './components/AuthCodeStatus'
 import { AuthField } from './components/AuthField'
 import { LoginLandingLayout } from './components/LoginLandingLayout'
+import { FootballField } from '@/components/3d/football'
 import { InviteGroupCard } from '@/components/group/InviteGroupCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -168,11 +169,13 @@ export function LoginPage() {
   const registerSearch = registerParams.toString()
 
   return (
-    <LoginLandingLayout
-      title="Bolão CLT"
-      subtitle="Entre na sua conta para apostar"
-      logoSrc="/bolao_clt_logo.png"
-    >
+    <>
+      <FootballField />
+      <LoginLandingLayout
+        title="Bolão CLT"
+        subtitle="Entre na sua conta para apostar"
+        logoSrc="/bolao_clt_logo.png"
+      >
       {step === 'email' ? (
         <form onSubmit={handleRequestCode} className="flex flex-col gap-2" noValidate>
           <AuthField errorId="email-error" error={errors.email}>
@@ -284,8 +287,9 @@ export function LoginPage() {
           className="font-medium text-[var(--brand)] hover:underline"
         >
           Cadastre-se
-        </Link>
-      </p>
-    </LoginLandingLayout>
+          </Link>
+        </p>
+      </LoginLandingLayout>
+    </>
   )
 }
