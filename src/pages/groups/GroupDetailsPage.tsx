@@ -103,7 +103,7 @@ export function GroupDetailsPage() {
               <li>
                 Acertar o placar exato:{' '}
                 <strong>
-                  +{group.exactScorePoints} {group.exactScorePoints === 1 ? 'ponto' : 'pontos'}
+                  {group.exactScorePoints} {group.exactScorePoints === 1 ? 'ponto' : 'pontos'}
                 </strong>
               </li>
               <li>

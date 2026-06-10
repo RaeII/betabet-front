@@ -152,10 +152,13 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
   // "Ao vivo" eternamente após o apito final.
   const isFinishedView = match.status === 'finished' || isUpstreamFinished
   const locked = !isBetEditable(match.scheduledAt) || isFinishedView
-  const isLive = isLiveStatus && !isUpstreamFinished
+  // O backend pode ter virado status='live' pelo horário enquanto o upstream
+  // ainda reporta NS/TBD. Nesses casos `live.isLive=false`.
+  const isLive = isLiveStatus && (live ? live.isLive : !isUpstreamFinished)
+  const isUpstreamScheduled = isLiveStatus && !!live && !live.isLive && !isUpstreamFinished
   const [secsRemaining, setSecsRemaining] = useState(() => secondsUntilKickoff(match.scheduledAt))
   const minsLeft = minutesUntilKickoff(match.scheduledAt)
-  const isPreMatch = match.status === 'upcoming' && minsLeft > 0 && minsLeft <= 30
+  const isPreMatch = (match.status === 'upcoming' || isUpstreamScheduled) && minsLeft > 0 && minsLeft <= 30
   const isCountdown = secsRemaining > 0 && secsRemaining <= 30 * 60
 
   useEffect(() => {

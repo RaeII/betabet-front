@@ -28,6 +28,23 @@ const MATCH_START_REFRESH_INTERVAL_MS = 30_000
 const MATCH_START_REFRESH_WINDOW_MS = 2 * 60 * 60_000
 const MAX_TIMEOUT_MS = 2_147_483_647
 
+// Status do upstream em que o jogo está na prorrogação (ou pênaltis) durante o
+// ao vivo: ET = prorrogação, BT = intervalo da prorrogação, P = disputa de pênaltis.
+const LIVE_EXTRA_TIME_STATUSES = new Set(['ET', 'BT', 'P'])
+
+// Mensagem exibida abaixo do card do resultado quando o jogo foi/está na
+// prorrogação. O placar que vale para os pontos considera a prorrogação; a
+// disputa de pênaltis NÃO conta (vale o empate) — ver Doc backend 011.
+function extraTimeNotice(statusShort: string): string | null {
+  if (statusShort === 'PEN' || statusShort === 'P') {
+    return 'O resultado considera o tempo de prorrogação. A disputa de pênaltis não conta para os pontos — o jogo vale como empate.'
+  }
+  if (statusShort === 'AET' || statusShort === 'ET' || statusShort === 'BT') {
+    return 'O resultado considerado para os pontos inclui o tempo de prorrogação.'
+  }
+  return null
+}
+
 export function MatchDetailPage() {
   const { matchId, groupId } = useParams<{ matchId: string; groupId?: string }>()
   const { user } = useAuth()
@@ -42,14 +59,14 @@ export function MatchDetailPage() {
   const refetchGroupMatches = groupMatchesQuery.refetch
   const refetchMatchDetail = matchQuery.refetch
 
-  const hasStarted = match && (match.status === 'live' || match.status === 'finished')
-  const isUpcoming = match?.status === 'upcoming'
+  const hasStartedStatus = match && (match.status === 'live' || match.status === 'finished')
+  const isUpcomingStatus = match?.status === 'upcoming'
   const isLiveStatus = match?.status === 'live'
   const isFinishedStatus = match?.status === 'finished'
-  const { data: distribution } = useMatchDistribution(matchId ?? '', !!user?.chartUnlocked && !!hasStarted)
-  const { data: preview } = useMatchPreview(matchId ?? '', !!isUpcoming)
+  const { data: distribution } = useMatchDistribution(matchId ?? '', !!user?.chartUnlocked && !!hasStartedStatus)
+  const { data: preview } = useMatchPreview(matchId ?? '', !!isUpcomingStatus)
   const { data: live } = useMatchLive(matchId ?? '', !!isLiveStatus)
-  const { data: postMatch } = useMatchPostMatch(matchId ?? '', !!hasStarted)
+  const { data: postMatch } = useMatchPostMatch(matchId ?? '', !!hasStartedStatus)
   useLiveMatchNotifications(matchId ?? '', live?.events)
 
   const { data: betsData } = useQuery({
@@ -132,6 +149,12 @@ export function MatchDetailPage() {
   const TERMINAL_STATUSES = new Set(['FT', 'AET', 'PEN'])
   const isUpstreamFinished = !!live && TERMINAL_STATUSES.has(live.status.short)
   const isFinishedView = isFinishedStatus || isUpstreamFinished
+  // O status interno pode virar `live` pelo horário antes de a API-Football
+  // sair de NS/TBD. `live.isLive` é a fonte canônica para o bloco ao vivo.
+  const isLiveView = !!isLiveStatus && (live ? live.isLive : true)
+  const isUpstreamScheduled = !!isLiveStatus && !!live && !live.isLive && !isUpstreamFinished
+  const hasStartedView = isFinishedView || isLiveView
+  const displayStatus = isUpstreamScheduled ? 'upcoming' : match.status
 
   // Fonte canônica do snapshot pós-jogo: prioriza o salvo no banco; se ainda
   // não houve coleta (cron roda a cada 10 min), usa a resposta `live` corrente
@@ -174,15 +197,19 @@ export function MatchDetailPage() {
       : null
 
   const showPostMatchBlock = isFinishedView && !!postSource
-  const showLiveBlock = isLiveStatus && live && live.hasApiFixtureId && !isUpstreamFinished
+  const showLiveBlock = isLiveStatus && live && live.hasApiFixtureId && live.isLive
   // Pontos do usuário só existem em contexto de grupo (endpoint exige groupId) e
   // só fazem sentido com o jogo em andamento ou encerrado.
-  const showPoints = !!groupId && !!matchId && (isLiveStatus || isFinishedView)
+  const showPoints = !!groupId && !!matchId && (isLiveView || isFinishedView)
   const liveHomeTeamId = live?.teams?.home.id ?? null
   const liveStadiumName = live?.venue?.name ?? match.stadium?.name ?? null
   const liveStadiumCity = live?.venue?.city ?? match.stadium?.city ?? null
   const postStadiumName = postSource?.venueName ?? match.stadium?.name ?? null
   const postStadiumCity = postSource?.venueCity ?? match.stadium?.city ?? null
+  // Aviso de prorrogação (só quando o jogo foi/está nela).
+  const postExtraTimeNotice =
+    showPostMatchBlock && postSource ? extraTimeNotice(postSource.statusShort) : null
+  const liveExtraTimeNotice = showLiveBlock && live ? extraTimeNotice(live.status.short) : null
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -213,6 +240,7 @@ export function MatchDetailPage() {
               {postStadiumCity ? `, ${postStadiumCity}` : ''}
             </p>
           ) : null}
+          {postExtraTimeNotice ? <ExtraTimeNote>{postExtraTimeNotice}</ExtraTimeNote> : null}
         </div>
       ) : showLiveBlock ? (
         <div className="space-y-1.5">
@@ -231,6 +259,7 @@ export function MatchDetailPage() {
               {liveStadiumCity ? `, ${liveStadiumCity}` : ''}
             </p>
           ) : null}
+          {liveExtraTimeNotice ? <ExtraTimeNote>{liveExtraTimeNotice}</ExtraTimeNote> : null}
         </div>
       ) : (
         <div className="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6">
@@ -244,7 +273,7 @@ export function MatchDetailPage() {
           </div>
 
           <div className="flex flex-col items-center gap-2">
-            {hasStarted ? (
+            {hasStartedView ? (
               <span className="text-3xl font-bold tracking-tight text-[var(--text)]">
                 {match.homeScore} × {match.awayScore}
               </span>
@@ -253,7 +282,7 @@ export function MatchDetailPage() {
                 {formatCountdown(match.scheduledAt)}
               </span>
             )}
-            <MatchStatusBadge status={match.status} />
+            <MatchStatusBadge status={displayStatus} />
             <span className="text-xs text-[var(--text-muted)]">{formatMatchDate(match.scheduledAt)}</span>
             {match.stadium && (
               <span className="text-xs text-[var(--text-muted)]">
@@ -339,7 +368,7 @@ export function MatchDetailPage() {
           )}
 
           {/* Distribution chart (unlocked users only, after match starts) */}
-          {distribution && user?.chartUnlocked && (
+          {distribution && user?.chartUnlocked && hasStartedView && (
             <DistributionChart
               data={distribution}
               homeTeamName={match.homeTeam.name}
@@ -348,7 +377,7 @@ export function MatchDetailPage() {
           )}
 
           {/* Pre-match data (probability, recent form, lineups, injuries, venue) */}
-          {isUpcoming && preview ? (
+          {isUpcomingStatus && preview ? (
             <div className="space-y-4">
               {preview.prediction ? (
                 <PreMatchProbability
@@ -408,6 +437,16 @@ export function MatchDetailPage() {
           </div>
         )
       ) : null}
+    </div>
+  )
+}
+
+// Nota pequena em amarelo sob o card do resultado (prorrogação/pênaltis).
+function ExtraTimeNote({ children }: { children: string }) {
+  return (
+    <div className="flex items-start gap-1.5 rounded-[var(--radius)] border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1.5 text-xs text-yellow-700">
+      <span aria-hidden>⏱️</span>
+      <span>{children}</span>
     </div>
   )
 }

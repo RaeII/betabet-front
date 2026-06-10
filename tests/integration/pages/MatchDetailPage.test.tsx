@@ -13,6 +13,7 @@ import {
   useMatchPreview,
 } from '@/hooks/useMatches'
 import type { MatchWithUserBet } from '@/types/match.types'
+import type { MatchLive } from '@/services/liveMatch.service'
 
 vi.mock('@/hooks/useGroupMatches', () => ({ useGroupMatches: vi.fn() }))
 vi.mock('@/hooks/useMatches', () => ({
@@ -101,6 +102,32 @@ function makeMatch(
       createdAt: '',
       updatedAt: '',
     },
+    ...overrides,
+  }
+}
+
+function makeLive(overrides: Partial<MatchLive> = {}): MatchLive {
+  return {
+    matchId: 'm-1',
+    hasApiFixtureId: true,
+    isLive: true,
+    status: { short: '1H', long: 'First Half', elapsed: 10, extra: null },
+    goals: { home: 1, away: 0 },
+    score: {
+      halftime: { home: null, away: null },
+      fulltime: { home: null, away: null },
+      extratime: { home: null, away: null },
+      penalty: { home: null, away: null },
+    },
+    league: null,
+    venue: null,
+    referee: null,
+    teams: null,
+    events: [],
+    lineups: [],
+    statistics: [],
+    cachedAt: null,
+    staleAt: null,
     ...overrides,
   }
 }
@@ -198,6 +225,40 @@ describe('MatchDetailPage', () => {
     })
 
     expect(refetch).toHaveBeenCalled()
-    expect(screen.getByText('+2 pts')).toBeInTheDocument()
+    expect(screen.getByText((_, element) => element?.textContent === '+2pts')).toBeInTheDocument()
+  })
+
+  it('treats upstream NS as scheduled even when the internal status is live', () => {
+    const scheduledAt = new Date(Date.now() + 20 * 60_000).toISOString()
+    mockedGroupMatches.mockReturnValue({
+      data: {
+        matches: [
+          makeMatch(4, 3, {
+            scheduledAt,
+            status: 'live',
+            homeScore: null,
+            awayScore: null,
+          }),
+        ],
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    mockedLive.mockReturnValue({
+      data: makeLive({
+        isLive: false,
+        status: { short: 'NS', long: 'Not Started', elapsed: null, extra: null },
+        goals: { home: null, away: null },
+      }),
+    })
+
+    renderPage()
+
+    expect(screen.queryByText('Not Started')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ao vivo/i)).not.toBeInTheDocument()
+    expect(screen.getByText('Em breve')).toBeInTheDocument()
+    expect(screen.getByText('Seu palpite')).toBeInTheDocument()
+    expect(screen.queryByText('Pontos com a partida')).not.toBeInTheDocument()
   })
 })

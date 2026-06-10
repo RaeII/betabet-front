@@ -33,9 +33,16 @@ vi.mock('@/hooks/useBets', () => ({
   }),
 }))
 
+vi.mock('@/hooks/useMatches', () => ({
+  useMatchLive: vi.fn(),
+}))
+
+import { useMatchLive } from '@/hooks/useMatches'
 import { InlineBetCard } from '@/pages/home/components/InlineBetCard'
 import type { MatchWithUserBet } from '@/types/match.types'
 import type { Bet } from '@/types/bet.types'
+
+const mockedUseMatchLive = useMatchLive as ReturnType<typeof vi.fn>
 
 function makeBet(overrides: Partial<Bet> = {}): Bet {
   return {
@@ -94,6 +101,7 @@ function renderCard(match: MatchWithUserBet, groupId = 'g1') {
 describe('InlineBetCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockedUseMatchLive.mockReturnValue({ data: undefined })
     vi.mocked(getGroupMatchBets).mockResolvedValue({ bets: [], canView: true })
   })
 
@@ -235,6 +243,26 @@ describe('InlineBetCard', () => {
     const inputs = screen.getAllByRole('textbox', { name: /Palpite / })
     inputs.forEach(input => expect(input).toBeDisabled())
     expect(screen.getByText(/Encerrado/i)).toBeInTheDocument()
+  })
+
+  it('does not show live when the upstream status is not started', () => {
+    mockedUseMatchLive.mockReturnValue({
+      data: {
+        isLive: false,
+        status: { short: 'NS', long: 'Not Started', elapsed: null, extra: null },
+      },
+    })
+
+    renderCard(
+      makeMatch({
+        status: 'live',
+        scheduledAt: new Date(Date.now() - 5 * 60_000).toISOString(),
+      }),
+    )
+
+    expect(mockedUseMatchLive).toHaveBeenCalledWith('m-1', true)
+    expect(screen.queryByText(/Ao vivo/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Fique por dentro/i })).toBeInTheDocument()
   })
 
   it('opens match bets modal with all match bets', async () => {
