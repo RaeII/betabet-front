@@ -1,5 +1,5 @@
 import { apiDelete, apiGet, apiPost, apiPut } from './api'
-import type { AdminUser, AdminStats, ChampionState, MatchAnalytics, MatchFormData, RemoveChampionResult, ResultFormData, SetChampionResult, TeamFormData, UserStats } from '@/types/admin.types'
+import type { AdminUser, AdminStats, ChampionState, GroupStats, GroupStatsParams, MatchAnalytics, MatchFormData, RemoveChampionResult, ResultFormData, SetChampionResult, TeamFormData, UserStats, UserStatsParams } from '@/types/admin.types'
 import type { Match } from '@/types/match.types'
 import type { BettingGroup, GroupMembership, RankingEntry } from '@/types/group.types'
 import type { Team } from '@/types/match.types'
@@ -13,7 +13,7 @@ export function adminLogout(): Promise<{ ok: boolean }> {
 }
 
 export function getAdminStats(): Promise<AdminStats> {
-  return apiGet('/api/admin/stats')
+  return apiGet<{ stats: AdminStats }>('/api/admin/stats').then(res => res.stats)
 }
 
 export function getAdminMatches(): Promise<{ matches: Match[] }> {
@@ -81,8 +81,35 @@ export function getMatchAnalytics(): Promise<{ analytics: MatchAnalytics[] }> {
   return apiGet('/api/admin/analytics/matches')
 }
 
-export function getUserStats(page = 1, limit = 20): Promise<{ users: UserStats[]; total: number }> {
-  return apiGet(`/api/admin/analytics/users?page=${page}&limit=${limit}`)
+function buildQuery(params: Record<string, string | number | undefined>): string {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== '') search.set(key, String(value))
+  }
+  const qs = search.toString()
+  return qs ? `?${qs}` : ''
+}
+
+export interface UsersAnalyticsResponse {
+  users: UserStats[]
+  total: number
+  page: number
+  limit: number
+}
+
+export function getUserStats(params: UserStatsParams = {}): Promise<UsersAnalyticsResponse> {
+  return apiGet(`/api/admin/analytics/users${buildQuery({ ...params })}`)
+}
+
+export interface GroupsAnalyticsResponse {
+  groups: GroupStats[]
+  total: number
+  page: number
+  limit: number
+}
+
+export function getGroupStats(params: GroupStatsParams = {}): Promise<GroupsAnalyticsResponse> {
+  return apiGet(`/api/admin/analytics/groups${buildQuery({ ...params })}`)
 }
 
 export function getGroupObserver(groupId: string): Promise<{

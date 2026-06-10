@@ -22,10 +22,11 @@ export function LoginPage() {
   const [searchParams] = useSearchParams()
   const inviteCode = searchParams.get('invite')
   const referralCode = searchParams.get('ref')
+  const prefillEmail = searchParams.get('email')
   const { requestLoginCode, verifyLoginCode } = useAuth()
   const joinByCode = useJoinByCode()
   const [step, setStep] = useState<'email' | 'code'>('email')
-  const [values, setValues] = useState<LoginCredentials>({ email: '' })
+  const [values, setValues] = useState<LoginCredentials>({ email: prefillEmail ?? '' })
   const [code, setCode] = useState('')
   const [challenge, setChallenge] = useState<AuthCodeChallenge | null>(null)
   const [errors, setErrors] = useState<Partial<LoginCredentials & { code: string }>>({})
@@ -91,16 +92,21 @@ export function LoginPage() {
     setIsSubmitting(true)
     setServerError('')
     try {
-      // Anti-enumeração (backend 017/F4): a API responde 202 exista ou não a
-      // conta — sem 404 para redirecionar ao cadastro. Quem não tem conta cai
-      // no passo do código (que nunca chega) com o aviso condicional abaixo e
-      // o link "Cadastre-se" sempre visível.
       const nextChallenge = await requestLoginCode(result.data.email)
       setChallenge(nextChallenge)
       setStep('code')
       setCode('')
       setErrors({})
     } catch (error) {
+      // E-mail sem conta (404): leva direto ao cadastro com o e-mail preenchido.
+      if (error instanceof ApiRequestError && error.status === 404) {
+        const params = new URLSearchParams()
+        params.set('email', result.data.email)
+        if (inviteCode) params.set('invite', inviteCode)
+        if (referralCode) params.set('ref', referralCode)
+        navigate(`/auth/register?${params.toString()}`)
+        return
+      }
       setServerError(getApiRequestMessage(error, 'Não foi possível enviar o código. Tente novamente.'))
     } finally {
       codeRequestInFlightRef.current = false
@@ -206,9 +212,7 @@ export function LoginPage() {
       ) : (
         <form onSubmit={handleVerifyCode} className="flex flex-col gap-2" noValidate>
           <p className="text-sm text-[var(--text-muted)]">
-            Se houver uma conta para{' '}
-            <span className="font-medium text-[var(--text)]">{values.email}</span>, você receberá um
-            código por e-mail. Não tem conta? Cadastre-se pelo link abaixo.
+            Enviamos um código para <span className="font-medium text-[var(--text)]">{values.email}</span>.
           </p>
 
           <AuthField errorId="code-error" error={errors.code}>

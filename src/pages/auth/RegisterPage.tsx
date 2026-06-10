@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useJoinByCode } from '@/hooks/useGroups'
 import { AuthCodeSchema, RegisterSchema } from '@/lib/schemas'
 import { resolveInviteCode } from '@/services/groups.service'
+import { ApiRequestError } from '@/services/api'
 import type { AuthCodeChallenge, RegisterData } from '@/types/auth.types'
 
 type FormValues = Omit<RegisterData, 'referralCode'> & { referralCode: string }
@@ -102,6 +103,15 @@ export function RegisterPage() {
       setCode('')
       setErrors({})
     } catch (error) {
+      // E-mail já cadastrado (409): leva direto ao login com o e-mail preenchido.
+      if (error instanceof ApiRequestError && error.status === 409) {
+        const params = new URLSearchParams()
+        params.set('email', result.data.email)
+        if (inviteCode) params.set('invite', inviteCode)
+        if (referralCode) params.set('ref', referralCode)
+        navigate(`/auth/login?${params.toString()}`)
+        return
+      }
       setServerError(getApiRequestMessage(error, 'Não foi possível enviar o código. Tente novamente.'))
     } finally {
       codeRequestInFlightRef.current = false
@@ -264,10 +274,7 @@ export function RegisterPage() {
       ) : (
         <form onSubmit={handleVerifyCode} className="flex flex-col gap-2" noValidate>
           <p className="text-sm text-[var(--text-muted)]">
-            {/* Anti-enumeração (backend 017/F4): e-mail já cadastrado recebe a
-                mesma resposta 202, mas sem código — daí o aviso condicional. */}
-            Se <span className="font-medium text-[var(--text)]">{values.email}</span> ainda não tiver
-            cadastro, você receberá um código por e-mail. Já tem conta? Entre pelo link abaixo.
+            Enviamos um código para <span className="font-medium text-[var(--text)]">{values.email}</span>.
           </p>
 
           <AuthField errorId="code-error" error={errors.code}>

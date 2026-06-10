@@ -105,6 +105,10 @@ export class FootballScene {
   private accumulator = 0
   private prevTime = 0
   private disposed = false
+  // a física só começa depois que o modelo (.glb) terminou de carregar, para que
+  // a animação de queda seja vista (e não simulada "às escondidas" enquanto o
+  // asset ~5 MB baixa, fazendo a bola surgir já parada na posição final).
+  private ready = false
 
   private readonly tmpQuat = new THREE.Quaternion()
   private readonly tmpAxis = new THREE.Vector3()
@@ -200,7 +204,15 @@ export class FootballScene {
 
       this.pivot = new THREE.Group()
       this.pivot.add(model)
+      this.pivot.position.set(this.x, this.y, 0)
       this.scene.add(this.pivot)
+
+      // com o modelo pronto, (re)lança a bola do topo e só agora libera a física,
+      // garantindo que a queda seja animada a partir deste frame.
+      this.launchBall()
+      this.accumulator = 0
+      this.prevTime = performance.now()
+      this.ready = true
     })
   }
 
@@ -425,23 +437,28 @@ export class FootballScene {
     this.prevTime = now
     if (frameDt > MAX_FRAME_DT) frameDt = MAX_FRAME_DT
 
-    this.syncColliders()
+    // só evolui a física depois que o modelo carregou; enquanto isso, apenas
+    // mantém o relógio em dia para não dar um salto enorme ao iniciar.
+    if (this.ready) {
+      this.syncColliders()
 
-    // arrasto parado: sem mover o ponteiro há um instante, zera a velocidade
-    // estimada para que a bola segurada não gire (nem seja arremessada à toa)
-    if (this.dragging && (now - this.lastPointer.t) / 1000 > DRAG_STALE) {
-      this.vx = 0
-      this.vy = 0
+      // arrasto parado: sem mover o ponteiro há um instante, zera a velocidade
+      // estimada para que a bola segurada não gire (nem seja arremessada à toa)
+      if (this.dragging && (now - this.lastPointer.t) / 1000 > DRAG_STALE) {
+        this.vx = 0
+        this.vy = 0
+      }
+
+      this.accumulator += frameDt
+      while (this.accumulator >= FIXED_DT) {
+        this.substep(FIXED_DT)
+        this.accumulator -= FIXED_DT
+      }
+      this.updateSpin(frameDt)
+
+      if (this.pivot) this.pivot.position.set(this.x, this.y, 0)
     }
 
-    this.accumulator += frameDt
-    while (this.accumulator >= FIXED_DT) {
-      this.substep(FIXED_DT)
-      this.accumulator -= FIXED_DT
-    }
-    this.updateSpin(frameDt)
-
-    if (this.pivot) this.pivot.position.set(this.x, this.y, 0)
     this.renderer.render(this.scene, this.camera)
     this.rafId = requestAnimationFrame(this.loop)
   }
