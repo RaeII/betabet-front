@@ -18,8 +18,10 @@ export function calcPoints(
   const betOutcome = deriveBetOutcome(betHome, betAway)
   const actualOutcome = deriveBetOutcome(matchHome, matchAway)
 
+  // Placar exato e acerto de resultado NÃO acumulam: o placar exato pontua só
+  // exactScorePoints (tier mais alto), não soma com resultPoints.
   if (betHome === matchHome && betAway === matchAway) {
-    return group.resultPoints + group.exactScorePoints
+    return group.exactScorePoints
   }
   if (betOutcome === actualOutcome) {
     return group.resultPoints

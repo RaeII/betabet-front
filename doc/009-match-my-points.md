@@ -86,9 +86,9 @@ export interface MatchMyPoints {
   liveScore: { home: number | null; away: number | null } | null   // placar usado no cálculo
   bet: { homeScore: number; awayScore: number } | null             // null se não apostou
   matchPoints: {
-    result: number        // pontos por acerto de vencedor/empate
+    result: number        // pontos por acerto de vencedor/empate (0 se acertou o placar exato)
     exactScore: number    // pontos por placar exato
-    total: number         // result + exactScore
+    total: number         // result OU exactScore — não acumulam (placar exato substitui o resultado)
     confirmed: boolean    // true = liquidado no banco (definitivo)
   }
   totalBeforeMatch: number  // total confirmado no grupo, EXCLUINDO esta partida

@@ -31,8 +31,8 @@ export const BetFormSchema = z.object({
 export const GroupCreateSchema = z.object({
   name: z.string().min(3, 'Mínimo 3 caracteres').max(20, 'Máximo 20 caracteres'),
   emoji: z.string().emoji('Emoji inválido').optional(),
-  resultPoints: z.number().int().min(1).max(10).default(1),
-  exactScorePoints: z.number().int().min(1).max(20).default(3),
+  resultPoints: z.number().int().min(1).max(10).default(6),
+  exactScorePoints: z.number().int().min(1).max(20).default(10),
   championBetEnabled: z.boolean().default(true),
   championFirstPoints: z.number().int().min(1).max(100).default(15),
   championSecondPoints: z.number().int().min(0).max(100).default(10),

@@ -18,7 +18,7 @@ export function CreateGroupPage() {
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState<string | null>('⚽')
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
-  const [resultPoints, setResultPoints] = useState(7)
+  const [resultPoints, setResultPoints] = useState(6)
   const [exactScorePoints, setExactScorePoints] = useState(10)
   const [championBetEnabled, setChampionBetEnabled] = useState(true)
   const [championFirstPoints, setChampionFirstPoints] = useState(25)
