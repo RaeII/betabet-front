@@ -1,8 +1,8 @@
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { Button } from '@/components/ui/button'
 
-/** Checa por atualização do service worker a cada 60 minutos. */
-const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000
+/** Checa por atualização do service worker a cada 5 minutos. */
+const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000
 
 /**
  * Banner de atualização do PWA.

@@ -34,8 +34,12 @@ export function DistributionChart({ data, homeTeamName, awayTeamName }: Distribu
   return (
     <div className="space-y-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[var(--text)]">Distribuição das apostas no aplicativo</h3>
-        <span className="text-xs text-[var(--text-muted)]">{data.totalBets} apostas</span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-[var(--text)]">Palpite da galera</h3>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Mostra a proporção dos palpites enviados por todos os usuários para este jogo.
+          </p>
+        </div>
       </div>
 
       <div className="space-y-2">
