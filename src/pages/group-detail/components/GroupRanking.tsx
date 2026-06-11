@@ -124,13 +124,16 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
                           isMe,
                         })
                       }
-                      className="group/btn inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-3 py-1.5 text-xs font-bold text-[var(--brand)] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-[var(--brand)]/15 hover:shadow-md active:translate-y-0 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)]"
+                      className="group/btn inline-flex h-8 w-8 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-0 py-1.5 text-xs font-bold text-[var(--brand)] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-[var(--brand)]/15 hover:shadow-md active:translate-y-0 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--support)] sm:h-auto sm:w-auto sm:px-3"
                       aria-label={`Ver histórico de palpites e pontos de ${entry.userName}`}
                       title={`Ver histórico de palpites de ${entry.userName}`}
                     >
                       <History size={14} className="transition-transform group-hover/btn:-rotate-6" />
-                      Histórico
-                      <ChevronRight size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
+                      <span className="hidden sm:inline">Histórico</span>
+                      <ChevronRight
+                        size={13}
+                        className="hidden transition-transform group-hover/btn:translate-x-0.5 sm:block"
+                      />
                     </button>
                   </td>
                 </tr>
