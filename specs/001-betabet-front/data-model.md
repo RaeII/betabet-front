@@ -177,9 +177,9 @@ export interface RankingEntry {
   userId: string
   userName: string
   avatarUrl: string | null
-  position: number
+  position: number                // ranking denso: empate de pontos compartilha a posição (1,1,2,…)
   totalPoints: number
-  exactScorePredictions: number   // used as first tie-breaker
+  exactScorePredictions: number   // estatística (não é mais tie-breaker)
   totalBets: number
 }
 

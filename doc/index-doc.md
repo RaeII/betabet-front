@@ -128,7 +128,7 @@ Principais temas:
 - hooks `useMatchMyPoints` (1 partida, polling esperto que para ao `confirmed`) e `useGroupLiveMyPoints` (soma os provisórios das partidas ao vivo do grupo), com `matchPointsKeys` compartilhada que o React Query deduplica;
 - `MatchPointsCard` na `MatchDetailPage` (estados ao vivo/confirmado/provisório, breakdown resultado/placar exato, total antes → com a partida);
 - `MatchPointsBadge` reutilizável: ao vivo via endpoint (dedup), encerrada via `resultPoints`/`exactScorePoints` do próprio palpite (sem rede) — usado em `GroupPalpitesPage` e `MatchCard`;
-- overlay ao vivo do `GroupRanking`: aplica o `liveDelta` do usuário, reordena em tempo real e marca quem subiu de posição, sem contar pontos em dobro;
+- overlay ao vivo do `GroupRanking` para **todos os membros** via `useGroupLiveRanking` (endpoint group-wide `GET /api/groups/:groupId/ranking/live`): reordena em tempo real, marca quem subiu de posição e atualiza sozinho enquanto a tela do ranking está aberta, sem contar pontos em dobro;
 - invariantes (sem dupla contagem, definitivo lido do palpite, busca só com `status==='live'`, pontos exigem grupo) e pontos de alteração futura.
 
 ### [010-authentication.md](./010-authentication.md)

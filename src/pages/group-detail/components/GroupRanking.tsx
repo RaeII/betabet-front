@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ChevronRight, History, TrendingUp } from 'lucide-react'
-import { useGroupRanking } from '@/hooks/useRanking'
-import { useGroupLiveMyPoints } from '@/hooks/useMatchPoints'
+import { useGroupRanking, useGroupLiveRanking } from '@/hooks/useRanking'
 import { useAuth } from '@/hooks/useAuth'
 import { formatRank } from '@/lib/format.utils'
 import { RankingBreakdownModal } from './RankingBreakdownModal'
@@ -21,8 +20,16 @@ interface BreakdownTarget {
 export function GroupRanking({ groupId }: GroupRankingProps) {
   const { data, isLoading } = useGroupRanking(groupId)
   const { user } = useAuth()
-  const { liveDelta, hasLiveMatch } = useGroupLiveMyPoints(groupId)
+  const { data: liveData } = useGroupLiveRanking(groupId)
   const [target, setTarget] = useState<BreakdownTarget | null>(null)
+
+  // Pontos provisórios por usuário (todos os membros), vindos do `/ranking/live`.
+  const liveByUser = useMemo(
+    () => new Map((liveData?.live ?? []).map(e => [e.userId, e.livePoints] as const)),
+    [liveData],
+  )
+  const hasLiveMatch = liveData?.hasLiveMatch ?? false
+  const myLiveDelta = (user?.id ? liveByUser.get(user.id) : 0) ?? 0
 
   if (isLoading) {
     return <div className="py-8 text-center text-sm text-[var(--text-muted)]">Carregando ranking…</div>
@@ -34,18 +41,34 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
     return <p className="py-8 text-center text-sm text-[var(--text-muted)]">Nenhuma aposta ainda.</p>
   }
 
-  // Overlay ao vivo: soma os pontos provisórios do usuário autenticado ao seu
-  // total confirmado e reordena. Só o próprio usuário tem prévia — o backend
-  // expõe pontos provisórios por usuário (`/my-points`); os demais permanecem
-  // no total confirmado do `/ranking` até a liquidação. Tie-break estável pela
-  // posição original (que já encoda os critérios de desempate do backend).
-  const rows = ranking
+  // Overlay ao vivo: soma os pontos provisórios de CADA usuário (do
+  // `/ranking/live`) ao seu total confirmado e reordena em tempo real. O
+  // `/ranking` só traz pontos confirmados; os provisórios das partidas em
+  // andamento vêm por usuário aqui (disjuntos, sem dupla contagem).
+  //
+  // Ordenação: total projetado DESC, depois nome A→Z (case-insensitive) para
+  // desempate de exibição. `livePosition` é DENSA — jogadores com o mesmo total
+  // compartilham a posição e a numeração não pula (ex.: 1,1,2,3,3,4).
+  const sortedRows = ranking
     .map(entry => {
-      const livePoints = entry.userId === user?.id ? liveDelta : 0
+      const livePoints = liveByUser.get(entry.userId) ?? 0
       return { ...entry, livePoints, projectedTotal: entry.totalPoints + livePoints }
     })
-    .sort((a, b) => b.projectedTotal - a.projectedTotal || a.position - b.position)
-    .map((entry, index) => ({ ...entry, livePosition: index + 1 }))
+    .sort(
+      (a, b) =>
+        b.projectedTotal - a.projectedTotal ||
+        a.userName.localeCompare(b.userName, 'pt-BR', { sensitivity: 'base' }),
+    )
+
+  let livePosition = 0
+  let prevTotal: number | null = null
+  const rows = sortedRows.map(entry => {
+    if (prevTotal === null || entry.projectedTotal !== prevTotal) {
+      livePosition += 1
+      prevTotal = entry.projectedTotal
+    }
+    return { ...entry, livePosition }
+  })
 
   return (
     <div className="space-y-3">
@@ -55,9 +78,9 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-yellow-500 opacity-70" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-yellow-500" />
           </span>
-          {liveDelta > 0
-            ? `Ranking ao vivo — você está ganhando +${liveDelta} pts na partida em andamento (prévia).`
-            : 'Partida em andamento — o ranking atualiza conforme os pontos são confirmados.'}
+          {myLiveDelta > 0
+            ? `Ranking ao vivo — atualizando em tempo real. Você está fazendo +${myLiveDelta} pts na(s) partida(s) em andamento (prévia).`
+            : 'Ranking ao vivo — atualizando em tempo real conforme o placar das partidas em andamento.'}
         </div>
       ) : null}
 
@@ -76,7 +99,7 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
           <tbody className="divide-y divide-[var(--border)] bg-[var(--surface)]">
             {rows.map(entry => {
               const isMe = entry.userId === user?.id
-              const movedUp = isMe && entry.livePosition < entry.position
+              const movedUp = entry.livePosition < entry.position
               return (
                 <tr key={entry.userId} className={isMe ? 'bg-[var(--brand)]/5' : undefined}>
                   <td className="px-4 py-3 font-bold text-[var(--brand)]">

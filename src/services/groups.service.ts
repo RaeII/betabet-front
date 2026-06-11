@@ -48,6 +48,24 @@ export function getGroupRanking(groupId: string): Promise<{ ranking: RankingEntr
   return apiGet(`/api/groups/${groupId}/ranking`)
 }
 
+/** Pontos provisórios (não confirmados) por usuário das partidas em andamento. */
+export interface GroupLiveRankingEntry {
+  userId: string
+  livePoints: number
+}
+
+export interface GroupLiveRanking {
+  /** Só usuários com saldo provisório > 0; os demais ficam no total confirmado. */
+  live: GroupLiveRankingEntry[]
+  liveMatchCount: number
+  hasLiveMatch: boolean
+  updatedAt: string
+}
+
+export function getGroupLiveRanking(groupId: string): Promise<GroupLiveRanking> {
+  return apiGet(`/api/groups/${groupId}/ranking/live`)
+}
+
 export function generateInviteLink(groupId: string): Promise<{ inviteCode: string; link: string }> {
   return apiPost(`/api/groups/${groupId}/invite-link`)
 }

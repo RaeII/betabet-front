@@ -29,20 +29,24 @@ Companions no frontend:
 ```
 services/matchPoints.service.ts          GET /api/matches/:matchId/my-points?groupId=
         │  getMatchMyPoints() → MatchMyPoints (espelha MatchMyPointsDTO)
+services/groups.service.ts               GET /api/groups/:groupId/ranking/live
+        │  getGroupLiveRanking() → GroupLiveRanking (provisório por usuário, todos)
         │
 hooks/useMatchPoints.ts
         ├─ matchPointsKeys.detail(matchId, groupId)   ← chave única (dedup)
         ├─ useMatchMyPoints(matchId, groupId, enabled) ← 1 partida; polling esperto
-        └─ useGroupLiveMyPoints(groupId)               ← soma provisórios das partidas ao vivo
+        └─ useGroupLiveMyPoints(groupId)               ← soma provisórios do usuário (legado)
+hooks/useRanking.ts
+        └─ useGroupLiveRanking(groupId)                ← provisório de TODOS (overlay do ranking)
         │
 components
         ├─ MatchPointsCard      (match-detail)   "Seus pontos" — bloco completo
         ├─ MatchPointsBadge     (reutilizável)   pílula compacta para listas/cards
-        └─ GroupRanking         (group-detail)   overlay ao vivo + reordenação
+        └─ GroupRanking         (group-detail)   overlay ao vivo (todos) + reordenação
         │
 composição
         ├─ MatchDetailPage      → MatchPointsCard (contexto de grupo, live/finished)
-        ├─ GroupRanking         → overlay com useGroupLiveMyPoints
+        ├─ GroupRanking         → overlay com useGroupLiveRanking (todos os membros)
         ├─ GroupPalpitesPage    → MatchPointsBadge por palpite (live + confirmado)
         └─ MatchCard            → MatchPointsBadge (só ao vivo, contexto de grupo)
 ```
@@ -214,30 +218,60 @@ if (status === 'finished' && userBet?.resultPoints !== null) {
 - **Pílula provisória** (ao vivo): ponto pulsante amarelo + `+N pts`.
 - **Pílula confirmada** (encerrada): verde se `> 0`, cinza/muted se `0`.
 
-### `GroupRanking` — overlay ao vivo + reordenação
+### `GroupRanking` — overlay ao vivo de TODOS + reordenação
 
-Sobre o ranking confirmado do `GET /ranking`, aplica o `liveDelta` do usuário
-autenticado e **reordena em tempo real**:
+Sobre o ranking confirmado do `GET /ranking`, aplica o `livePoints` de **cada
+usuário** (vindo do endpoint group-wide `GET /ranking/live` via
+`useGroupLiveRanking`) e **reordena em tempo real**:
 
 ```ts
-const rows = ranking
+const liveByUser = new Map((liveData?.live ?? []).map(e => [e.userId, e.livePoints]))
+const sortedRows = ranking
   .map(e => {
-    const livePoints = e.userId === user?.id ? liveDelta : 0
+    const livePoints = liveByUser.get(e.userId) ?? 0
     return { ...e, livePoints, projectedTotal: e.totalPoints + livePoints }
   })
-  .sort((a, b) => b.projectedTotal - a.projectedTotal || a.position - b.position)
-  .map((e, i) => ({ ...e, livePosition: i + 1 }))
+  .sort((a, b) =>
+    b.projectedTotal - a.projectedTotal ||
+    a.userName.localeCompare(b.userName, 'pt-BR', { sensitivity: 'base' }))
+// livePosition DENSA: mesmo total → mesma posição, sem pular (1,1,2,3,3,4)
+let livePosition = 0, prevTotal = null
+const rows = sortedRows.map(e => {
+  if (prevTotal === null || e.projectedTotal !== prevTotal) { livePosition += 1; prevTotal = e.projectedTotal }
+  return { ...e, livePosition }
+})
 ```
 
-- **Só o próprio usuário tem prévia** — o backend só expõe provisório por
-  usuário (`/my-points`); os demais ficam no total confirmado até liquidar.
-- **Tie-break estável** pela `position` original (que já encoda os critérios de
-  desempate do backend).
+- **Todos os membros têm prévia ao vivo** — o backend expõe os pontos
+  provisórios por usuário do grupo em `GET /api/groups/:groupId/ranking/live`
+  (calculados contra o placar ao vivo, mesma regra da liquidação). O `/ranking`
+  segue só com confirmados; os dois conjuntos são disjuntos (sem dupla
+  contagem — ver invariante 1).
+- **Ranking denso + ordem alfabética**: jogadores com o mesmo total projetado
+  **compartilham a posição** e a numeração não pula (ex.: 1,1,2,3,3,4); o
+  desempate de **exibição** dentro do grupo empatado é o nome A→Z
+  (case-insensitive). Mesma regra do backend (`toRankingEntries` + `ORDER BY
+  total_points DESC, LOWER(name)`), então live e confirmado ficam coerentes.
 - Banner ao vivo quando `hasLiveMatch` (jogo **realmente em andamento**, não só
-  `status === 'live'` no banco — ver `useGroupLiveMyPoints`); seta `TrendingUp`
-  quando o usuário **subiu** posições (`livePosition < position`); `+livePoints`
-  ao lado do total. Sem partida em andamento, `liveDelta = 0` → nenhum overlay,
-  nenhuma reordenação: o ranking fica exatamente o confirmado do `/ranking`.
+  `status === 'live'` no banco — o backend confirma via `getLive().isLive`);
+  seta `TrendingUp` para **qualquer** usuário que **subiu** posições
+  (`livePosition < position`); `+livePoints` ao lado do total de cada linha. Sem
+  partida em andamento o endpoint fica desabilitado → nenhum overlay, nenhuma
+  reordenação: o ranking fica exatamente o confirmado do `/ranking`.
+
+#### `useGroupLiveRanking(groupId)` — polling group-wide
+
+Vive em [`hooks/useRanking.ts`](../src/hooks/useRanking.ts). `refetchInterval:
+60_000` + `refetchIntervalInBackground: false` (pausa com a aba em segundo
+plano). Como o hook vive dentro do `GroupRanking`, o polling só ocorre
+**enquanto a tela do ranking está montada/aberta** — atende ao requisito de
+atualizar automaticamente com o ranking aberto. **Polla sempre enquanto montado**
+(não fica atrás de um gate de `useGroupMatches`), então uma partida que **comece
+a rolar com a página já aberta** é detectada sozinha em até 60 s. É barato no
+ocioso: o backend só roda uma query indexada por `status='live'` (vazia, sem
+chamar a API-Football) e o front não aplica overlay (`hasLiveMatch=false`).
+Substitui o antigo `useGroupLiveMyPoints` (que só somava o provisório do usuário
+autenticado) no overlay do ranking.
 
 ---
 
@@ -338,8 +372,10 @@ qualquer membro do grupo vê (`canView` sempre `true`).
 6. **A regra de pontos é do backend.** O front só soma pontos já gravados; o
    provisório ao vivo vem pronto de `matchPoints.total` (mesma regra da
    liquidação SQL — provisório e definitivo nunca divergem para o mesmo placar).
-7. **Só o próprio usuário tem prévia ao vivo no ranking.** Os demais ficam no
-   confirmado até a liquidação.
+7. **Todos os membros têm prévia ao vivo no ranking.** O overlay usa o endpoint
+   group-wide `GET /ranking/live`, que devolve o provisório por usuário de todas
+   as partidas em andamento. (Antes só o próprio usuário tinha prévia, via
+   `useGroupLiveMyPoints` + `/my-points`.)
 
 ---
 
@@ -347,7 +383,7 @@ qualquer membro do grupo vê (`canView` sempre `true`).
 
 | Mudança                                                              | Como fazer                                                                                     |
 |----------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| Prévia ao vivo dos **outros** jogadores no ranking                   | Backend precisaria expor provisório por grupo (`/ranking/live`); o front somaria por `userId`  |
+| ~~Prévia ao vivo dos **outros** jogadores no ranking~~ ✅ feito        | Backend expõe `GET /api/groups/:groupId/ranking/live`; o front soma por `userId` em `useGroupLiveRanking` |
 | Animar a subida/descida de posições no ranking                       | Envolver as linhas em `Reorder`/`AnimatePresence` do `framer-motion` (já no `package.json`)    |
 | Badge de pontos no `MatchCard` encerrado da grade de Jogos           | Exigiria `userBet` na resposta de `useMatchesByPhase`, ou um batch endpoint de pontos por grupo |
 | Total de pontos do grupo num header/persistente                      | Reusar `useGroupRanking` + posição do usuário; o dado já existe                                |
