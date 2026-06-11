@@ -42,8 +42,12 @@ export function BetsGrid({ bets, canView, groupInviteCode }: BetsGridProps) {
           className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-sm font-bold text-[var(--brand)]">
-              {bet.user.name.charAt(0).toUpperCase()}
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-soft)] text-sm font-bold text-[var(--brand)]">
+              {bet.user.avatarUrl ? (
+                <img src={bet.user.avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                bet.user.name.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-[var(--text)]">{bet.user.name}</p>

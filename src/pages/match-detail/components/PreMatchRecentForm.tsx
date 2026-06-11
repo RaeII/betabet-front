@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { PreviewRecentForm, PreviewRecentFormGame, PreviewRecentFormSide } from '@/services/matchPreview.service'
 import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 import { cn } from '@/lib/utils'
@@ -215,6 +217,8 @@ function GameRow({ game, team }: { game: PreviewRecentFormGame; team: Registered
 
 function TeamForm({ team, form, sideLabel }: { team: RegisteredTeam; form: PreviewRecentFormSide; sideLabel: string }) {
   const goalAverage = calculateGoalAverage(form)
+  const [showGames, setShowGames] = useState(true)
+  const gamesId = `recent-form-games-${team.id}`
 
   return (
     <div className="space-y-3">
@@ -245,21 +249,46 @@ function TeamForm({ team, form, sideLabel }: { team: RegisteredTeam; form: Previ
           </div>
         </div>
 
-        <span
-          className="shrink-0 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)]"
-        >
-          {form.wins}V {form.draws}E {form.losses}D
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span
+            className="rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)]"
+          >
+            {form.wins}V {form.draws}E {form.losses}D
+          </span>
+          <button
+            type="button"
+            aria-expanded={showGames}
+            aria-controls={gamesId}
+            onClick={() => setShowGames((curr) => !curr)}
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface-soft)] px-2.5 text-[11px] font-semibold text-[var(--text-muted)] transition hover:text-[var(--text)] focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]"
+          >
+            {showGames ? (
+              <>
+                Ocultar jogos
+                <ChevronUp aria-hidden="true" className="h-3 w-3" />
+              </>
+            ) : (
+              <>
+                Mostrar jogos
+                <ChevronDown aria-hidden="true" className="h-3 w-3" />
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      {form.games.length === 0 ? (
-        <p className="text-xs text-[var(--text-muted)]">Sem jogos recentes.</p>
-      ) : (
-        <ul className="space-y-2">
-          {form.games.map(g => (
-            <GameRow key={g.fixtureId} game={g} team={team} />
-          ))}
-        </ul>
+      {showGames && (
+        <div id={gamesId}>
+          {form.games.length === 0 ? (
+            <p className="text-xs text-[var(--text-muted)]">Sem jogos recentes.</p>
+          ) : (
+            <ul className="space-y-2">
+              {form.games.map(g => (
+                <GameRow key={g.fixtureId} game={g} team={team} />
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   )
@@ -267,12 +296,13 @@ function TeamForm({ team, form, sideLabel }: { team: RegisteredTeam; form: Previ
 
 export function PreMatchRecentForm({ recentForm, homeTeam, awayTeam }: PreMatchRecentFormProps) {
   const { home, away } = recentForm
+
   if (!home && !away) return null
 
   return (
     <section className="space-y-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
       <header>
-        <h3 className="mt-1 text-base font-semibold tracking-tight text-[var(--text)] sm:text-lg">
+        <h3 className="text-base font-semibold tracking-tight text-[var(--text)] sm:text-lg">
           Últimos jogos
         </h3>
       </header>

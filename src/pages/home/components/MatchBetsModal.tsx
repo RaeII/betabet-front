@@ -83,8 +83,12 @@ export function MatchBetsModal({
                 className="flex items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-sm font-bold text-[var(--brand)]">
-                    {bet.user.name.charAt(0).toUpperCase()}
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-soft)] text-sm font-bold text-[var(--brand)]">
+                    {bet.user.avatarUrl ? (
+                      <img src={bet.user.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      bet.user.name.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <span className="min-w-0 truncate text-sm font-semibold text-[var(--text)]">
                     {bet.user.id === user?.id ? 'Você' : bet.user.name}

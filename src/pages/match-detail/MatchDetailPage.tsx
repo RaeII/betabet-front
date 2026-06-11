@@ -63,7 +63,8 @@ export function MatchDetailPage() {
   const isUpcomingStatus = match?.status === 'upcoming'
   const isLiveStatus = match?.status === 'live'
   const isFinishedStatus = match?.status === 'finished'
-  const { data: distribution } = useMatchDistribution(matchId ?? '', !!user?.chartUnlocked && !!hasStartedStatus)
+  const shouldLoadDistribution = !!user?.chartUnlocked && (!!isUpcomingStatus || !!hasStartedStatus)
+  const { data: distribution } = useMatchDistribution(matchId ?? '', shouldLoadDistribution)
   const { data: preview } = useMatchPreview(matchId ?? '', !!isUpcomingStatus)
   const { data: live } = useMatchLive(matchId ?? '', !!isLiveStatus)
   const { data: postMatch } = useMatchPostMatch(matchId ?? '', !!hasStartedStatus)
@@ -210,6 +211,7 @@ export function MatchDetailPage() {
   const postExtraTimeNotice =
     showPostMatchBlock && postSource ? extraTimeNotice(postSource.statusShort) : null
   const liveExtraTimeNotice = showLiveBlock && live ? extraTimeNotice(live.status.short) : null
+  const showDistributionChart = !!distribution && !!user?.chartUnlocked
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -367,8 +369,8 @@ export function MatchDetailPage() {
             </div>
           )}
 
-          {/* Distribution chart (unlocked users only, after match starts) */}
-          {distribution && user?.chartUnlocked && hasStartedView && (
+          {/* Distribution chart (unlocked users only, live/post-match) */}
+          {showDistributionChart && hasStartedView && (
             <DistributionChart
               data={distribution}
               homeTeamName={match.homeTeam.name}
@@ -377,9 +379,9 @@ export function MatchDetailPage() {
           )}
 
           {/* Pre-match data (probability, recent form, lineups, injuries, venue) */}
-          {isUpcomingStatus && preview ? (
+          {isUpcomingStatus && (preview || showDistributionChart) ? (
             <div className="space-y-4">
-              {preview.prediction ? (
+              {preview?.prediction ? (
                 <PreMatchProbability
                   prediction={preview.prediction}
                   homeName={match.homeTeam.name}
@@ -387,34 +389,46 @@ export function MatchDetailPage() {
                 />
               ) : null}
 
-              <PreMatchRecentForm
-                recentForm={preview.recentForm}
-                homeTeam={{
-                  id: match.homeTeam.id,
-                  name: match.homeTeam.name,
-                  flagUrl: match.homeTeam.flagUrl,
-                }}
-                awayTeam={{
-                  id: match.awayTeam.id,
-                  name: match.awayTeam.name,
-                  flagUrl: match.awayTeam.flagUrl,
-                }}
-              />
+              {showDistributionChart ? (
+                <DistributionChart
+                  data={distribution}
+                  homeTeamName={match.homeTeam.name}
+                  awayTeamName={match.awayTeam.name}
+                />
+              ) : null}
 
-              {preview.lineups.length > 0 ? <PreMatchLineup lineups={preview.lineups} /> : null}
+              {preview ? (
+                <>
+                  <PreMatchRecentForm
+                    recentForm={preview.recentForm}
+                    homeTeam={{
+                      id: match.homeTeam.id,
+                      name: match.homeTeam.name,
+                      flagUrl: match.homeTeam.flagUrl,
+                    }}
+                    awayTeam={{
+                      id: match.awayTeam.id,
+                      name: match.awayTeam.name,
+                      flagUrl: match.awayTeam.flagUrl,
+                    }}
+                  />
 
-              <PreMatchInjuries
-                injuries={preview.injuries}
-                homeTeamName={match.homeTeam.name}
-                awayTeamName={match.awayTeam.name}
-              />
+                  {preview.lineups.length > 0 ? <PreMatchLineup lineups={preview.lineups} /> : null}
 
-              <PreMatchVenue
-                venue={preview.venue}
-                referee={preview.referee}
-                fallbackStadiumName={match.stadium?.name ?? null}
-                fallbackStadiumCity={match.stadium?.city ?? null}
-              />
+                  <PreMatchInjuries
+                    injuries={preview.injuries}
+                    homeTeamName={match.homeTeam.name}
+                    awayTeamName={match.awayTeam.name}
+                  />
+
+                  <PreMatchVenue
+                    venue={preview.venue}
+                    referee={preview.referee}
+                    fallbackStadiumName={match.stadium?.name ?? null}
+                    fallbackStadiumCity={match.stadium?.city ?? null}
+                  />
+                </>
+              ) : null}
             </div>
           ) : null}
         </div>
