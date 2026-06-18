@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { PhaseSelector } from '@/pages/matches/components/PhaseSelector'
 import { KnockoutBracket } from '@/pages/matches/components/KnockoutBracket'
 import { WorldCupGroupOverview } from '@/pages/matches/components/WorldCupGroupOverview'
@@ -9,8 +9,14 @@ type Phase = 'group' | 'knockout'
 
 export function GroupJogosPage() {
   const { groupId } = useParams<{ groupId: string }>()
-  const [phase, setPhase] = useState<Phase>('group')
+  const location = useLocation()
+  // Ao voltar do detalhe da partida, restaura a fase que estava selecionada.
+  const [phase, setPhase] = useState<Phase>(
+    () => (location.state as { phase?: Phase } | null)?.phase ?? 'group',
+  )
   const { data, isLoading, isError } = useMatchesByPhase()
+  // Anexado ao link do card; o detalhe usa para o botão "Voltar".
+  const backState = { fromJogos: phase }
 
   return (
     <div className="space-y-6">
@@ -41,9 +47,11 @@ export function GroupJogosPage() {
       )}
 
       {data && phase === 'group' && (
-        <WorldCupGroupOverview data={data.groupStage} groupId={groupId} />
+        <WorldCupGroupOverview data={data.groupStage} groupId={groupId} backState={backState} />
       )}
-      {data && phase === 'knockout' && <KnockoutBracket data={data.knockout} groupId={groupId} />}
+      {data && phase === 'knockout' && (
+        <KnockoutBracket data={data.knockout} groupId={groupId} backState={backState} />
+      )}
     </div>
   )
 }

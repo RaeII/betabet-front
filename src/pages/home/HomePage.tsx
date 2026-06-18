@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useGroupMatches } from '@/hooks/useGroupMatches'
@@ -30,7 +31,11 @@ export function HomePage() {
   const { groupId, group } = useActiveGroup()
   const { user } = useAuth()
   const { data, isLoading, isError } = useGroupMatches(groupId ?? '')
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const location = useLocation()
+  // Ao voltar do detalhe da partida, restaura o dia que estava selecionado.
+  const [selectedDate, setSelectedDate] = useState<string | null>(
+    () => (location.state as { selectedDate?: string } | null)?.selectedDate ?? null,
+  )
   const [teamSearch, setTeamSearch] = useState('')
 
   const matches = data?.matches ?? []
@@ -146,7 +151,7 @@ export function HomePage() {
 
       {currentMatchday ? (
         visibleMatches.length > 0 ? (
-          <DayMatchList matches={visibleMatches} group={group} />
+          <DayMatchList matches={visibleMatches} group={group} selectedDate={currentDate} />
         ) : (
           <p className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 text-center text-sm text-[var(--text-muted)]">
             {teamSearchTerm

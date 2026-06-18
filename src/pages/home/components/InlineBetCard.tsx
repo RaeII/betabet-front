@@ -27,6 +27,7 @@ interface InlineBetCardProps {
   match: MatchWithUserBet
   groupId: string
   groupInviteCode?: string
+  selectedDate?: string | null
 }
 
 function clampScore(value: number): number {
@@ -127,7 +128,7 @@ function ScoreInput({ label, value, onChange, disabled }: ScoreInputProps) {
   )
 }
 
-export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCardProps) {
+export function InlineBetCard({ match, groupId, groupInviteCode, selectedDate }: InlineBetCardProps) {
   const placeBet = usePlaceBet()
   const editBet = useEditBet(match.id)
   const isEditing = match.userBet !== null
@@ -179,6 +180,8 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
     return formatMatchDate(match.scheduledAt).split(',').join(' ')
   })()
   const detailHref = `/groups/${groupId}/matches/${match.id}`
+  // Preserva o dia selecionado na home para restaurar ao voltar do detalhe.
+  const detailLinkState = selectedDate ? { fromDay: selectedDate } : undefined
 
   const homeEmpty = home === ''
   const awayEmpty = away === ''
@@ -331,6 +334,7 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
         {locked ? (
           <Link
             to={detailHref}
+            state={detailLinkState}
             className={`inline-flex items-center gap-1 text-xs font-semibold transition duration-150 hover:opacity-75 active:scale-95 ${
               isLive
                 ? 'text-red-500'
@@ -354,6 +358,7 @@ export function InlineBetCard({ match, groupId, groupInviteCode }: InlineBetCard
           <div className="relative flex min-h-9 w-36 items-center justify-center">
             <Link
               to={detailHref}
+              state={detailLinkState}
               className={`absolute inset-0 flex items-center justify-center gap-1 text-xs font-semibold text-[var(--brand)] transition duration-200 ${
                 showAction || showSavedIcon ? 'pointer-events-none opacity-0' : 'opacity-100'
               }`}

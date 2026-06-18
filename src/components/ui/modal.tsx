@@ -49,7 +49,7 @@ export function Modal({
                 <div className="min-w-0 flex-1 space-y-1">
                   {title ? (
                     <Dialog.Title
-                      className="truncate text-lg font-bold text-[var(--text)]"
+                      className="text-lg font-bold leading-tight text-[var(--text)]"
                     >
                       {title}
                     </Dialog.Title>
@@ -70,7 +70,7 @@ export function Modal({
                 ) : null}
               </header>
             ) : null}
-            <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface)]">{children}</div>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

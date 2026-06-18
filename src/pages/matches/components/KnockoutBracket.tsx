@@ -13,9 +13,10 @@ const PHASE_ORDER = ['r16', 'qf', 'sf', 'final']
 interface KnockoutBracketProps {
   data: MatchesResponse['knockout']
   groupId?: string
+  backState?: Record<string, unknown>
 }
 
-export function KnockoutBracket({ data, groupId }: KnockoutBracketProps) {
+export function KnockoutBracket({ data, groupId, backState }: KnockoutBracketProps) {
   const phases = PHASE_ORDER.filter(p => data[p]?.length > 0)
 
   if (phases.length === 0) {
@@ -40,7 +41,7 @@ export function KnockoutBracket({ data, groupId }: KnockoutBracketProps) {
             </div>
             <div className="space-y-3">
               {(data[phase] as Match[]).map(match => (
-                <MatchCard key={match.id} match={match} groupId={groupId} />
+                <MatchCard key={match.id} match={match} groupId={groupId} backState={backState} />
               ))}
             </div>
           </section>

@@ -5,6 +5,7 @@ import type { BettingGroup } from '@/types/group.types'
 interface DayMatchListProps {
   matches: MatchWithUserBet[]
   group: BettingGroup
+  selectedDate?: string | null
 }
 
 // Ordem: ao vivo primeiro, depois próximos jogos primeiro, depois encerrados.
@@ -14,7 +15,7 @@ function getMatchPriority(match: MatchWithUserBet): number {
   return 2
 }
 
-export function DayMatchList({ matches, group }: DayMatchListProps) {
+export function DayMatchList({ matches, group, selectedDate }: DayMatchListProps) {
   if (matches.length === 0) {
     return (
       <p className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 text-center text-sm text-[var(--text-muted)]">
@@ -40,6 +41,7 @@ export function DayMatchList({ matches, group }: DayMatchListProps) {
           match={match}
           groupId={group.id}
           groupInviteCode={group.inviteCode}
+          selectedDate={selectedDate}
         />
       ))}
     </div>

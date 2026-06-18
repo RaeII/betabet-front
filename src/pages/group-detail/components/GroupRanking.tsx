@@ -12,6 +12,7 @@ interface GroupRankingProps {
 interface BreakdownTarget {
   userId: string
   userName: string
+  avatarUrl: string | null
   position: number
   totalPoints: number
   isMe: boolean
@@ -142,6 +143,7 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
                         setTarget({
                           userId: entry.userId,
                           userName: entry.userName,
+                          avatarUrl: entry.avatarUrl,
                           position: entry.position,
                           totalPoints: entry.totalPoints,
                           isMe,
@@ -175,6 +177,7 @@ export function GroupRanking({ groupId }: GroupRankingProps) {
           groupId={groupId}
           userId={target.userId}
           userName={target.userName}
+          avatarUrl={target.avatarUrl}
           position={target.position}
           totalPoints={target.totalPoints}
           isMe={target.isMe}

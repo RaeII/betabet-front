@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { ChevronLeft } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useMatch, useMatchDistribution, useMatchLive, useMatchPostMatch, useMatchPreview } from '@/hooks/useMatches'
 import { useUserGroups } from '@/hooks/useGroups'
@@ -47,8 +48,22 @@ function extraTimeNotice(statusShort: string): string | null {
 
 export function MatchDetailPage() {
   const { matchId, groupId } = useParams<{ matchId: string; groupId?: string }>()
+  const navigate = useNavigate()
+  const location = useLocation()
+  // Vindo do card de um jogo: `fromDay` (home, restaura o dia) ou `fromJogos`
+  // (página Jogos, restaura a fase). Só então exibimos o botão de voltar.
+  const navState = location.state as { fromDay?: string; fromJogos?: 'group' | 'knockout' } | null
+  const fromDay = navState?.fromDay
+  const fromJogos = navState?.fromJogos
+  const canGoBack = !!fromDay || !!fromJogos
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<'details' | 'bets'>('details')
+
+  // Ao abrir o detalhe de uma partida, sobe pro topo (SPA não reseta o scroll
+  // da lista por padrão).
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [matchId])
   const groupMatchesQuery = useGroupMatches(groupId ?? '')
   const matchQuery = useMatch(matchId ?? '', !groupId)
   const { data: groupsData } = useUserGroups()
@@ -213,8 +228,31 @@ export function MatchDetailPage() {
   const liveExtraTimeNotice = showLiveBlock && live ? extraTimeNotice(live.status.short) : null
   const showDistributionChart = !!distribution && !!user?.chartUnlocked
 
+  const handleBack = () => {
+    if (groupId && fromJogos) {
+      navigate(`/groups/${groupId}/jogos`, { state: { phase: fromJogos } })
+      return
+    }
+    if (groupId) {
+      navigate(`/groups/${groupId}`, { state: { selectedDate: fromDay } })
+      return
+    }
+    navigate(-1)
+  }
+
   return (
     <div className="mx-auto max-w-lg space-y-6">
+      {canGoBack ? (
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--text-muted)] transition duration-150 hover:text-[var(--text)] active:scale-95"
+        >
+          <ChevronLeft size={18} aria-hidden="true" />
+          Voltar
+        </button>
+      ) : null}
+
       {/* Match header */}
       {showPostMatchBlock && postSource ? (
         <div className="space-y-1.5">

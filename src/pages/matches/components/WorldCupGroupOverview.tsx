@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useWorldCupStandings } from '@/hooks/useWorldCupStandings'
 import type { MatchesResponse } from '@/types/match.types'
 import type { WorldCupStanding } from '@/types/worldCup.types'
@@ -14,10 +14,12 @@ import {
 interface WorldCupGroupOverviewProps {
   data: MatchesResponse['groupStage']
   groupId?: string
+  backState?: Record<string, unknown>
 }
 
-export function WorldCupGroupOverview({ data, groupId }: WorldCupGroupOverviewProps) {
+export function WorldCupGroupOverview({ data, groupId, backState }: WorldCupGroupOverviewProps) {
   const standingsQuery = useWorldCupStandings()
+  const [scrollSignal, setScrollSignal] = useState(0)
 
   const standingsByGroup = useMemo(() => {
     const map = new Map<string, WorldCupStanding[]>()
@@ -34,6 +36,14 @@ export function WorldCupGroupOverview({ data, groupId }: WorldCupGroupOverviewPr
     standingsByGroup.forEach((_rows, group) => groups.add(group))
     return [...groups].filter(Boolean).sort(sortGroupLetters)
   }, [data, standingsByGroup])
+
+  const liveMatchId = useMemo(() => {
+    for (const groupLetter of groupOptions) {
+      const live = getGroupMatches(data, groupLetter).find(({ match }) => match.status === 'live')
+      if (live) return live.match.id
+    }
+    return null
+  }, [data, groupOptions])
 
   if (groupOptions.length === 0) {
     return (
@@ -83,10 +93,28 @@ export function WorldCupGroupOverview({ data, groupId }: WorldCupGroupOverviewPr
               groupLetter={groupLetter}
               matches={matches}
               groupId={groupId}
+              liveMatchId={liveMatchId}
+              scrollSignal={scrollSignal}
+              backState={backState}
             />
           </section>
         )
       })}
+
+      {liveMatchId ? (
+        <button
+          type="button"
+          onClick={() => setScrollSignal(signal => signal + 1)}
+          className="fixed bottom-20 right-4 z-40 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-600 shadow-lg backdrop-blur-sm transition duration-150 hover:bg-red-500/20 focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-red-500 active:scale-95 lg:bottom-8 lg:right-8"
+          aria-label="Centralizar no jogo ao vivo"
+        >
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+          </span>
+          Jogo ao vivo
+        </button>
+      ) : null}
     </div>
   )
 }

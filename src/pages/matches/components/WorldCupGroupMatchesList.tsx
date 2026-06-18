@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { MatchCard } from '@/components/match/MatchCard'
 import {
@@ -7,20 +7,34 @@ import {
   type GroupMatch,
 } from './worldCupGroup.utils'
 
+/** Id no DOM do card de uma partida — alvo do scroll do botão "Jogo ao vivo". */
+export function matchCardDomId(matchId: string): string {
+  return `jogo-${matchId}`
+}
+
 interface WorldCupGroupMatchesListProps {
   groupLetter: string
   matches: GroupMatch[]
   groupId?: string
+  /** Partida ao vivo no calendário (qualquer grupo); usada para centralizar o card. */
+  liveMatchId?: string | null
+  /** Incrementa a cada clique no botão "Jogo ao vivo" — dispara o scroll. */
+  scrollSignal?: number
+  backState?: Record<string, unknown>
 }
 
 export function WorldCupGroupMatchesList({
   groupLetter,
   matches,
   groupId,
+  liveMatchId,
+  scrollSignal,
+  backState,
 }: WorldCupGroupMatchesListProps) {
   const rounds = useMemo(() => getGroupRounds(matches), [matches])
   const defaultRound = useMemo(() => findDefaultRound(rounds), [rounds])
   const [selectedRound, setSelectedRound] = useState<string | null>(null)
+  const pendingScrollId = useRef<string | null>(null)
 
   useEffect(() => {
     setSelectedRound(current => {
@@ -28,6 +42,27 @@ export function WorldCupGroupMatchesList({
       return defaultRound
     })
   }, [defaultRound, rounds])
+
+  // Botão "Jogo ao vivo" clicado: se a partida ao vivo está neste grupo,
+  // seleciona a rodada dela e agenda o scroll para depois da re-renderização.
+  useEffect(() => {
+    if (!scrollSignal || !liveMatchId) return
+    const liveRound = rounds.find(round => round.matches.some(match => match.id === liveMatchId))
+    if (!liveRound) return
+    pendingScrollId.current = liveMatchId
+    setSelectedRound(liveRound.value)
+  }, [scrollSignal])
+
+  // Executa o scroll após a rodada certa estar montada (roda a cada render,
+  // guardado pelo ref para só agir quando há um alvo pendente).
+  useEffect(() => {
+    if (!pendingScrollId.current) return
+    const target = document.getElementById(matchCardDomId(pendingScrollId.current))
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      pendingScrollId.current = null
+    }
+  })
 
   const activeRound = rounds.find(round => round.value === (selectedRound ?? defaultRound))
   const activeRoundIndex = activeRound
@@ -90,7 +125,13 @@ export function WorldCupGroupMatchesList({
       ) : (
         <div className="space-y-3">
           {activeRound.matches.map(match => (
-            <MatchCard key={match.id} match={match} groupId={groupId} />
+            <MatchCard
+              key={match.id}
+              match={match}
+              groupId={groupId}
+              cardId={matchCardDomId(match.id)}
+              backState={backState}
+            />
           ))}
         </div>
       )}
