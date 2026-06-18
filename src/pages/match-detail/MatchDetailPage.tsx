@@ -22,7 +22,9 @@ import { LiveEventsTimeline } from './components/LiveEventsTimeline'
 import { LiveStats } from './components/LiveStats'
 import { PostMatchScoreboard } from './components/PostMatchScoreboard'
 import { MatchPointsCard } from './components/MatchPointsCard'
-import { formatMatchDate, formatCountdown } from '@/lib/date.utils'
+import { MatchBetForm } from './components/MatchBetForm'
+import { formatMatchDate, formatCountdown, isBetEditable } from '@/lib/date.utils'
+import type { MatchWithUserBet } from '@/types/match.types'
 import { getGroupMatchBets } from '@/services/bets.service'
 
 const MATCH_START_REFRESH_INTERVAL_MS = 30_000
@@ -227,6 +229,9 @@ export function MatchDetailPage() {
     showPostMatchBlock && postSource ? extraTimeNotice(postSource.statusShort) : null
   const liveExtraTimeNotice = showLiveBlock && live ? extraTimeNotice(live.status.short) : null
   const showDistributionChart = !!distribution && !!user?.chartUnlocked
+  // Palpite inline só no contexto de grupo, com o jogo ainda não iniciado e
+  // dentro da janela de edição (mesma regra do InlineBetCard na home).
+  const canBet = !!groupId && displayStatus === 'upcoming' && isBetEditable(match.scheduledAt)
 
   const handleBack = () => {
     if (groupId && fromJogos) {
@@ -301,7 +306,7 @@ export function MatchDetailPage() {
           ) : null}
           {liveExtraTimeNotice ? <ExtraTimeNote>{liveExtraTimeNotice}</ExtraTimeNote> : null}
         </div>
-      ) : (
+      ) : canBet ? null : (
         <div className="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6">
           <div className="shrink-0">
             <TeamFlag
@@ -354,6 +359,8 @@ export function MatchDetailPage() {
           </div>
           <MatchPointsCard matchId={matchId!} groupId={groupId!} />
         </div>
+      ) : canBet ? (
+        <MatchBetForm match={match as MatchWithUserBet} groupId={groupId!} />
       ) : match.userBet ? (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-soft)] p-3 text-center">
           <p className="text-xs text-[var(--text-muted)]">Seu palpite</p>

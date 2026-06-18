@@ -1,4 +1,4 @@
-const BET_LOCK_MINUTES = 15
+const BET_LOCK_MINUTES = 5
 
 /**
  * Prazo final para o admin editar as configurações do bolão. A partir do
