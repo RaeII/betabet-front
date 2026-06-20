@@ -34,8 +34,9 @@ export function getGroupChatMessages(
 export function sendGroupChatMessage(
   groupId: string,
   body: string,
+  mentionedUserIds: string[] = [],
 ): Promise<{ message: GroupChatMessage }> {
-  return apiPost(`${chatBase(groupId)}/messages`, { body })
+  return apiPost(`${chatBase(groupId)}/messages`, { body, mentionedUserIds })
 }
 
 export function updateGroupChatReadState(

@@ -21,6 +21,10 @@ function isStandalone(): boolean {
   return standaloneMedia || iosStandalone
 }
 
+export function isPwaStandalone(): boolean {
+  return isStandalone()
+}
+
 function isIOSDevice(): boolean {
   if (typeof navigator === 'undefined') return false
   const isiPhoneFamily = /iPad|iPhone|iPod/.test(navigator.userAgent)

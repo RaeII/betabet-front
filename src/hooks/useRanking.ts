@@ -8,11 +8,11 @@ export const rankingKeys = {
     ['ranking', groupId, 'breakdown', userId] as const,
 }
 
-export function useGroupRanking(groupId: string) {
+export function useGroupRanking(groupId: string, enabled = true) {
   return useQuery({
     queryKey: rankingKeys.group(groupId),
     queryFn: () => getGroupRanking(groupId),
-    enabled: !!groupId,
+    enabled: enabled && !!groupId,
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
   })

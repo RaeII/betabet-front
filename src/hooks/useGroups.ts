@@ -50,11 +50,11 @@ export function useGroup(groupId: string) {
   })
 }
 
-export function useGroupMembers(groupId: string) {
+export function useGroupMembers(groupId: string, enabled = true) {
   return useQuery({
     queryKey: groupKeys.members(groupId),
     queryFn: () => groupsService.getGroupMembers(groupId),
-    enabled: !!groupId,
+    enabled: enabled && !!groupId,
   })
 }
 

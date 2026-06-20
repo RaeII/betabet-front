@@ -41,6 +41,49 @@ body {
   color: #151713;
 }
 
+.group-chat-composer-input {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 46%, transparent)
+    transparent;
+}
+
+.group-chat-composer-input::-webkit-scrollbar {
+  width: 6px;
+}
+
+.group-chat-composer-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.group-chat-composer-input::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-pill);
+  background-color: color-mix(in srgb, var(--text-muted) 40%, transparent);
+}
+
+.group-chat-composer-input::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--text-muted) 58%, transparent);
+}
+
+.group-chat-emoji-picker button:focus:not(:focus-visible),
+.group-chat-emoji-picker .epr-btn:focus:not(:focus-visible),
+.group-chat-emoji-picker .epr-emoji:focus:not(:focus-visible),
+.group-chat-emoji-picker .epr-cat-btn:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+.group-chat-emoji-picker .epr-cat-btn:focus:not(:focus-visible)::before {
+  border: 0;
+}
+
+.group-chat-emoji-picker .epr-search-container input:focus:not(:focus-visible) {
+  border-color: var(--border);
+}
+
+.group-chat-emoji-picker .epr-search-container input:focus-visible {
+  border-color: var(--brand);
+}
+
 .pwa-install-button {
   position: relative;
   overflow: hidden;

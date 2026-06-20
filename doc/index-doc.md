@@ -173,6 +173,7 @@ Principais temas:
 
 - diagnóstico do código atual e avaliação de dificuldade (nível baixo-médio: Vite + SPA já favorecem PWA);
 - decisões de arquitetura: `vite-plugin-pwa` (Workbox), modo `generateSW`, `registerType: 'prompt'`;
+- nota atual: o service worker migrou para `injectManifest` em `017-push-notifications.md` para suportar Web Push;
 - plano por fases: dependência/config Vite, `manifest.webmanifest`, ícones (incl. maskable e apple-touch), service worker e estratégias de cache, registro + prompt de atualização, meta tags iOS, headers de nginx, build/Docker e testes;
 - regra de ouro de cache: `/api/*` em `NetworkOnly` (preserva sessão por cookie e dados ao vivo), shell em precache, imagens em StaleWhileRevalidate;
 - riscos e pontos de atenção (auth por cookie, dados ao vivo, versão presa em cache, limitações do iOS, LGPD/GA fora do SW);
@@ -222,12 +223,26 @@ Documenta o widget de chat textual por bolão, exibido apenas em rotas `/groups/
 Principais temas:
 
 - `chat.service.ts` com endpoints HTTP e `EventSource` autenticado por cookie;
-- hook `useGroupChat` com estado local para mensagens, SSE, envio, unread e paginação;
+- hook `useGroupChat` com estado local para mensagens, SSE, envio, unread, menções e paginação;
 - `GroupChatWidget` no `GroupShell`, condicionado ao `groupId` real da URL e a `group.chatEnabled`;
 - página admin `/admin/chat` para liberar/ocultar o chat de bolões selecionados via `setGroupChatEnabled`;
-- painel responsivo com botão flutuante, badge de não-lidas, scroll para mensagens antigas e composer com Enter/Shift+Enter;
+- painel responsivo com botão flutuante, badge de não-lidas, indicador de menção, scroll para mensagens antigas e composer com Enter/Shift+Enter;
 - integração com backend em `../../betabet/Doc/023-group-chat.md`;
+- CTA discreto para ativar Web Push quando a PWA instalada ainda não tem notificações ativas;
 - limitações do MVP (texto puro, sem mídia/edição/exclusão/reações).
+
+### [017-push-notifications.md](./017-push-notifications.md)
+
+Documenta a camada frontend de notificações Web Push do PWA instalado.
+
+Principais temas:
+
+- `vite-plugin-pwa` em modo `injectManifest` e Service Worker customizado em `src/sw.ts`;
+- hook `usePushNotifications`, service HTTP e `PushNotificationHost`;
+- card de notificações no Perfil e CTA discreto no chat;
+- fluxo de assinatura, revogação no logout e abertura de `/groups/:groupId?chat=1`;
+- regra de privacidade: notificação de chat sem autor nem corpo da mensagem;
+- tipos futuros reservados no backend, sem produtores no frontend ainda.
 
 ### [ui.md](./ui.md)
 

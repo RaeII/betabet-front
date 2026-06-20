@@ -1,12 +1,64 @@
 import { useRef, useState } from 'react'
-import { Camera, X } from 'lucide-react'
+import { Bell, BellOff, Camera, Loader2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
+import type { PushNotificationStatus } from '@/hooks/usePushNotifications'
 import { ReferralSection } from './components/ReferralSection'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { detectMime, resizeToBase64 } from '@/lib/image.utils'
 import { updateProfile } from '@/services/auth.service'
 import { ApiRequestError } from '@/services/api'
+
+function notificationStatus(status: PushNotificationStatus, error: string | null) {
+  if (error) return error
+  if (status === 'active') return 'Ativas neste aparelho.'
+  if (status === 'denied') return 'Bloqueadas nas permissões do sistema.'
+  if (status === 'unavailable') return 'Indisponíveis no momento.'
+  if (status === 'unsupported') return 'Disponíveis apenas no app instalado.'
+  if (status === 'checking') return 'Verificando aparelho.'
+  return 'Desativadas neste aparelho.'
+}
+
+function NotificationSettingsCard() {
+  const push = usePushNotifications()
+  const active = push.isActive
+  const disabled =
+    push.busy ||
+    push.status === 'checking' ||
+    push.status === 'unsupported' ||
+    push.status === 'unavailable' ||
+    push.status === 'denied'
+
+  return (
+    <div className="space-y-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--brand)]">
+          {active ? <Bell aria-hidden="true" size={18} /> : <BellOff aria-hidden="true" size={18} />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base font-semibold text-[var(--text)]">Notificações neste aparelho</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            {notificationStatus(push.status, push.error)}
+          </p>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant={active ? 'secondary' : 'primary'}
+        className="w-full"
+        disabled={disabled}
+        onClick={() => {
+          void (active ? push.disable() : push.enable())
+        }}
+      >
+        {push.busy ? <Loader2 aria-hidden="true" size={16} className="animate-spin" /> : null}
+        {active ? 'Desativar notificações' : 'Ativar notificações'}
+      </Button>
+    </div>
+  )
+}
 
 export function ProfilePage() {
   const { user, setUser, logout } = useAuth()
@@ -151,6 +203,8 @@ export function ProfilePage() {
 
       {/* Referral */}
       <ReferralSection />
+
+      <NotificationSettingsCard />
 
       {/* Logout */}
       <Button variant="secondary" className="w-full" onClick={logout}>

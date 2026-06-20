@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { AuthCodeChallenge, RegisterData, User, VerifyAuthCodeData } from '@/types/auth.types'
 import * as authService from '@/services/auth.service'
+import { removeCurrentPushSubscription } from '@/services/notification.service'
 import { ApiRequestError } from '@/services/api'
 
 interface AuthContextValue {
@@ -76,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
+    await removeCurrentPushSubscription().catch(() => undefined)
     await authService.logout()
     setUser(null)
     queryClient.clear()

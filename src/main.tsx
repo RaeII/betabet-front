@@ -6,6 +6,7 @@ import { AuthProvider } from '@/context/auth.context'
 import { AdminAuthProvider } from '@/context/admin.context'
 import { ToastProvider } from '@/context/toast.context'
 import { CookieConsent } from '@/components/legal/CookieConsent'
+import { PushNotificationHost } from '@/components/notifications/PushNotificationHost'
 import { PwaUpdatePrompt } from '@/components/pwa/PwaUpdatePrompt'
 import { startPwaInstallListener } from '@/hooks/usePwaInstall'
 import { router } from '@/router'
@@ -29,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
         <AdminAuthProvider>
           <ToastProvider>
             <RouterProvider router={router} />
+            <PushNotificationHost />
             <CookieConsent />
             <PwaUpdatePrompt />
           </ToastProvider>
