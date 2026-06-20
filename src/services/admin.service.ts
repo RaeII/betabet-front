@@ -43,10 +43,36 @@ export interface AdminGroup {
   id: string
   name: string
   memberCount: number
+  chatEnabled: boolean
 }
 
 export function listAdminGroups(): Promise<{ groups: AdminGroup[] }> {
   return apiGet('/api/admin/groups')
+}
+
+export interface AdminGroupChatEnabledResult {
+  ok: true
+  groupId: string
+  chatEnabled: boolean
+}
+
+export function setGroupChatEnabled(
+  groupId: string,
+  chatEnabled: boolean,
+): Promise<AdminGroupChatEnabledResult> {
+  return apiPut(`/api/admin/groups/${groupId}/chat-enabled`, { chatEnabled })
+}
+
+export interface ResetGroupPointsResult {
+  ok: true
+  groupId: string
+  groupName: string
+  betsReset: number
+  championBetsReset: number
+}
+
+export function resetGroupPoints(groupId: string): Promise<ResetGroupPointsResult> {
+  return apiPost(`/api/admin/groups/${groupId}/reset-points`, {})
 }
 
 export interface TestMatch {
@@ -118,6 +144,30 @@ export function getGroupObserver(groupId: string): Promise<{
   ranking: RankingEntry[]
 }> {
   return apiGet(`/api/admin/groups/${groupId}/observer`)
+}
+
+export interface DiskUsage {
+  mountPath: string
+  totalBytes: number
+  usedBytes: number
+  freeBytes: number
+  usedPercent: number
+}
+
+export interface DiskSample extends DiskUsage {
+  id: string
+  sampledAt: string
+}
+
+export interface DiskReport {
+  current: DiskUsage
+  samples: DiskSample[]
+}
+
+/** Uso de disco do servidor: leitura atual + histórico das amostras de 6h. */
+export function getServerDiskUsage(limit?: number): Promise<DiskReport> {
+  const qs = limit ? `?limit=${limit}` : ''
+  return apiGet(`/api/admin/system/disk${qs}`)
 }
 
 export function getChampion(): Promise<ChampionState> {

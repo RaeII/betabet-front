@@ -73,6 +73,27 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'chat',
+            lazy: async () => {
+              const { AdminGroupChatPage } = await import('@/pages/admin/AdminGroupChatPage')
+              return { Component: AdminGroupChatPage }
+            },
+          },
+          {
+            path: 'reset-points',
+            lazy: async () => {
+              const { AdminResetPointsPage } = await import('@/pages/admin/AdminResetPointsPage')
+              return { Component: AdminResetPointsPage }
+            },
+          },
+          {
+            path: 'storage',
+            lazy: async () => {
+              const { AdminServerStoragePage } = await import('@/pages/admin/AdminServerStoragePage')
+              return { Component: AdminServerStoragePage }
+            },
+          },
+          {
             path: 'explorer',
             lazy: async () => {
               const { AdminApiFootballExplorerPage } = await import('@/pages/admin/AdminApiFootballExplorerPage')

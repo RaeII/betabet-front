@@ -12,6 +12,7 @@ import { DayStrip } from './components/DayStrip'
 import { DayMatchList } from './components/DayMatchList'
 import { BettingProgressBar } from './components/BettingProgressBar'
 import { ChampionBetCard } from './components/ChampionBetCard'
+import { ChampionDistributionTrigger } from './components/ChampionDistributionTrigger'
 
 function normalizeTeamSearch(value: string) {
   return value
@@ -109,6 +110,8 @@ export function HomePage() {
       </section>
 
       <ChampionBetCard groupId={groupId} />
+
+      <ChampionDistributionTrigger groupId={groupId} />
 
       <BettingProgressBar
         progress={progress}

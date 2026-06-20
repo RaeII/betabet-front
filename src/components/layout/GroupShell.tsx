@@ -3,6 +3,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { GroupHeader } from './GroupHeader'
 import { GroupSidebar } from './GroupSidebar'
 import { GroupMobileNav } from './GroupMobileNav'
+import { GroupChatWidget } from '@/components/group-chat/GroupChatWidget'
 
 export function GroupShell() {
   const { theme } = useTheme()
@@ -46,6 +47,7 @@ export function GroupShell() {
           </main>
         </div>
         <GroupMobileNav />
+        <GroupChatWidget />
       </div>
     </div>
   )

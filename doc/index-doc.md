@@ -192,6 +192,43 @@ Principais temas:
 - ciclo de vida/`dispose`, fallback sem WebGL, `prefers-reduced-motion` e marcação de colisão via `[data-football-collider]` (sem mudança visual de layout);
 - pontos de atenção (`.glb` não pré-cacheado, releitura por frame) e melhorias futuras.
 
+### [014-admin-reset-points.md](./014-admin-reset-points.md)
+
+Documenta a página de admin **Zerar pontos** (`/admin/reset-points`), que zera os pontos de todos os membros de **um único bolão**.
+
+Principais temas:
+
+- item "Zerar pontos" (`RotateCcw`) no sidebar do `AdminShell` e `AdminResetPointsPage` espelhando `AdminChampionPage`;
+- busca local + grade de bolões clicáveis (`listAdminGroups`) e ação `resetGroupPoints(groupId)` → `POST /api/admin/groups/:groupId/reset-points`;
+- `ConfirmDialog` destrutivo, toast com `betsReset`/`championBetsReset`, invalidação de `groups-analytics` e `observer`;
+- pontos de atenção (admin do sistema, idempotente, não re-liquida partidas; backend em `018-admin-reset-group-points.md`).
+
+### [015-admin-server-storage.md](./015-admin-server-storage.md)
+
+Documenta a página de admin **Armazenamento** (`/admin/storage`), que visualiza o uso de disco do servidor (ocupação atual ao vivo + histórico de amostras de 6h) para comparar usado vs. total sem acessar os logs do host.
+
+Principais temas:
+
+- cartão de uso atual (% + barra usado/total + GB livres) com cor por faixa (brand `<75%`, âmbar `<90%`, vermelho `≥90%`);
+- gráfico de área em **SVG puro** (sem lib de chart) + tabela das ~16 amostras recentes com variação;
+- service `getServerDiskUsage(limit?)` consumindo `GET /api/admin/system/disk`, key `['admin','server-disk']`;
+- rota lazy `storage` e item "Armazenamento" (ícone `HardDrive`) no sidebar do `AdminShell`;
+- pontos de atenção (sessão admin, `formatBytes`, `useMemo` antes do early return) e backend em `../../betabet/Doc/019-server-disk-usage.md`.
+
+### [016-group-chat.md](./016-group-chat.md)
+
+Documenta o widget de chat textual por bolão, exibido apenas em rotas `/groups/:groupId/*`.
+
+Principais temas:
+
+- `chat.service.ts` com endpoints HTTP e `EventSource` autenticado por cookie;
+- hook `useGroupChat` com estado local para mensagens, SSE, envio, unread e paginação;
+- `GroupChatWidget` no `GroupShell`, condicionado ao `groupId` real da URL e a `group.chatEnabled`;
+- página admin `/admin/chat` para liberar/ocultar o chat de bolões selecionados via `setGroupChatEnabled`;
+- painel responsivo com botão flutuante, badge de não-lidas, scroll para mensagens antigas e composer com Enter/Shift+Enter;
+- integração com backend em `../../betabet/Doc/023-group-chat.md`;
+- limitações do MVP (texto puro, sem mídia/edição/exclusão/reações).
+
 ### [ui.md](./ui.md)
 
 Documenta a direção visual e as regras de UI do frontend.

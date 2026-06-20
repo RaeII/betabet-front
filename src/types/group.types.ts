@@ -14,6 +14,7 @@ export interface BettingGroup {
   championBetEnabled: boolean
   championFirstPoints: number
   championSecondPoints: number
+  chatEnabled: boolean
   showBetsBeforeKickoff: boolean
   joinMode: JoinMode
   memberCount: number

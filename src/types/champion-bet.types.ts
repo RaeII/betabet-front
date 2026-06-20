@@ -1,3 +1,5 @@
+import type { Team } from './match.types'
+
 export interface ChampionBet {
   firstTeamId: string
   secondTeamId: string
@@ -31,4 +33,23 @@ export interface ChampionBetState {
 export interface ChampionBetInput {
   firstTeamId: number
   secondTeamId: number
+}
+
+/** Uma seleção na distribuição global, com quantas vezes foi escolhida. */
+export interface ChampionDistributionEntry {
+  team: Team
+  /** Nº de vezes que a seleção foi escolhida (1º + 2º palpite somados). */
+  votes: number
+  /** Percentual sobre o total de palpites (0–100). */
+  percent: number
+}
+
+/**
+ * Distribuição global dos palpites de campeão (todos os usuários do app). Os dois
+ * palpites contam como aposta na seleção campeã e são somados num total único,
+ * já ordenado da seleção mais escolhida para a menos.
+ */
+export interface ChampionDistribution {
+  totalBets: number
+  entries: ChampionDistributionEntry[]
 }

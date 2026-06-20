@@ -5,6 +5,7 @@ import type { ChampionBetInput } from '@/types/champion-bet.types'
 export const championBetKeys = {
   all: ['champion-bet'] as const,
   forGroup: (groupId: string) => [...championBetKeys.all, groupId] as const,
+  distribution: () => [...championBetKeys.all, 'distribution'] as const,
 }
 
 export function useChampionBet(groupId: string) {
@@ -12,6 +13,16 @@ export function useChampionBet(groupId: string) {
     queryKey: championBetKeys.forGroup(groupId),
     queryFn: () => championBetService.getChampionBet(groupId),
     enabled: !!groupId,
+    staleTime: 30_000,
+  })
+}
+
+/** Distribuição global dos palpites de campeão (todos os usuários do app). */
+export function useChampionDistribution(enabled = true) {
+  return useQuery({
+    queryKey: championBetKeys.distribution(),
+    queryFn: championBetService.getChampionDistribution,
+    enabled,
     staleTime: 30_000,
   })
 }
