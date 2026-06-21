@@ -38,11 +38,36 @@ function urlBase64ToUint8Array(value: string): Uint8Array {
   return output
 }
 
+// Records that the user explicitly turned push on. Each consumer mounts a fresh
+// hook instance with no shared cache, so the per-mount runtime check can briefly
+// resolve to `inactive` and make the chat CTA flash back even after a successful
+// opt-in. This persisted flag keeps the opt-in sticky across mounts; it is
+// cleared only when the user disables push or the browser permission is revoked.
+const PUSH_ACCEPTED_STORAGE_KEY = 'betabet:push-accepted'
+
+function readPushAccepted(): boolean {
+  try {
+    return localStorage.getItem(PUSH_ACCEPTED_STORAGE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writePushAccepted(value: boolean): void {
+  try {
+    if (value) localStorage.setItem(PUSH_ACCEPTED_STORAGE_KEY, '1')
+    else localStorage.removeItem(PUSH_ACCEPTED_STORAGE_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
 export function usePushNotifications() {
   const { isAuthenticated } = useAuth()
   const [status, setStatus] = useState<PushNotificationStatus>('checking')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [hasAccepted, setHasAccepted] = useState(readPushAccepted)
 
   const refresh = useCallback(async () => {
     if (!isAuthenticated || !hasPushSupport()) {
@@ -55,6 +80,8 @@ export function usePushNotifications() {
     if (permission === 'denied') {
       setStatus('denied')
       setError(null)
+      writePushAccepted(false)
+      setHasAccepted(false)
       return
     }
     if (permission === 'default') {
@@ -111,6 +138,8 @@ export function usePushNotifications() {
 
       await registerPushSubscription(subscription)
       setStatus('active')
+      writePushAccepted(true)
+      setHasAccepted(true)
       return true
     } catch {
       setStatus('error')
@@ -126,6 +155,8 @@ export function usePushNotifications() {
     setError(null)
     try {
       await removeCurrentPushSubscription()
+      writePushAccepted(false)
+      setHasAccepted(false)
       await refresh()
       return true
     } catch {
@@ -153,6 +184,8 @@ export function usePushNotifications() {
       await registerPushSubscription(subscription)
       setStatus('active')
       setError(null)
+      writePushAccepted(true)
+      setHasAccepted(true)
     } catch {
       setStatus('error')
     }
@@ -164,6 +197,7 @@ export function usePushNotifications() {
     error,
     isSupported: status !== 'unsupported',
     isActive: status === 'active',
+    hasAccepted,
     canEnable: status === 'default' || status === 'inactive' || status === 'error',
     enable,
     disable,

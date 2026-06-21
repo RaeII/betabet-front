@@ -450,7 +450,9 @@ function ChatPushNotificationPrompt({
   // each time. Once dismissed or enabled the discreet CTA still lets the user
   // turn notifications on later.
   const [dismissed, setDismissed] = useState(wasChatPushPromptDismissed)
-  const promptOpen = open && push.canEnable && !dismissed
+  // Once push is accepted the prompt must stay gone, even if a fresh mount's
+  // runtime check momentarily reports `inactive`.
+  const promptOpen = open && push.canEnable && !dismissed && !push.hasAccepted
 
   const dismiss = useCallback(() => {
     rememberChatPushPromptDismissed()
@@ -521,7 +523,9 @@ function ChatPushNotificationPrompt({
 }
 
 function ChatPushNotificationCta({ push }: { push: PushNotifications }) {
-  if (!push.canEnable) return null
+  // Accepted + working → never show the in-chat CTA again. If the user only
+  // refused, `canEnable` keeps the discreet CTA available.
+  if (!push.canEnable || push.hasAccepted) return null
 
   return (
     <div className="border-b border-[var(--border)] bg-[var(--surface)] px-4 py-3">
