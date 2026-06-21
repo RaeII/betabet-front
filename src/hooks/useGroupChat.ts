@@ -13,6 +13,7 @@ import type {
 } from '@/types/group-chat.types'
 
 const PAGE_SIZE = 30
+const MISSED_MESSAGE_SYNC_INTERVAL_MS = 30_000
 
 const emptyState: GroupChatState = {
   lastSeenMessageId: null,
@@ -100,38 +101,97 @@ export function useGroupChat(groupId: string | null, open: boolean) {
     })
   }, [groupId, refreshState])
 
-  const catchUpAfterReconnect = useCallback(async (afterId: string | null) => {
-    if (!groupId || !afterId || catchUpRunningRef.current) return
+  const catchUpMissingMessages = useCallback(async (
+    afterId: string | null,
+    options: { silent?: boolean } = {},
+  ) => {
+    if (!groupId || catchUpRunningRef.current) return
+    const shouldMergeMessages = isLoadedRef.current || messagesRef.current.length > 0
+    if (!afterId && !shouldMergeMessages) {
+      try {
+        const nextState = await chatService.getGroupChatState(groupId)
+        setState(nextState)
+      } catch {
+        if (!options.silent) setError('Não foi possível atualizar o chat após reconectar.')
+      }
+      return
+    }
+
     catchUpRunningRef.current = true
     try {
       const incoming: GroupChatMessage[] = []
       let cursor: string | null = afterId
       let hasMore = false
+      let hasMoreBefore: boolean | null = null
 
-      for (let page = 0; page < 10 && cursor; page += 1) {
-        const response = await chatService.getGroupChatMessages(groupId, {
-          limit: PAGE_SIZE,
-          afterId: cursor,
-        })
+      if (cursor) {
+        for (let page = 0; page < 10 && cursor; page += 1) {
+          const response = await chatService.getGroupChatMessages(groupId, {
+            limit: PAGE_SIZE,
+            afterId: cursor,
+          })
+          incoming.push(...response.messages)
+          hasMore = response.hasMoreAfter
+          const last = response.messages[response.messages.length - 1]
+          if (!hasMore || !last) break
+          cursor = last.id
+        }
+      } else {
+        const response = await chatService.getGroupChatMessages(groupId, { limit: PAGE_SIZE })
         incoming.push(...response.messages)
         hasMore = response.hasMoreAfter
-        const last = response.messages[response.messages.length - 1]
-        if (!hasMore || !last) break
-        cursor = last.id
+        hasMoreBefore = response.hasMoreBefore
       }
 
       const nextState = await chatService.getGroupChatState(groupId)
       setState(nextState)
-      if (incoming.length > 0 && (isLoadedRef.current || messagesRef.current.length > 0)) {
+      if (incoming.length > 0 && shouldMergeMessages) {
         setMessages(prev => mergeMessages(prev, incoming))
       }
+      if (hasMoreBefore !== null) setHasMoreBefore(hasMoreBefore)
       setHasMoreAfter(hasMore)
     } catch {
-      setError('Não foi possível atualizar o chat após reconectar.')
+      if (!options.silent) setError('Não foi possível atualizar o chat após reconectar.')
     } finally {
       catchUpRunningRef.current = false
     }
   }, [groupId])
+
+  const reconcileMissedMessages = useCallback(async () => {
+    if (!groupId || catchUpRunningRef.current) return
+    try {
+      const nextState = await chatService.getGroupChatState(groupId)
+      const knownLatestId = latestMessageIdRef.current
+      const shouldFetchMessages = isLoadedRef.current || messagesRef.current.length > 0
+      setState(nextState)
+      if (shouldFetchMessages && nextState.latestMessageId && isAfter(nextState.latestMessageId, knownLatestId)) {
+        await catchUpMissingMessages(knownLatestId, { silent: true })
+      }
+    } catch {
+      // Reconciliação de fundo: mantém o SSE como caminho principal e evita ruído visual.
+    }
+  }, [catchUpMissingMessages, groupId])
+
+  useEffect(() => {
+    if (!groupId) return
+
+    const sync = () => {
+      void reconcileMissedMessages()
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') sync()
+    }
+
+    const interval = window.setInterval(sync, MISSED_MESSAGE_SYNC_INTERVAL_MS)
+    window.addEventListener('focus', sync)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', sync)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [groupId, reconcileMissedMessages])
 
   useEffect(() => {
     if (!groupId) {
@@ -183,7 +243,7 @@ export function useGroupChat(groupId: string | null, open: boolean) {
         setConnectionStatus('connected')
         const afterId = reconnectAfterIdRef.current
         reconnectAfterIdRef.current = null
-        void catchUpAfterReconnect(afterId)
+        void catchUpMissingMessages(afterId)
       }
       es.onerror = () => {
         if (disposed) return
@@ -213,7 +273,7 @@ export function useGroupChat(groupId: string | null, open: boolean) {
       source?.close()
       setConnectionStatus('idle')
     }
-  }, [catchUpAfterReconnect, groupId, user?.id])
+  }, [catchUpMissingMessages, groupId, user?.id])
 
   const loadInitial = useCallback(async () => {
     if (!groupId) return

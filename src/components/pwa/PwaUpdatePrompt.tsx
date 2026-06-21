@@ -18,7 +18,6 @@ const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000
 export function PwaUpdatePrompt() {
   const {
     needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(_swUrl, registration) {
       if (!registration) return
@@ -39,21 +38,22 @@ export function PwaUpdatePrompt() {
   const [updating, setUpdating] = useState(false)
 
   /**
-   * Ativa o SW novo e recarrega assim que ele assumir.
+   * Recarrega na versão nova quando o SW novo assume o controle.
    *
-   * O reload embutido do vite-plugin-pwa só dispara no evento `controlling`
-   * quando `event.isUpdate` é `true` — e `isUpdate` reflete se havia um SW
-   * controlando a página *no momento do registro*. Numa página não-controlada
-   * (hard reload, primeiro load, quirks do iOS) `isUpdate` é `false` e o reload
-   * nunca acontece, travando o banner.
+   * Único gatilho de reload: `controllerchange`. Ele só dispara quando
+   * `navigator.serviceWorker.controller` JÁ é o SW novo (depois do
+   * `clientsClaim()` do SW), então o reload sempre carrega os assets novos.
    *
-   * Disparamos o reload por três gatilhos, o que vier primeiro:
-   *  - `statechange → activated` do SW em espera (mais cedo: não espera o
-   *    `clients.claim()`);
-   *  - `controllerchange` (quando o `clientsClaim()` do SW assume);
-   *  - um backstop por tempo, caso o Android atrase o ciclo de vida do SW.
-   * O estado `updating` dá feedback imediato — sem ele o botão parece morto
-   * durante o (lento) ciclo de ativação do SW no Android.
+   * Por que não recarregar antes: o estado `activated` do worker e o reload do
+   * próprio plugin (gated por `event.isUpdate`) acontecem ANTES do swap de
+   * controlador — `clients.claim()` é assíncrono. Recarregar nesse instante cai
+   * na página ainda controlada pelo SW antigo → o NavigationRoute serve o
+   * `index.html` antigo e o banner reaparece (o que parecia "travado").
+   *
+   * Para o SW novo assumir, pedimos `SKIP_WAITING`. No Android o worker em
+   * espera costuma estar suspenso e perde a primeira mensagem (por isso antes o
+   * skipWaiting só "pegava" minutos depois, atualizando sozinho). Reenviamos até
+   * o `controllerchange` chegar. `updating` dá feedback imediato no botão.
    */
   function handleUpdate() {
     setUpdating(true)
@@ -64,27 +64,26 @@ export function PwaUpdatePrompt() {
       reloaded = true
       window.location.reload()
     }
-
     navigator.serviceWorker?.addEventListener('controllerchange', reload, { once: true })
 
     void navigator.serviceWorker?.getRegistration().then(registration => {
       const waiting = registration?.waiting
       if (!waiting) {
-        // Sem SW em espera (já ativou / foi trocado): recarrega no que controla.
+        // Sem SW em espera (já assumiu / foi trocado): recarrega no que controla.
         reload()
         return
       }
-      waiting.addEventListener('statechange', () => {
-        if (waiting.state === 'activated') reload()
-      })
-      updateServiceWorker(true) // posta SKIP_WAITING → ativa o SW em espera
-      // Rede de segurança APENAS. `controllerchange`/`activated` normalmente
-      // disparam em <1s. Recarregar cedo demais (3s era pouco no Android sob
-      // carga) cai na página AINDA controlada pelo SW antigo → o NavigationRoute
-      // serve o index.html antigo e o banner reaparece, parecendo "travado".
-      // 10s dá folga pro SW novo assumir; este timer só age se o ciclo de vida
-      // do SW realmente falhar — aí recarregar é a melhor recuperação possível.
-      setTimeout(reload, 10000)
+      // Reenvia SKIP_WAITING até o SW assumir (controllerchange dispara o
+      // reload). Cobre o worker suspenso no Android que ignora a 1ª mensagem.
+      let tries = 0
+      const askSkipWaiting = () => {
+        if (reloaded) return
+        waiting.postMessage({ type: 'SKIP_WAITING' })
+        tries += 1
+        if (tries < 8) setTimeout(askSkipWaiting, 1500)
+        else setUpdating(false) // último recurso: reabilita o botão, não trava
+      }
+      askSkipWaiting()
     })
   }
 
