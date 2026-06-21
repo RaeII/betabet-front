@@ -420,6 +420,24 @@ function MessageAvatar({ message }: { message: GroupChatMessage }) {
   )
 }
 
+const CHAT_PUSH_PROMPT_DISMISSED_KEY = 'betabet:chat-push-prompt-dismissed'
+
+function wasChatPushPromptDismissed(): boolean {
+  try {
+    return localStorage.getItem(CHAT_PUSH_PROMPT_DISMISSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function rememberChatPushPromptDismissed(): void {
+  try {
+    localStorage.setItem(CHAT_PUSH_PROMPT_DISMISSED_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+}
+
 function ChatPushNotificationPrompt({
   open,
   push,
@@ -427,23 +445,28 @@ function ChatPushNotificationPrompt({
   open: boolean
   push: PushNotifications
 }) {
-  const [dismissed, setDismissed] = useState(false)
+  // Persist the user's choice so the popup doesn't nag on every chat open. The
+  // panel unmounts when the chat closes, so component state alone would reset
+  // each time. Once dismissed or enabled the discreet CTA still lets the user
+  // turn notifications on later.
+  const [dismissed, setDismissed] = useState(wasChatPushPromptDismissed)
   const promptOpen = open && push.canEnable && !dismissed
 
-  useEffect(() => {
-    if (!push.canEnable) setDismissed(false)
-  }, [push.canEnable])
+  const dismiss = useCallback(() => {
+    rememberChatPushPromptDismissed()
+    setDismissed(true)
+  }, [])
 
   async function handleEnable() {
     const enabled = await push.enable()
-    if (enabled) setDismissed(true)
+    if (enabled) dismiss()
   }
 
   return (
     <Modal
       open={promptOpen}
       onOpenChange={nextOpen => {
-        if (!nextOpen && !push.busy) setDismissed(true)
+        if (!nextOpen && !push.busy) dismiss()
       }}
       title="Ative as notificações do chat"
       description="Receba avisos quando chegarem novas mensagens no bolão."
@@ -472,7 +495,7 @@ function ChatPushNotificationPrompt({
             size="sm"
             variant="secondary"
             disabled={push.busy}
-            onClick={() => setDismissed(true)}
+            onClick={dismiss}
           >
             Agora não
           </Button>
