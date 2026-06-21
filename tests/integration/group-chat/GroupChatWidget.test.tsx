@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { createElement } from 'react'
 
@@ -76,6 +76,18 @@ const mockedUseGroupMembers = useGroupMembers as ReturnType<typeof vi.fn>
 const mockedUseGroupRanking = useGroupRanking as ReturnType<typeof vi.fn>
 const sendMessage = vi.fn(async () => true)
 
+function message(id: string, body = `Mensagem ${id}`) {
+  return {
+    id,
+    groupId: 'g1',
+    userId: 'u2',
+    body,
+    createdAt: new Date(`2026-06-20T12:${id.padStart(2, '0')}:00.000Z`).toISOString(),
+    user: { id: 'u2', name: 'Maria', avatarUrl: null },
+    mentions: [],
+  }
+}
+
 const rankingResponse = {
   data: {
     ranking: [
@@ -139,23 +151,97 @@ function chatReturn(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function renderWidget(path: string, routePath: string) {
-  return render(
+function widgetElement(path: string, routePath: string) {
+  return createElement(
+    MemoryRouter,
+    { initialEntries: [path] },
     createElement(
-      MemoryRouter,
-      { initialEntries: [path] },
-      createElement(
-        Routes,
-        null,
-        createElement(Route, { path: routePath, element: createElement(GroupChatWidget) }),
-      ),
+      Routes,
+      null,
+      createElement(Route, { path: routePath, element: createElement(GroupChatWidget) }),
     ),
   )
+}
+
+function renderWidget(path: string, routePath: string) {
+  return render(widgetElement(path, routePath))
+}
+
+function domRect(top: number, height: number): DOMRect {
+  return {
+    x: 0,
+    y: top,
+    width: 320,
+    height,
+    top,
+    right: 320,
+    bottom: top + height,
+    left: 0,
+    toJSON: () => ({}),
+  } as DOMRect
+}
+
+function restoreDescriptor(
+  target: object,
+  property: string,
+  descriptor: PropertyDescriptor | undefined,
+) {
+  if (descriptor) {
+    Object.defineProperty(target, property, descriptor)
+  } else {
+    delete (target as Record<string, unknown>)[property]
+  }
+}
+
+function mockChatListLayout(messageTops: Record<string, number> = {}) {
+  const scrollHeightDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollHeight')
+  const clientHeightDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight')
+  const offsetHeightDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')
+  const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.dataset.groupChatMessageList === 'true') return domRect(0, 300)
+    if (this.id.startsWith('group-chat-message-')) {
+      return domRect(messageTops[this.id.replace('group-chat-message-', '')] ?? 0, 40)
+    }
+    return domRect(0, 0)
+  })
+
+  Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+    configurable: true,
+    get() {
+      return this.dataset.groupChatMessageList === 'true' ? 900 : 0
+    },
+  })
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    get() {
+      return this.dataset.groupChatMessageList === 'true' ? 300 : 0
+    },
+  })
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+    configurable: true,
+    get() {
+      return this.id.startsWith('group-chat-message-') ? 40 : 0
+    },
+  })
+
+  return () => {
+    rectSpy.mockRestore()
+    restoreDescriptor(HTMLElement.prototype, 'scrollHeight', scrollHeightDescriptor)
+    restoreDescriptor(HTMLElement.prototype, 'clientHeight', clientHeightDescriptor)
+    restoreDescriptor(HTMLElement.prototype, 'offsetHeight', offsetHeightDescriptor)
+  }
+}
+
+function getChatMessageList() {
+  const element = document.querySelector('[data-group-chat-message-list="true"]')
+  if (!(element instanceof HTMLElement)) throw new Error('Chat message list not found')
+  return element
 }
 
 describe('GroupChatWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    window.sessionStorage.clear()
     mockedUseGroupChat.mockReturnValue(chatReturn())
     mockedUseGroupMembers.mockReturnValue({
       data: {
@@ -220,6 +306,141 @@ describe('GroupChatWidget', () => {
     })
 
     expect(sendMessage).toHaveBeenCalledWith('Nova mensagem', [])
+  })
+
+  it('keeps the composer readable on iOS without forcing an action keyboard', async () => {
+    renderWidget('/groups/g1', '/groups/:groupId/*')
+
+    fireEvent.click(screen.getByRole('button', { name: /Abrir chat do bolão/i }))
+    await screen.findByRole('dialog', { name: /Chat do bolão/i })
+
+    const composer = screen.getByLabelText('Mensagem do chat')
+    expect(composer).not.toHaveAttribute('inputmode')
+    expect(composer).not.toHaveAttribute('enterkeyhint')
+    expect(composer).toHaveAttribute('autocomplete', 'off')
+    expect(composer).toHaveAttribute('autocorrect', 'off')
+    expect(composer).toHaveAttribute('autocapitalize', 'off')
+    expect(composer).toHaveAttribute('spellcheck', 'false')
+    expect(composer).toHaveClass('text-base')
+    expect(composer).toHaveClass('leading-5')
+  })
+
+  it('opens at the bottom when there are no unread messages, ignoring a stale initial anchor', async () => {
+    const restoreLayout = mockChatListLayout()
+    mockedUseGroupChat.mockReturnValue(
+      chatReturn({
+        messages: [message('1'), message('2'), message('3')],
+        state: {
+          lastSeenMessageId: '3',
+          latestMessageId: '3',
+          unreadCount: 0,
+          mentionUnreadCount: 0,
+        },
+        initialAnchorMessageId: '1',
+      }),
+    )
+
+    try {
+      renderWidget('/groups/g1', '/groups/:groupId/*')
+
+      fireEvent.click(screen.getByRole('button', { name: /Abrir chat do bolão/i }))
+      await screen.findByRole('dialog', { name: /Chat do bolão/i })
+
+      await waitFor(() => expect(getChatMessageList().scrollTop).toBe(900))
+    } finally {
+      restoreLayout()
+    }
+  })
+
+  it('restores the saved chat scroll position without using page scroll', async () => {
+    const restoreLayout = mockChatListLayout({ 2: 300 })
+    const scrollYDescriptor = Object.getOwnPropertyDescriptor(window, 'scrollY')
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 640 })
+    window.sessionStorage.setItem(
+      'betabet:group-chat-scroll:u1:g1',
+      JSON.stringify({
+        anchorMessageId: '2',
+        anchorOffset: 12,
+        wasNearBottom: false,
+      }),
+    )
+    mockedUseGroupChat.mockReturnValue(
+      chatReturn({
+        messages: [message('1'), message('2'), message('3')],
+        state: {
+          lastSeenMessageId: '3',
+          latestMessageId: '3',
+          unreadCount: 0,
+          mentionUnreadCount: 0,
+        },
+        initialAnchorMessageId: null,
+      }),
+    )
+
+    try {
+      renderWidget('/groups/g1', '/groups/:groupId/*')
+
+      fireEvent.click(screen.getByRole('button', { name: /Abrir chat do bolão/i }))
+      await screen.findByRole('dialog', { name: /Chat do bolão/i })
+
+      await waitFor(() => expect(getChatMessageList().scrollTop).toBe(312))
+      expect(window.scrollY).toBe(640)
+    } finally {
+      restoreLayout()
+      restoreDescriptor(window, 'scrollY', scrollYDescriptor)
+    }
+  })
+
+  it('shows an icon-only jump button with the new message count', async () => {
+    const restoreLayout = mockChatListLayout()
+    let chatMock = chatReturn({
+      messages: [message('1'), message('2'), message('3')],
+      state: {
+        lastSeenMessageId: '3',
+        latestMessageId: '3',
+        unreadCount: 0,
+        mentionUnreadCount: 0,
+      },
+    })
+    mockedUseGroupChat.mockImplementation(() => chatMock)
+
+    try {
+      const view = renderWidget('/groups/g1', '/groups/:groupId/*')
+
+      fireEvent.click(screen.getByRole('button', { name: /Abrir chat do bolão/i }))
+      await screen.findByRole('dialog', { name: /Chat do bolão/i })
+      const list = getChatMessageList()
+      await waitFor(() => expect(list.scrollTop).toBe(900))
+
+      act(() => {
+        list.scrollTop = 120
+        fireEvent.scroll(list)
+      })
+      expect(screen.getByRole('button', { name: 'Ir para o fim do chat' })).toBeInTheDocument()
+
+      chatMock = chatReturn({
+        messages: [message('1'), message('2'), message('3'), message('4'), message('5')],
+        state: {
+          lastSeenMessageId: '3',
+          latestMessageId: '5',
+          unreadCount: 2,
+          mentionUnreadCount: 0,
+        },
+      })
+      view.rerender(widgetElement('/groups/g1', '/groups/:groupId/*'))
+
+      const jumpButton = await screen.findByRole('button', {
+        name: 'Ir para o fim do chat, 2 mensagens novas',
+      })
+      expect(jumpButton).toHaveTextContent('2')
+      expect(screen.queryByText('Novas mensagens')).not.toBeInTheDocument()
+
+      fireEvent.click(jumpButton)
+      expect(list.scrollTop).toBe(900)
+    } finally {
+      restoreLayout()
+      mockedUseGroupChat.mockReset()
+    }
   })
 
   it('opens panel from notification URL param', async () => {

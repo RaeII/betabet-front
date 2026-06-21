@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { CSSProperties, ReactNode } from 'react'
 import EmojiPicker, { Categories, EmojiStyle, SkinTones, SuggestionMode, Theme } from 'emoji-picker-react'
 import type { EmojiClickData } from 'emoji-picker-react'
-import { Bell, Loader2, Send, Smile, WifiOff, X } from 'lucide-react'
+import { Bell, ChevronDown, Loader2, Send, Smile, WifiOff, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { useAuth } from '@/hooks/useAuth'
@@ -33,6 +33,7 @@ type PushNotifications = ReturnType<typeof usePushNotifications>
 const GROUP_CHAT_MOBILE_SCROLL_LOCK_QUERY = '(max-width: 1023px)'
 const GROUP_CHAT_MESSAGE_WARNING_LENGTH = Math.floor(GROUP_CHAT_MESSAGE_MAX_LENGTH * 0.9)
 const GROUP_CHAT_COMPOSER_MAX_HEIGHT = 144
+const GROUP_CHAT_SCROLL_STORAGE_PREFIX = 'betabet:group-chat-scroll:'
 const GROUP_CHAT_EMOJI_PICKER_CATEGORIES = [
   { category: Categories.SUGGESTED, name: 'Recentes' },
   { category: Categories.CUSTOM, name: 'Novos' },
@@ -179,6 +180,12 @@ interface GroupChatPanelProps {
   chat: GroupChatHook
 }
 
+interface GroupChatScrollSnapshot {
+  anchorMessageId: string | null
+  anchorOffset: number
+  wasNearBottom: boolean
+}
+
 function formatDay(value: string) {
   const date = new Date(value)
   return new Intl.DateTimeFormat('pt-BR', {
@@ -218,6 +225,114 @@ function getScrollBehavior(): ScrollBehavior {
   }
 
   return 'smooth'
+}
+
+function isMessageIdAfter(id: string, previousId: string | null) {
+  return previousId !== null && Number(id) > Number(previousId)
+}
+
+function getGroupChatScrollStorageKey(groupId: string, userId: string | undefined) {
+  return `${GROUP_CHAT_SCROLL_STORAGE_PREFIX}${userId ?? 'anonymous'}:${groupId}`
+}
+
+function getGroupChatMessageElement(container: HTMLElement, messageId: string | null) {
+  if (!messageId) return null
+  const element = document.getElementById(`group-chat-message-${messageId}`)
+  return element instanceof HTMLElement && container.contains(element) ? element : null
+}
+
+function getGroupChatMessageId(element: HTMLElement) {
+  return element.id.replace('group-chat-message-', '')
+}
+
+function getChatElementTop(container: HTMLElement, element: HTMLElement) {
+  const containerRect = container.getBoundingClientRect()
+  const elementRect = element.getBoundingClientRect()
+  return elementRect.top - containerRect.top + container.scrollTop
+}
+
+function scrollChatTo(container: HTMLElement, top: number, behavior: ScrollBehavior = 'auto') {
+  const nextTop = Math.max(0, top)
+  if (behavior === 'auto' || typeof container.scrollTo !== 'function') {
+    container.scrollTop = nextTop
+    return
+  }
+  container.scrollTo({ top: nextTop, behavior })
+}
+
+function scrollChatToMessage(
+  container: HTMLElement,
+  messageId: string | null,
+  anchorOffset = 0,
+  behavior: ScrollBehavior = 'auto',
+) {
+  const message = getGroupChatMessageElement(container, messageId)
+  if (!message) return false
+
+  scrollChatTo(container, getChatElementTop(container, message) + anchorOffset, behavior)
+  return true
+}
+
+function scrollChatToBottom(container: HTMLElement, behavior: ScrollBehavior = 'auto') {
+  scrollChatTo(container, container.scrollHeight, behavior)
+}
+
+function readGroupChatScrollSnapshot(
+  groupId: string,
+  userId: string | undefined,
+): GroupChatScrollSnapshot | null {
+  try {
+    const raw = window.sessionStorage.getItem(getGroupChatScrollStorageKey(groupId, userId))
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<GroupChatScrollSnapshot>
+    if (parsed.anchorMessageId !== null && typeof parsed.anchorMessageId !== 'string') return null
+    if (typeof parsed.anchorOffset !== 'number') return null
+    if (typeof parsed.wasNearBottom !== 'boolean') return null
+    return {
+      anchorMessageId: parsed.anchorMessageId ?? null,
+      anchorOffset: parsed.anchorOffset,
+      wasNearBottom: parsed.wasNearBottom,
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeGroupChatScrollSnapshot(
+  groupId: string,
+  userId: string | undefined,
+  snapshot: GroupChatScrollSnapshot,
+) {
+  try {
+    window.sessionStorage.setItem(
+      getGroupChatScrollStorageKey(groupId, userId),
+      JSON.stringify(snapshot),
+    )
+  } catch {
+    // Ignora navegadores que bloqueiam sessionStorage.
+  }
+}
+
+function captureGroupChatScrollSnapshot(
+  container: HTMLElement,
+  groupId: string,
+  userId: string | undefined,
+) {
+  const messageElements = Array.from(
+    container.querySelectorAll<HTMLElement>('[id^="group-chat-message-"]'),
+  )
+  const viewportTop = container.scrollTop
+  const anchor =
+    messageElements.find(element => {
+      const top = getChatElementTop(container, element)
+      return top + element.offsetHeight >= viewportTop
+    }) ?? messageElements[messageElements.length - 1] ?? null
+
+  writeGroupChatScrollSnapshot(groupId, userId, {
+    anchorMessageId: anchor ? getGroupChatMessageId(anchor) : null,
+    anchorOffset: anchor ? viewportTop - getChatElementTop(container, anchor) : 0,
+    wasNearBottom: isNearBottom(container),
+  })
 }
 
 function hasCoarsePointer() {
@@ -1014,7 +1129,7 @@ function ChatComposer({
           <div
             ref={mirrorRef}
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-4 py-3 text-sm leading-5 text-transparent"
+            className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-4 py-3 text-base leading-5 text-transparent"
           >
             {renderComposerMirrorBody(body, visibleSelectedMentions)}
           </div>
@@ -1079,10 +1194,13 @@ function ChatComposer({
             }}
             rows={1}
             maxLength={GROUP_CHAT_MESSAGE_MAX_LENGTH}
-            enterKeyHint="enter"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             placeholder="Mensagem"
             aria-label="Mensagem do chat"
-            className="group-chat-composer-input relative z-[1] max-h-36 min-h-11 w-full resize-none overflow-y-hidden border-0 bg-transparent px-4 py-3 text-sm leading-5 text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none"
+            className="group-chat-composer-input relative z-[1] max-h-36 min-h-11 w-full resize-none overflow-y-hidden border-0 bg-transparent px-4 py-3 text-base leading-5 text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none"
           />
         </div>
         <Button
@@ -1124,24 +1242,54 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
   const listRef = useRef<HTMLDivElement | null>(null)
   const initialScrollDoneRef = useRef(false)
   const loadingOlderRef = useRef(false)
+  const latestRenderedMessageIdRef = useRef<string | null>(null)
+  const shouldStickToBottomRef = useRef(true)
   const [visibleOpen, setVisibleOpen] = useState(open)
   const [sentMessageToRevealId, setSentMessageToRevealId] = useState<string | null>(null)
+  const [newMessagesAnchorId, setNewMessagesAnchorId] = useState<string | null>(null)
+  const [showJumpToBottomButton, setShowJumpToBottomButton] = useState(false)
 
   const messages = chat.messages
   const members = membersData?.members ?? []
   const latestMessageId = messages[messages.length - 1]?.id ?? null
+  const newMessagesCount = useMemo(() => {
+    if (!newMessagesAnchorId) return 0
+    const anchorIndex = messages.findIndex(message => message.id === newMessagesAnchorId)
+    return anchorIndex === -1 ? 0 : messages.length - anchorIndex
+  }, [messages, newMessagesAnchorId])
+  const jumpToBottomMessageCount = newMessagesCount || chat.state.unreadCount
   const showReconnect = chat.connectionStatus === 'reconnecting'
   const positionByUserId = useMemo(
     () => new Map((rankingData?.ranking ?? []).map(entry => [entry.userId, entry.position] as const)),
     [rankingData?.ranking],
   )
 
+  const saveScrollSnapshot = useCallback(() => {
+    const element = listRef.current
+    if (!element || !initialScrollDoneRef.current) return
+    captureGroupChatScrollSnapshot(element, groupId, user?.id)
+  }, [groupId, user?.id])
+
   useEffect(() => {
     if (open) {
       setVisibleOpen(true)
       initialScrollDoneRef.current = false
+      latestRenderedMessageIdRef.current = null
+      shouldStickToBottomRef.current = true
+      setNewMessagesAnchorId(null)
+      setShowJumpToBottomButton(false)
     }
   }, [open])
+
+  useEffect(() => {
+    initialScrollDoneRef.current = false
+    loadingOlderRef.current = false
+    latestRenderedMessageIdRef.current = null
+    shouldStickToBottomRef.current = true
+    setNewMessagesAnchorId(null)
+    setShowJumpToBottomButton(false)
+    setSentMessageToRevealId(null)
+  }, [groupId])
 
   useMobileBodyScrollLock(open)
 
@@ -1151,36 +1299,103 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
     return sentMessage
   }, [chat])
 
+  const scrollToChatBottom = useCallback(() => {
+    const element = listRef.current
+    if (!element) return
+
+    scrollChatToBottom(element, getScrollBehavior())
+    shouldStickToBottomRef.current = true
+    setShowJumpToBottomButton(false)
+    setNewMessagesAnchorId(null)
+    if (latestMessageId) void chat.markReadThrough(latestMessageId)
+    captureGroupChatScrollSnapshot(element, groupId, user?.id)
+  }, [chat, groupId, latestMessageId, user?.id])
+
   useEffect(() => {
-    if (!open) return
+    if (!open) saveScrollSnapshot()
+  }, [open, saveScrollSnapshot])
+
+  useLayoutEffect(() => {
+    if (!open || !visibleOpen) return
     const element = listRef.current
     if (!element || messages.length === 0 || initialScrollDoneRef.current) return
 
-    window.requestAnimationFrame(() => {
-      const anchorId = chat.initialAnchorMessageId
-      const anchor = anchorId
-        ? document.getElementById(`group-chat-message-${anchorId}`)
-        : null
+    const snapshot = readGroupChatScrollSnapshot(groupId, user?.id)
+    const hasUnreadAnchor = chat.state.unreadCount > 0
+    const initialAnchorId = hasUnreadAnchor ? chat.initialAnchorMessageId : null
 
-      if (anchor) {
-        anchor.scrollIntoView({ block: 'start' })
-      } else {
-        element.scrollTop = element.scrollHeight
-      }
-      initialScrollDoneRef.current = true
-      if (isNearBottom(element) && latestMessageId) {
-        void chat.markReadThrough(latestMessageId)
-      }
+    if (snapshot?.wasNearBottom) {
+      scrollChatToBottom(element)
+    } else if (
+      !snapshot ||
+      !scrollChatToMessage(element, snapshot.anchorMessageId, snapshot.anchorOffset)
+    ) {
+      const restoredInitialAnchor = scrollChatToMessage(element, initialAnchorId)
+      if (!restoredInitialAnchor) scrollChatToBottom(element)
+    }
+
+    initialScrollDoneRef.current = true
+    shouldStickToBottomRef.current = isNearBottom(element)
+    setShowJumpToBottomButton(!shouldStickToBottomRef.current)
+    if (shouldStickToBottomRef.current && latestMessageId) {
+      void chat.markReadThrough(latestMessageId)
+    }
+    captureGroupChatScrollSnapshot(element, groupId, user?.id)
+  }, [
+    chat,
+    chat.initialAnchorMessageId,
+    chat.state.unreadCount,
+    groupId,
+    latestMessageId,
+    messages.length,
+    open,
+    user?.id,
+    visibleOpen,
+  ])
+
+  useLayoutEffect(() => {
+    if (!open || !latestMessageId) return
+    const element = listRef.current
+    if (!element) return
+
+    const previousLatestMessageId = latestRenderedMessageIdRef.current
+    latestRenderedMessageIdRef.current = latestMessageId
+    if (!initialScrollDoneRef.current || !isMessageIdAfter(latestMessageId, previousLatestMessageId)) return
+
+    const firstNewMessageId =
+      messages.find(message => isMessageIdAfter(message.id, previousLatestMessageId))?.id ?? latestMessageId
+
+    if (!shouldStickToBottomRef.current) {
+      setNewMessagesAnchorId(current => current ?? firstNewMessageId)
+      setShowJumpToBottomButton(true)
+      return
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      scrollChatToBottom(element)
+      shouldStickToBottomRef.current = true
+      setShowJumpToBottomButton(false)
+      setNewMessagesAnchorId(null)
+      void chat.markReadThrough(latestMessageId)
+      captureGroupChatScrollSnapshot(element, groupId, user?.id)
     })
-  }, [chat, latestMessageId, messages.length, open])
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+    }
+  }, [chat, groupId, latestMessageId, messages, open, user?.id])
 
   useEffect(() => {
     if (!open || !latestMessageId) return
     const element = listRef.current
     if (element && isNearBottom(element)) {
+      shouldStickToBottomRef.current = true
+      setShowJumpToBottomButton(false)
+      setNewMessagesAnchorId(null)
       void chat.markReadThrough(latestMessageId)
+      captureGroupChatScrollSnapshot(element, groupId, user?.id)
     }
-  }, [chat, latestMessageId, messages.length, open])
+  }, [chat, groupId, latestMessageId, messages.length, open, user?.id])
 
   useLayoutEffect(() => {
     if (!open || !sentMessageToRevealId) return
@@ -1193,17 +1408,18 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
       const target = document.getElementById(`group-chat-message-${sentMessageToRevealId}`)
       if (!target || !element.contains(target)) return
 
-      element.scrollTo({
-        top: element.scrollHeight,
-        behavior: getScrollBehavior(),
-      })
+      scrollChatToBottom(element, getScrollBehavior())
+      shouldStickToBottomRef.current = true
+      setShowJumpToBottomButton(false)
+      setNewMessagesAnchorId(null)
       setSentMessageToRevealId(null)
+      captureGroupChatScrollSnapshot(element, groupId, user?.id)
     })
 
     return () => {
       window.cancelAnimationFrame(frame)
     }
-  }, [messages, open, sentMessageToRevealId])
+  }, [groupId, latestMessageId, messages, open, sentMessageToRevealId, user?.id])
 
   const renderedMessages = useMemo(() => {
     let lastDay = ''
@@ -1235,8 +1451,12 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
         nodes.push(
           <div key={`unread-${message.id}`} className="flex items-center gap-3 py-2">
             <span className="h-px flex-1 bg-[var(--border)]" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">
-              Novas mensagens
+            <span
+              aria-label={`${chat.state.unreadCount} mensagens novas`}
+              className="inline-flex h-6 min-w-6 items-center justify-center gap-1 rounded-full bg-[var(--brand)] px-2 text-[11px] font-bold leading-none text-[var(--brand-text)] shadow-sm"
+            >
+              <ChevronDown aria-hidden="true" size={13} />
+              <span className="tabular-nums">{chat.state.unreadCount}</span>
             </span>
             <span className="h-px flex-1 bg-[var(--border)]" />
           </div>,
@@ -1302,47 +1522,83 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
 
       <ChatPushNotifications open={open} />
 
-      <div
-        ref={listRef}
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--surface-soft)] px-3 py-4 [-webkit-overflow-scrolling:touch]"
-        onScroll={event => {
-          const element = event.currentTarget
-          if (element.scrollTop <= 48 && chat.hasMoreBefore && !loadingOlderRef.current) {
-            loadingOlderRef.current = true
-            const previousHeight = element.scrollHeight
-            const previousTop = element.scrollTop
-            void chat.loadOlder().then(loaded => {
-              window.requestAnimationFrame(() => {
-                if (loaded) {
-                  element.scrollTop = element.scrollHeight - previousHeight + previousTop
-                }
-                loadingOlderRef.current = false
+      <div className="relative min-h-0 flex-1 bg-[var(--surface-soft)]">
+        <div
+          ref={listRef}
+          data-group-chat-message-list="true"
+          className="h-full space-y-3 overflow-y-auto overscroll-contain px-3 py-4 [-webkit-overflow-scrolling:touch]"
+          onScroll={event => {
+            const element = event.currentTarget
+            if (element.scrollTop <= 48 && chat.hasMoreBefore && !loadingOlderRef.current) {
+              loadingOlderRef.current = true
+              const previousHeight = element.scrollHeight
+              const previousTop = element.scrollTop
+              void chat.loadOlder().then(loaded => {
+                window.requestAnimationFrame(() => {
+                  if (loaded) {
+                    element.scrollTop = element.scrollHeight - previousHeight + previousTop
+                  }
+                  loadingOlderRef.current = false
+                  captureGroupChatScrollSnapshot(element, groupId, user?.id)
+                })
               })
-            })
-          }
+            }
 
-          if (latestMessageId && isNearBottom(element)) {
-            void chat.markReadThrough(latestMessageId)
-          }
-        }}
-      >
-        {chat.isLoadingOlder ? (
-          <div className="flex justify-center py-2 text-xs text-[var(--text-muted)]">
-            Carregando mensagens antigas…
-          </div>
+            const nearBottom = isNearBottom(element)
+            shouldStickToBottomRef.current = nearBottom
+            setShowJumpToBottomButton(!nearBottom)
+            if (nearBottom) {
+              setNewMessagesAnchorId(null)
+            }
+            if (latestMessageId && nearBottom) {
+              void chat.markReadThrough(latestMessageId)
+            }
+            if (initialScrollDoneRef.current) {
+              captureGroupChatScrollSnapshot(element, groupId, user?.id)
+            }
+          }}
+        >
+          {chat.isLoadingOlder ? (
+            <div className="flex justify-center py-2 text-xs text-[var(--text-muted)]">
+              Carregando mensagens antigas…
+            </div>
+          ) : null}
+
+          {chat.isLoadingInitial ? (
+            <div className="flex h-full items-center justify-center text-sm text-[var(--text-muted)]">
+              Carregando chat…
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex h-full items-center justify-center px-8 text-center text-sm text-[var(--text-muted)]">
+              Nenhuma mensagem ainda.
+            </div>
+          ) : (
+            renderedMessages
+          )}
+        </div>
+
+        {showJumpToBottomButton && messages.length > 0 ? (
+          <button
+            type="button"
+            onClick={scrollToChatBottom}
+            className={cn(
+              'absolute bottom-3 right-3 z-10 inline-flex h-11 min-w-11 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--brand)_42%,var(--border))] bg-[var(--brand)] text-sm font-bold text-[var(--brand-text)] shadow-lg transition hover:brightness-105 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--brand)]',
+              jumpToBottomMessageCount > 0 ? 'gap-1.5 px-3' : 'px-0',
+            )}
+            aria-label={
+              jumpToBottomMessageCount > 0
+                ? `Ir para o fim do chat, ${jumpToBottomMessageCount} mensagens novas`
+                : 'Ir para o fim do chat'
+            }
+          >
+            <ChevronDown aria-hidden="true" size={19} />
+            {jumpToBottomMessageCount > 0 ? (
+              <span className="min-w-4 text-center leading-none tabular-nums">
+                {jumpToBottomMessageCount}
+              </span>
+            ) : null}
+          </button>
         ) : null}
-
-        {chat.isLoadingInitial ? (
-          <div className="flex h-full items-center justify-center text-sm text-[var(--text-muted)]">
-            Carregando chat…
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center px-8 text-center text-sm text-[var(--text-muted)]">
-            Nenhuma mensagem ainda.
-          </div>
-        ) : (
-          renderedMessages
-        )}
       </div>
 
       {chat.error ? (

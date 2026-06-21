@@ -58,8 +58,10 @@ no backend.
 - O painel mostra separadores de data, horário por mensagem, quebra de linha e
   `break-words`.
 - O composer envia com Enter no desktop, quebra linha com Shift+Enter e, no
-  teclado mobile, Enter insere quebra de linha no padrão nativo. Ele expande até
-  algumas linhas antes de ativar rolagem interna discreta.
+  teclado mobile, Enter insere quebra de linha no padrão nativo. O campo mantém
+  fonte de 16px para evitar zoom de foco no iOS, desliga assistentes de texto
+  do navegador (`autocomplete`, `autocorrect`, `autocapitalize`, `spellcheck`) e
+  expande até algumas linhas antes de ativar rolagem interna discreta.
 - O composer tem um botão de emoji no padrão de chat: ao clicar, abre um picker
   compacto com recentes, novos e categorias por tipo, busca visível no topo e
   seleção rápida de tom dos emojis. O usuário pode selecionar vários emojis em
@@ -82,6 +84,16 @@ no backend.
 - O texto é validado no cliente e no servidor: 1 a 250 caracteres e até 6 linhas.
 - Quando o usuário chega ao fim da lista, o hook atualiza o read-state no
   backend.
+- Ao abrir ou reabrir o painel, a lista restaura a posição local do chat por
+  bolão/usuário. Sem posição local, abre na última mensagem vista quando há
+  não-lidas; caso contrário, abre no fim. O scroll de outras páginas não
+  influencia a lista do chat.
+- Se o usuário já está no fim da lista, novas mensagens mantêm o scroll preso
+  no fim para revelar a mensagem recém-chegada.
+- Se o usuário está lendo mensagens anteriores, novas mensagens não roubam o
+  scroll; o painel mostra um botão flutuante só com seta para baixo e contador
+  de mensagens novas, levando direto ao fim da lista. O mesmo atalho aparece
+  sem contador quando o usuário rola para cima manualmente.
 - Ao enviar uma mensagem própria, o painel rola a lista para revelar a mensagem
   recém-criada.
 - No mobile, o painel bloqueia o scroll da página de fundo enquanto está aberto;
