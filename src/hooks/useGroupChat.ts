@@ -169,7 +169,9 @@ export function useGroupChat(groupId: string | null, open: boolean) {
               : prev.mentionUnreadCount,
         }))
 
-        setMessages(prev => (prev.length > 0 ? mergeMessages(prev, [incoming]) : prev))
+        // Anexa quando a janela já foi carregada — inclusive vazia (chat novo).
+        // Usar prev.length descartava a 1ª mensagem de uma conversa recém-aberta.
+        setMessages(prev => (isLoadedRef.current ? mergeMessages(prev, [incoming]) : prev))
       } catch {
         // Ignora eventos malformados; o EventSource reconecta sozinho se cair.
       }
