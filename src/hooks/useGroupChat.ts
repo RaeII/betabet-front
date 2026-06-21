@@ -244,19 +244,19 @@ export function useGroupChat(groupId: string | null, open: boolean) {
   }, [groupId])
 
   const sendMessage = useCallback(async (body: string, mentionedUserIds: string[] = []) => {
-    if (!groupId) return false
+    if (!groupId) return null
     const trimmed = body.trim()
     if (!trimmed) {
       setError('Digite uma mensagem.')
-      return false
+      return null
     }
     if (trimmed.length > GROUP_CHAT_MESSAGE_MAX_LENGTH) {
       setError(`A mensagem deve ter no máximo ${GROUP_CHAT_MESSAGE_MAX_LENGTH} caracteres.`)
-      return false
+      return null
     }
     if (countGroupChatMessageLines(trimmed) > GROUP_CHAT_MESSAGE_MAX_LINES) {
       setError(`A mensagem deve ter no máximo ${GROUP_CHAT_MESSAGE_MAX_LINES} linhas.`)
-      return false
+      return null
     }
 
     setIsSending(true)
@@ -269,10 +269,10 @@ export function useGroupChat(groupId: string | null, open: boolean) {
         latestMessageId: message.id,
       }))
       await markReadThrough(message.id)
-      return true
+      return message
     } catch {
       setError('Não foi possível enviar. Tente novamente.')
-      return false
+      return null
     } finally {
       setIsSending(false)
     }

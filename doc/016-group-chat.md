@@ -57,13 +57,23 @@ no backend.
   Em mensagens próprias, o autor aparece como `você`.
 - O painel mostra separadores de data, horário por mensagem, quebra de linha e
   `break-words`.
-- O composer envia com Enter, quebra linha com Shift+Enter e expande até
+- O composer envia com Enter no desktop, quebra linha com Shift+Enter e, no
+  teclado mobile, Enter insere quebra de linha no padrão nativo. Ele expande até
   algumas linhas antes de ativar rolagem interna discreta.
 - O composer tem um botão de emoji no padrão de chat: ao clicar, abre um picker
-  compacto com categorias por tipo, busca visível no topo e seleção rápida de
-  tom dos emojis. O usuário pode selecionar vários emojis em sequência, inserir
-  junto ao texto ou enviar somente emoji; o painel fecha pelo botão de fechar,
-  Escape ou clique fora.
+  compacto com recentes, novos e categorias por tipo, busca visível no topo e
+  seleção rápida de tom dos emojis. O usuário pode selecionar vários emojis em
+  sequência, inserir junto ao texto ou enviar somente emoji; no mobile, abrir o
+  picker e selecionar emojis mantém o teclado do composer estável. O conjunto
+  padrão é renderizado pela fonte nativa do sistema (`EmojiStyle.NATIVE`): zero
+  requisições, carregamento instantâneo. Apenas as entradas recentes de Emoji
+  16.0 e 17.0 que ainda não vêm na base do pacote são injetadas como
+  `customEmojis` (imagens do jsdelivr), pois nem todo SO tem glifo para elas.
+  Atenção: o picker virtualiza a lista, então o label de categoria precisa de
+  altura > 0 (`--epr-category-label-height: 1px`) — com `0px` o
+  `getLabelHeight()` cai no fallback de 40px e os offsets do scroll divergem,
+  fazendo emojis sumirem ao rolar. O painel fecha pelo botão de fechar, Escape
+  ou clique fora.
 - Ao digitar `@`, o composer abre a lista de membros do bolão. Só escolhas
   feitas nessa lista enviam `mentionedUserIds`; texto `@nome` digitado
   manualmente continua sendo texto comum.
@@ -72,8 +82,12 @@ no backend.
 - O texto é validado no cliente e no servidor: 1 a 250 caracteres e até 6 linhas.
 - Quando o usuário chega ao fim da lista, o hook atualiza o read-state no
   backend.
-- Quando a PWA instalada ainda não tem push ativo, o painel mostra um CTA
-  discreto para ativar notificações do chat.
+- Ao enviar uma mensagem própria, o painel rola a lista para revelar a mensagem
+  recém-criada.
+- No mobile, o painel bloqueia o scroll da página de fundo enquanto está aberto;
+  a lista de mensagens permanece como a área rolável.
+- Quando a PWA instalada ainda não tem push ativo, o painel abre um popup claro
+  e mantém o CTA discreto no topo para ativar notificações do chat.
 
 ## Web Push
 

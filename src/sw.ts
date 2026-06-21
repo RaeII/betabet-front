@@ -32,13 +32,33 @@ registerRoute(
   new NetworkOnly(),
 )
 
+// Emoji PNGs (emoji-picker-react Apple set + custom Noto) are immutable and
+// keyed by codepoint / pinned commit. The picker lazy-loads hundreds of them,
+// so they must NOT share the small generic image cache — its 120-entry cap
+// would thrash and evict on scroll, and any errored <img> is permanently
+// dropped from the grid. Cache-first with a large, long-lived cache.
+registerRoute(
+  ({ url, request }) =>
+    request.destination === 'image' && url.origin === 'https://cdn.jsdelivr.net',
+  new CacheFirst({
+    cacheName: 'emoji-cache',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 4000,
+        maxAgeSeconds: 60 * 60 * 24 * 365,
+        purgeOnQuotaError: true,
+      }),
+    ],
+  }),
+)
+
 registerRoute(
   ({ request }) => request.destination === 'image',
   new StaleWhileRevalidate({
     cacheName: 'img-cache',
     plugins: [
       new ExpirationPlugin({
-        maxEntries: 120,
+        maxEntries: 250,
         maxAgeSeconds: 60 * 60 * 24 * 30,
       }),
     ],

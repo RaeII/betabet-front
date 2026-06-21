@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CheckSquare,
-  Loader2,
   MessageCircle,
   MessageCircleOff,
   Search,
@@ -13,6 +12,7 @@ import { listAdminGroups, setGroupChatEnabled } from '@/services/admin.service'
 import { ApiRequestError } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/context/toast.context'
 import { cn } from '@/lib/utils'
 
@@ -243,38 +243,18 @@ export function AdminGroupChatPage() {
                 {group.chatEnabled ? 'Ativo' : 'Oculto'}
               </span>
 
-              <button
-                type="button"
-                role="switch"
-                aria-checked={group.chatEnabled}
+              <Switch
+                checked={group.chatEnabled}
                 aria-label={`${group.chatEnabled ? 'Ocultar' : 'Ativar'} chat de ${group.name}`}
                 disabled={toggleChat.isPending}
-                onClick={() =>
+                loading={isPending}
+                onCheckedChange={chatEnabled =>
                   toggleChat.mutate({
                     groupIds: [group.id],
-                    chatEnabled: !group.chatEnabled,
+                    chatEnabled,
                   })
                 }
-                className={cn(
-                  'relative h-7 w-12 shrink-0 rounded-full border transition-colors disabled:opacity-50',
-                  group.chatEnabled
-                    ? 'border-[var(--brand)] bg-[var(--brand)]'
-                    : 'border-[var(--border)] bg-[var(--surface-soft)]',
-                )}
-              >
-                <span
-                  className={cn(
-                    'absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform',
-                    group.chatEnabled ? 'translate-x-5' : 'translate-x-1',
-                  )}
-                />
-                {isPending && (
-                  <Loader2
-                    size={14}
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-[var(--text-muted)]"
-                  />
-                )}
-              </button>
+              />
             </div>
           )
         })}

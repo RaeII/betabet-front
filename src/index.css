@@ -84,6 +84,15 @@ body {
   border-color: var(--brand);
 }
 
+/* Category labels are kept at 1px (see GROUP_CHAT_EMOJI_PICKER_STYLE) so the
+   picker's virtualization math stays correct; clip their text and drop the
+   blur so the hidden label leaves no smudge or click target over emojis. */
+.group-chat-emoji-picker .epr-emoji-category-label {
+  overflow: hidden;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+
 .pwa-install-button {
   position: relative;
   overflow: hidden;

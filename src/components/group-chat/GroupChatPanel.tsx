@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
-import EmojiPicker, { Categories, EmojiStyle, SkinTones, Theme } from 'emoji-picker-react'
+import EmojiPicker, { Categories, EmojiStyle, SkinTones, SuggestionMode, Theme } from 'emoji-picker-react'
 import type { EmojiClickData } from 'emoji-picker-react'
 import { Bell, Loader2, Send, Smile, WifiOff, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
 import { useAuth } from '@/hooks/useAuth'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { cn } from '@/lib/utils'
@@ -28,10 +29,13 @@ import {
 import type { SelectedChatMention } from './groupChatMention.utils'
 
 type GroupChatHook = ReturnType<typeof useGroupChat>
+type PushNotifications = ReturnType<typeof usePushNotifications>
+const GROUP_CHAT_MOBILE_SCROLL_LOCK_QUERY = '(max-width: 1023px)'
 const GROUP_CHAT_MESSAGE_WARNING_LENGTH = Math.floor(GROUP_CHAT_MESSAGE_MAX_LENGTH * 0.9)
 const GROUP_CHAT_COMPOSER_MAX_HEIGHT = 144
 const GROUP_CHAT_EMOJI_PICKER_CATEGORIES = [
   { category: Categories.SUGGESTED, name: 'Recentes' },
+  { category: Categories.CUSTOM, name: 'Novos' },
   { category: Categories.SMILEYS_PEOPLE, name: 'Rostos e pessoas' },
   { category: Categories.ANIMALS_NATURE, name: 'Animais e natureza' },
   { category: Categories.FOOD_DRINK, name: 'Comidas e bebidas' },
@@ -70,11 +74,102 @@ const GROUP_CHAT_EMOJI_PICKER_STYLE = {
   '--epr-header-padding': '8px',
   '--epr-search-input-height': '34px',
   '--epr-category-navigation-button-size': '23px',
-  '--epr-category-label-height': '0px',
+  // Must be > 0: emoji-picker-react's getLabelHeight() ignores a measured 0 and
+  // falls back to 40px, while the real label is 0px tall. That mismatch makes
+  // the virtualization scroll-offset drift +40px per category, so emojis in
+  // lower categories get culled as you scroll. 1px keeps the label invisible
+  // while letting the measured height match the DOM (see .epr-emoji-category-label).
+  '--epr-category-label-height': '1px',
   '--epr-category-label-padding': '0',
   '--epr-emoji-size': '24px',
   '--epr-emoji-padding': '4px',
 } as CSSProperties
+const GROUP_CHAT_APPLE_EMOJI_IMAGE_BASE_URL =
+  'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/'
+const GROUP_CHAT_NOTO_EMOJI_IMAGE_BASE_URL =
+  'https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@8998f5dd683424a73e2314a8c1f1e359c19e8742/png/128/'
+const GROUP_CHAT_LATEST_EMOJIS = [
+  {
+    id: '1fae9',
+    names: ['face with bags under eyes', 'cansado', 'sono', 'exausto'],
+    imgUrl: `${GROUP_CHAT_APPLE_EMOJI_IMAGE_BASE_URL}1fae9.png`,
+  },
+  {
+    id: '1fac6',
+    names: ['fingerprint', 'digital', 'identidade', 'seguranca'],
+    imgUrl: `${GROUP_CHAT_APPLE_EMOJI_IMAGE_BASE_URL}1fac6.png`,
+  },
+  {
+    id: '1fabe',
+    names: ['leafless tree', 'arvore seca', 'arvore sem folhas'],
+    imgUrl: `${GROUP_CHAT_APPLE_EMOJI_IMAGE_BASE_URL}1fabe.png`,
+  },
+  {
+    id: '1fadc',
+    names: ['root vegetable', 'vegetal', 'raiz', 'beterraba'],
+    imgUrl: `${GROUP_CHAT_APPLE_EMOJI_IMAGE_BASE_URL}1fadc.png`,
+  },
+  {
+    id: '1fa89',
+    names: ['harp', 'harpa', 'musica'],
+    imgUrl: `${GROUP_CHAT_APPLE_EMOJI_IMAGE_BASE_URL}1fa89.png`,
+  },
+  {
+    id: '1fa8f',
+    names: ['shovel', 'pa', 'cavar'],
+    imgUrl: `${GROUP_CHAT_APPLE_EMOJI_IMAGE_BASE_URL}1fa8f.png`,
+  },
+  {
+    id: '1fadf',
+    names: ['splatter', 'respingo', 'tinta', 'mancha'],
+    imgUrl: `${GROUP_CHAT_APPLE_EMOJI_IMAGE_BASE_URL}1fadf.png`,
+  },
+  {
+    id: '1f1e8-1f1f6',
+    names: ['flag sark', 'bandeira sark'],
+    imgUrl: `${GROUP_CHAT_APPLE_EMOJI_IMAGE_BASE_URL}1f1e8-1f1f6.png`,
+  },
+  {
+    id: '1faea',
+    names: ['distorted face', 'rosto distorcido', 'ansiedade', 'panico'],
+    imgUrl: `${GROUP_CHAT_NOTO_EMOJI_IMAGE_BASE_URL}emoji_u1faea.png`,
+  },
+  {
+    id: '1faef',
+    names: ['fight cloud', 'briga', 'discussao', 'luta'],
+    imgUrl: `${GROUP_CHAT_NOTO_EMOJI_IMAGE_BASE_URL}emoji_u1faef.png`,
+  },
+  {
+    id: '1fac8',
+    names: ['hairy creature', 'criatura peluda', 'sasquatch', 'yeti'],
+    imgUrl: `${GROUP_CHAT_NOTO_EMOJI_IMAGE_BASE_URL}emoji_u1fac8.png`,
+  },
+  {
+    id: '1f9d1-200d-1fa70',
+    names: ['ballet dancer', 'bale', 'dancarino', 'dancar'],
+    imgUrl: `${GROUP_CHAT_NOTO_EMOJI_IMAGE_BASE_URL}emoji_u1f9d1_200d_1fa70.png`,
+  },
+  {
+    id: '1facd',
+    names: ['orca', 'baleia', 'mar'],
+    imgUrl: `${GROUP_CHAT_NOTO_EMOJI_IMAGE_BASE_URL}emoji_u1facd.png`,
+  },
+  {
+    id: '1f6d8',
+    names: ['landslide', 'deslizamento', 'avalanche'],
+    imgUrl: `${GROUP_CHAT_NOTO_EMOJI_IMAGE_BASE_URL}emoji_u1f6d8.png`,
+  },
+  {
+    id: '1fa8a',
+    names: ['trombone', 'musica', 'instrumento'],
+    imgUrl: `${GROUP_CHAT_NOTO_EMOJI_IMAGE_BASE_URL}emoji_u1fa8a.png`,
+  },
+  {
+    id: '1fa8e',
+    names: ['treasure chest', 'tesouro', 'bau', 'premio'],
+    imgUrl: `${GROUP_CHAT_NOTO_EMOJI_IMAGE_BASE_URL}emoji_u1fa8e.png`,
+  },
+]
 
 interface GroupChatPanelProps {
   open: boolean
@@ -114,12 +209,96 @@ function isNearBottom(element: HTMLElement) {
   return element.scrollHeight - element.scrollTop - element.clientHeight < 96
 }
 
+function getScrollBehavior(): ScrollBehavior {
+  if (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
+    return 'auto'
+  }
+
+  return 'smooth'
+}
+
+function hasCoarsePointer() {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
+}
+
+function emojiFromUnified(unified: string) {
+  return unified
+    .split('-')
+    .map(hex => String.fromCodePoint(Number.parseInt(hex, 16)))
+    .join('')
+}
+
 function resizeComposerInput(element: HTMLTextAreaElement) {
   element.style.height = 'auto'
   const nextHeight = Math.min(element.scrollHeight, GROUP_CHAT_COMPOSER_MAX_HEIGHT)
   element.style.height = `${nextHeight}px`
   element.style.overflowY =
     element.scrollHeight > GROUP_CHAT_COMPOSER_MAX_HEIGHT ? 'auto' : 'hidden'
+}
+
+function useMobileBodyScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return
+    if (typeof window.matchMedia !== 'function') return
+
+    const mediaQuery = window.matchMedia(GROUP_CHAT_MOBILE_SCROLL_LOCK_QUERY)
+    let unlock: (() => void) | null = null
+
+    function lockBody() {
+      if (unlock || !mediaQuery.matches) return
+
+      const scrollY = window.scrollY
+      const bodyStyles = {
+        left: document.body.style.left,
+        overflow: document.body.style.overflow,
+        position: document.body.style.position,
+        right: document.body.style.right,
+        top: document.body.style.top,
+        width: document.body.style.width,
+      }
+      const htmlOverflow = document.documentElement.style.overflow
+
+      document.documentElement.style.overflow = 'hidden'
+      document.body.style.left = '0'
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.right = '0'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
+
+      unlock = () => {
+        document.documentElement.style.overflow = htmlOverflow
+        document.body.style.left = bodyStyles.left
+        document.body.style.overflow = bodyStyles.overflow
+        document.body.style.position = bodyStyles.position
+        document.body.style.right = bodyStyles.right
+        document.body.style.top = bodyStyles.top
+        document.body.style.width = bodyStyles.width
+        window.scrollTo(0, scrollY)
+      }
+    }
+
+    function syncLock() {
+      if (mediaQuery.matches) {
+        lockBody()
+        return
+      }
+
+      unlock?.()
+      unlock = null
+    }
+
+    syncLock()
+    mediaQuery.addEventListener('change', syncLock)
+
+    return () => {
+      mediaQuery.removeEventListener('change', syncLock)
+      unlock?.()
+    }
+  }, [locked])
 }
 
 function messageMentionsUser(message: GroupChatMessage, userId: string | undefined) {
@@ -241,8 +420,84 @@ function MessageAvatar({ message }: { message: GroupChatMessage }) {
   )
 }
 
-function ChatPushNotificationCta() {
-  const push = usePushNotifications()
+function ChatPushNotificationPrompt({
+  open,
+  push,
+}: {
+  open: boolean
+  push: PushNotifications
+}) {
+  const [dismissed, setDismissed] = useState(false)
+  const promptOpen = open && push.canEnable && !dismissed
+
+  useEffect(() => {
+    if (!push.canEnable) setDismissed(false)
+  }, [push.canEnable])
+
+  async function handleEnable() {
+    const enabled = await push.enable()
+    if (enabled) setDismissed(true)
+  }
+
+  return (
+    <Modal
+      open={promptOpen}
+      onOpenChange={nextOpen => {
+        if (!nextOpen && !push.busy) setDismissed(true)
+      }}
+      title="Ative as notificações do chat"
+      description="Receba avisos quando chegarem novas mensagens no bolão."
+      showClose={!push.busy}
+      className="mx-auto max-w-sm"
+    >
+      <div className="space-y-4 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--brand)_14%,var(--surface-soft))] text-[var(--brand)]">
+            <Bell aria-hidden="true" size={20} />
+          </span>
+          <p className="min-w-0 text-sm leading-6 text-[var(--text-muted)]">
+            O chat avisa neste aparelho quando alguém mandar mensagem enquanto você estiver fora.
+          </p>
+        </div>
+
+        {push.error ? (
+          <p className="rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--danger)_36%,var(--border))] bg-[color-mix(in_srgb,var(--danger)_8%,var(--surface))] px-3 py-2 text-sm text-[var(--danger)]">
+            {push.error}
+          </p>
+        ) : null}
+
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={push.busy}
+            onClick={() => setDismissed(true)}
+          >
+            Agora não
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={push.busy}
+            onClick={() => {
+              void handleEnable()
+            }}
+          >
+            {push.busy ? (
+              <Loader2 aria-hidden="true" size={15} className="animate-spin" />
+            ) : (
+              <Bell aria-hidden="true" size={15} />
+            )}
+            Ativar notificações
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+function ChatPushNotificationCta({ push }: { push: PushNotifications }) {
   if (!push.canEnable) return null
 
   return (
@@ -268,6 +523,17 @@ function ChatPushNotificationCta() {
         <p className="mt-2 text-center text-xs text-[var(--danger)]">{push.error}</p>
       ) : null}
     </div>
+  )
+}
+
+function ChatPushNotifications({ open }: { open: boolean }) {
+  const push = usePushNotifications()
+
+  return (
+    <>
+      <ChatPushNotificationPrompt open={open} push={push} />
+      <ChatPushNotificationCta push={push} />
+    </>
   )
 }
 
@@ -414,13 +680,16 @@ function ChatComposer({
   isSending: boolean
   members: GroupMembership[]
   currentUserId: string | undefined
-  onSend: (body: string, mentionedUserIds: string[]) => Promise<boolean>
+  onSend: (body: string, mentionedUserIds: string[]) => Promise<{ id: string } | null>
 }) {
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
   const mirrorRef = useRef<HTMLDivElement | null>(null)
   const emojiPickerRef = useRef<HTMLDivElement | null>(null)
   const [body, setBody] = useState('')
   const [caretPosition, setCaretPosition] = useState(0)
+  const bodyRef = useRef(body)
+  const caretPositionRef = useRef(caretPosition)
+  const selectionRef = useRef({ start: caretPosition, end: caretPosition })
   const [selectedMentions, setSelectedMentions] = useState<SelectedChatMention[]>([])
   const [mentionPickerOpen, setMentionPickerOpen] = useState(false)
   const [activeMentionIndex, setActiveMentionIndex] = useState(0)
@@ -483,7 +752,7 @@ function ChatComposer({
     function handleDocumentKeyDown(event: KeyboardEvent) {
       if (event.key !== 'Escape') return
       setEmojiPickerOpen(false)
-      focusComposerAt(caretPosition)
+      focusComposerAt(caretPositionRef.current)
     }
 
     document.addEventListener('pointerdown', handleDocumentPointerDown)
@@ -493,12 +762,19 @@ function ChatComposer({
       document.removeEventListener('pointerdown', handleDocumentPointerDown)
       document.removeEventListener('keydown', handleDocumentKeyDown)
     }
-  }, [caretPosition, emojiPickerOpen, focusComposerAt])
+  }, [emojiPickerOpen, focusComposerAt])
+
+  function setComposerValue(nextBody: string, nextCaretPosition: number) {
+    bodyRef.current = nextBody
+    caretPositionRef.current = nextCaretPosition
+    selectionRef.current = { start: nextCaretPosition, end: nextCaretPosition }
+    setBody(nextBody)
+    setCaretPosition(nextCaretPosition)
+  }
 
   function updateBody(nextBody: string, nextCaretPosition: number) {
     const nextActiveMention = findActiveMentionToken(nextBody, nextCaretPosition)
-    setBody(nextBody)
-    setCaretPosition(nextCaretPosition)
+    setComposerValue(nextBody, nextCaretPosition)
     setSelectedMentions(prev => getVisibleSelectedMentions(nextBody, prev))
     setMentionPickerOpen(Boolean(nextActiveMention))
     if (nextActiveMention) {
@@ -515,8 +791,7 @@ function ChatComposer({
   function selectMention(member: GroupMembership) {
     if (!activeMention) return
     const inserted = insertMentionText(body, activeMention, member.user.name)
-    setBody(inserted.value)
-    setCaretPosition(inserted.caretPosition)
+    setComposerValue(inserted.value, inserted.caretPosition)
     setSelectedMentions(prev =>
       dedupeSelectedMentions([
         ...getVisibleSelectedMentions(inserted.value, prev),
@@ -528,24 +803,27 @@ function ChatComposer({
   }
 
   function insertEmoji(emojiData: EmojiClickData) {
-    const element = inputRef.current
-    const selectionStart = element?.selectionStart ?? caretPosition
-    const selectionEnd = element?.selectionEnd ?? caretPosition
-    const nextBody = `${body.slice(0, selectionStart)}${emojiData.emoji}${body.slice(selectionEnd)}`
-    const nextCaretPosition = selectionStart + emojiData.emoji.length
+    const currentBody = bodyRef.current
+    const currentSelection = selectionRef.current
+    const selectionStart = Math.min(currentSelection.start, currentBody.length)
+    const selectionEnd = Math.min(currentSelection.end, currentBody.length)
+    const emoji = emojiData.isCustom ? emojiFromUnified(emojiData.unified) : emojiData.emoji
+    const nextBody = `${currentBody.slice(0, selectionStart)}${emoji}${currentBody.slice(selectionEnd)}`
+    const nextCaretPosition = selectionStart + emoji.length
 
     updateBody(nextBody, nextCaretPosition)
     setMentionPickerOpen(false)
-    focusComposerAt(nextCaretPosition)
+    if (!hasCoarsePointer()) {
+      focusComposerAt(nextCaretPosition)
+    }
   }
 
   async function submit() {
     if (!canSend) return
     const nextBody = body
-    const sent = await onSend(nextBody, getMentionedUserIds(nextBody, selectedMentions))
-    if (sent) {
-      setBody('')
-      setCaretPosition(0)
+    const sentMessage = await onSend(nextBody, getMentionedUserIds(nextBody, selectedMentions))
+    if (sentMessage) {
+      setComposerValue('', 0)
       setSelectedMentions([])
       setMentionPickerOpen(false)
       setEmojiPickerOpen(false)
@@ -557,7 +835,15 @@ function ChatComposer({
       <div className="flex items-end gap-2">
         <div ref={emojiPickerRef} className="relative shrink-0">
           {emojiPickerOpen ? (
-            <div className="group-chat-emoji-popover absolute bottom-full left-0 z-20 mb-2 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] shadow-2xl">
+            <div
+              className="group-chat-emoji-popover absolute bottom-full left-0 z-20 mb-2 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
+              onMouseDownCapture={event => {
+                const target = event.target
+                if (target instanceof HTMLElement && target.closest('button,[role="button"]')) {
+                  event.preventDefault()
+                }
+              }}
+            >
               <div className="flex min-h-10 items-center justify-between gap-2 border-b border-[var(--border)] px-2 py-1.5">
                 <div
                   role="group"
@@ -601,7 +887,9 @@ function ChatComposer({
                   onMouseDown={event => event.preventDefault()}
                   onClick={() => {
                     setEmojiPickerOpen(false)
-                    focusComposerAt(caretPosition)
+                    if (!hasCoarsePointer()) {
+                      focusComposerAt(caretPositionRef.current)
+                    }
                   }}
                   aria-label="Fechar emojis"
                   className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand)]"
@@ -614,11 +902,12 @@ function ChatComposer({
                 className="group-chat-emoji-picker"
                 width="100%"
                 height="min(17.5rem, calc(100vh - 13rem))"
-                lazyLoadEmojis
                 autoFocusSearch={false}
                 emojiStyle={EmojiStyle.NATIVE}
+                suggestedEmojisMode={SuggestionMode.RECENT}
                 theme={Theme.AUTO}
                 categories={GROUP_CHAT_EMOJI_PICKER_CATEGORIES}
+                customEmojis={GROUP_CHAT_LATEST_EMOJIS}
                 defaultSkinTone={selectedSkinTone}
                 skinTonesDisabled
                 searchPlaceholder="Buscar emoji"
@@ -634,8 +923,9 @@ function ChatComposer({
             disabled={disabled}
             onMouseDown={event => event.preventDefault()}
             onClick={() => {
+              const nextOpen = !emojiPickerOpen
               setMentionPickerOpen(false)
-              setEmojiPickerOpen(open => !open)
+              setEmojiPickerOpen(nextOpen)
             }}
             aria-label={emojiPickerOpen ? 'Fechar emojis' : 'Abrir emojis'}
             aria-expanded={emojiPickerOpen}
@@ -708,12 +998,25 @@ function ChatComposer({
               updateBody(event.target.value, event.target.selectionStart)
             }}
             onSelect={event => {
-              setCaretPosition(event.currentTarget.selectionStart)
+              const { selectionStart, selectionEnd } = event.currentTarget
+              const nextCaretPosition = selectionStart
+              caretPositionRef.current = nextCaretPosition
+              selectionRef.current = { start: selectionStart, end: selectionEnd }
+              setCaretPosition(nextCaretPosition)
             }}
             onScroll={event => {
               syncMirrorScroll(event.currentTarget)
             }}
             onKeyDown={event => {
+              const isEnter = event.key === 'Enter'
+
+              if (isEnter && hasCoarsePointer()) {
+                if (lineCount >= GROUP_CHAT_MESSAGE_MAX_LINES) {
+                  event.preventDefault()
+                }
+                return
+              }
+
               if (showMentionPicker) {
                 if (event.key === 'ArrowDown') {
                   event.preventDefault()
@@ -727,7 +1030,7 @@ function ChatComposer({
                   ) % mentionSuggestions.length)
                   return
                 }
-                if (event.key === 'Enter' || event.key === 'Tab') {
+                if (isEnter || event.key === 'Tab') {
                   event.preventDefault()
                   const suggestion = mentionSuggestions[activeMentionIndex] ?? mentionSuggestions[0]
                   if (suggestion) selectMention(suggestion)
@@ -740,15 +1043,16 @@ function ChatComposer({
                 }
               }
 
-              if (event.key === 'Enter' && !event.shiftKey) {
+              if (isEnter && !event.shiftKey) {
                 event.preventDefault()
                 void submit()
-              } else if (event.key === 'Enter' && lineCount >= GROUP_CHAT_MESSAGE_MAX_LINES) {
+              } else if (isEnter && lineCount >= GROUP_CHAT_MESSAGE_MAX_LINES) {
                 event.preventDefault()
               }
             }}
             rows={1}
             maxLength={GROUP_CHAT_MESSAGE_MAX_LENGTH}
+            enterKeyHint="enter"
             placeholder="Mensagem"
             aria-label="Mensagem do chat"
             className="group-chat-composer-input relative z-[1] max-h-36 min-h-11 w-full resize-none overflow-y-hidden border-0 bg-transparent px-4 py-3 text-sm leading-5 text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none"
@@ -794,6 +1098,7 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
   const initialScrollDoneRef = useRef(false)
   const loadingOlderRef = useRef(false)
   const [visibleOpen, setVisibleOpen] = useState(open)
+  const [sentMessageToRevealId, setSentMessageToRevealId] = useState<string | null>(null)
 
   const messages = chat.messages
   const members = membersData?.members ?? []
@@ -810,6 +1115,14 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
       initialScrollDoneRef.current = false
     }
   }, [open])
+
+  useMobileBodyScrollLock(open)
+
+  const handleSendMessage = useCallback(async (body: string, mentionedUserIds: string[]) => {
+    const sentMessage = await chat.sendMessage(body, mentionedUserIds)
+    if (sentMessage) setSentMessageToRevealId(sentMessage.id)
+    return sentMessage
+  }, [chat])
 
   useEffect(() => {
     if (!open) return
@@ -841,6 +1154,29 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
       void chat.markReadThrough(latestMessageId)
     }
   }, [chat, latestMessageId, messages.length, open])
+
+  useLayoutEffect(() => {
+    if (!open || !sentMessageToRevealId) return
+    if (!messages.some(message => message.id === sentMessageToRevealId)) return
+
+    const element = listRef.current
+    if (!element) return
+
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(`group-chat-message-${sentMessageToRevealId}`)
+      if (!target || !element.contains(target)) return
+
+      element.scrollTo({
+        top: element.scrollHeight,
+        behavior: getScrollBehavior(),
+      })
+      setSentMessageToRevealId(null)
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+    }
+  }, [messages, open, sentMessageToRevealId])
 
   const renderedMessages = useMemo(() => {
     let lastDay = ''
@@ -904,7 +1240,7 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
       aria-label="Chat do bolão"
       aria-hidden={!open}
       className={cn(
-        'fixed z-40 flex flex-col overflow-hidden border border-[var(--border)] bg-[var(--surface)] shadow-2xl transition duration-200',
+        'fixed z-40 flex flex-col overflow-hidden overscroll-contain border border-[var(--border)] bg-[var(--surface)] shadow-2xl transition duration-200',
         'bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-3 right-3 top-[calc(4rem+env(safe-area-inset-top)+0.75rem)] rounded-[var(--radius-xl)]',
         'lg:bottom-24 lg:left-auto lg:right-6 lg:top-auto lg:h-[38rem] lg:w-[26rem]',
         open ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0',
@@ -937,11 +1273,11 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
         </button>
       </header>
 
-      <ChatPushNotificationCta />
+      <ChatPushNotifications open={open} />
 
       <div
         ref={listRef}
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[var(--surface-soft)] px-3 py-4"
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--surface-soft)] px-3 py-4 [-webkit-overflow-scrolling:touch]"
         onScroll={event => {
           const element = event.currentTarget
           if (element.scrollTop <= 48 && chat.hasMoreBefore && !loadingOlderRef.current) {
@@ -993,7 +1329,7 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
         isSending={chat.isSending}
         members={members}
         currentUserId={user?.id}
-        onSend={chat.sendMessage}
+        onSend={handleSendMessage}
       />
     </section>
   )
