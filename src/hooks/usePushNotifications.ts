@@ -113,18 +113,24 @@ export function usePushNotifications() {
     setBusy(true)
     setError(null)
     try {
-      const key = await getWebPushKey()
-      if (!key.enabled || !key.publicKey) {
-        setStatus('unavailable')
-        return false
-      }
-
+      // Request permission FIRST, synchronously inside the user gesture. iOS
+      // Safari drops the gesture's "user activation" the moment we await
+      // anything else (e.g. the web-push-key fetch), so requesting it after a
+      // network round-trip makes the prompt silently never appear — permission
+      // stays `default`, `enable()` returns false, and the chat CTA never goes
+      // away even though the user tapped "Ativar".
       const permission =
         Notification.permission === 'granted'
           ? 'granted'
           : await Notification.requestPermission()
       if (permission !== 'granted') {
         await refresh()
+        return false
+      }
+
+      const key = await getWebPushKey()
+      if (!key.enabled || !key.publicKey) {
+        setStatus('unavailable')
         return false
       }
 

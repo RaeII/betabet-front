@@ -139,19 +139,14 @@ export function useGroupChat(groupId: string | null, open: boolean) {
       return
     }
 
-    setConnectionStatus('connecting')
-    const source = chatService.createGroupChatEventSource(groupId)
-
-    source.onopen = () => {
-      setConnectionStatus('connected')
-      const afterId = reconnectAfterIdRef.current
-      reconnectAfterIdRef.current = null
-      void catchUpAfterReconnect(afterId)
-    }
-    source.onerror = () => {
-      reconnectAfterIdRef.current = latestMessageIdRef.current
-      setConnectionStatus('reconnecting')
-    }
+    // O EventSource nativo só reconecta em queda de rede — NUNCA após resposta
+    // HTTP não-2xx (429/403/5xx) ou quando um service worker/proxy aborta o
+    // stream. Nesses casos ele fica morto e a UI trava em "Reconectando". Por
+    // isso assumimos o controle: a cada erro fechamos e reabrimos com backoff.
+    let source: EventSource | null = null
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let attempt = 0
+    let disposed = false
 
     const onMessageCreated = (event: MessageEvent<string>) => {
       try {
@@ -173,15 +168,49 @@ export function useGroupChat(groupId: string | null, open: boolean) {
         // Usar prev.length descartava a 1ª mensagem de uma conversa recém-aberta.
         setMessages(prev => (isLoadedRef.current ? mergeMessages(prev, [incoming]) : prev))
       } catch {
-        // Ignora eventos malformados; o EventSource reconecta sozinho se cair.
+        // Ignora eventos malformados; o loop de reconexão cuida de quedas.
       }
     }
 
-    source.addEventListener('message.created', onMessageCreated as EventListener)
+    const connect = () => {
+      if (disposed) return
+      setConnectionStatus(attempt === 0 ? 'connecting' : 'reconnecting')
+      const es = chatService.createGroupChatEventSource(groupId)
+      source = es
+
+      es.onopen = () => {
+        attempt = 0
+        setConnectionStatus('connected')
+        const afterId = reconnectAfterIdRef.current
+        reconnectAfterIdRef.current = null
+        void catchUpAfterReconnect(afterId)
+      }
+      es.onerror = () => {
+        if (disposed) return
+        // Marca o último id visto uma única vez para o catch-up pós-reconexão.
+        if (reconnectAfterIdRef.current === null) {
+          reconnectAfterIdRef.current = latestMessageIdRef.current
+        }
+        setConnectionStatus('reconnecting')
+        es.close()
+        if (reconnectTimer !== null) return
+        const delay = Math.min(1_000 * 2 ** attempt, 15_000)
+        attempt += 1
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null
+          connect()
+        }, delay)
+      }
+      es.addEventListener('message.created', onMessageCreated as EventListener)
+    }
+
+    connect()
 
     return () => {
-      source.removeEventListener('message.created', onMessageCreated as EventListener)
-      source.close()
+      disposed = true
+      if (reconnectTimer !== null) clearTimeout(reconnectTimer)
+      source?.removeEventListener('message.created', onMessageCreated as EventListener)
+      source?.close()
       setConnectionStatus('idle')
     }
   }, [catchUpAfterReconnect, groupId, user?.id])

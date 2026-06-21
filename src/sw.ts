@@ -27,8 +27,14 @@ self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting()
 })
 
+// SSE (text/event-stream) NÃO pode passar pelo service worker: a interceptação
+// do Workbox bufferiza/aborta o stream, fazendo a mensagem chegar só na próxima
+// e travando reconexões (Workbox #2692, W3C ServiceWorker #885). Deixamos esse
+// request escapar do SW (matcher retorna false) para ir direto à rede.
 registerRoute(
-  ({ url }) => url.pathname.startsWith('/api/'),
+  ({ url, request }) =>
+    url.pathname.startsWith('/api/') &&
+    !request.headers.get('accept')?.includes('text/event-stream'),
   new NetworkOnly(),
 )
 
