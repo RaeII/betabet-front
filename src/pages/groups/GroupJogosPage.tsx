@@ -50,7 +50,12 @@ export function GroupJogosPage() {
         <WorldCupGroupOverview data={data.groupStage} groupId={groupId} backState={backState} />
       )}
       {data && phase === 'knockout' && (
-        <KnockoutBracket data={data.knockout} groupId={groupId} backState={backState} />
+        <KnockoutBracket
+          data={data.knockout}
+          groupStage={data.groupStage}
+          groupId={groupId}
+          backState={backState}
+        />
       )}
     </div>
   )

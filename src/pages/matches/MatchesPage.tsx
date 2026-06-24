@@ -39,7 +39,9 @@ export function MatchesPage() {
       )}
 
       {data && phase === 'group' && <WorldCupGroupOverview data={data.groupStage} />}
-      {data && phase === 'knockout' && <KnockoutBracket data={data.knockout} />}
+      {data && phase === 'knockout' && (
+        <KnockoutBracket data={data.knockout} groupStage={data.groupStage} />
+      )}
     </div>
   )
 }
