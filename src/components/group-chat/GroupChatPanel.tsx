@@ -1421,6 +1421,43 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
     }
   }, [groupId, latestMessageId, messages, open, sentMessageToRevealId, user?.id])
 
+  // Janela inicial curta (ex.: poucas não-lidas ancoradas em lastSeenMessageId)
+  // não gera barra de rolagem, então o onScroll nunca dispara e o usuário fica
+  // sem como puxar o histórico anterior. Preenche automaticamente carregando
+  // antigas até a lista ficar rolável ou o histórico acabar.
+  useEffect(() => {
+    if (!open || !visibleOpen) return
+    if (!initialScrollDoneRef.current) return
+    if (chat.isLoadingInitial || chat.isLoadingOlder || loadingOlderRef.current) return
+    if (!chat.hasMoreBefore || messages.length === 0) return
+
+    const element = listRef.current
+    if (!element || element.scrollHeight - element.clientHeight > 4) return
+
+    loadingOlderRef.current = true
+    const previousHeight = element.scrollHeight
+    const previousTop = element.scrollTop
+    void chat.loadOlder().then(loaded => {
+      window.requestAnimationFrame(() => {
+        if (loaded) {
+          element.scrollTop = element.scrollHeight - previousHeight + previousTop
+        }
+        loadingOlderRef.current = false
+        captureGroupChatScrollSnapshot(element, groupId, user?.id)
+      })
+    })
+  }, [
+    chat,
+    chat.hasMoreBefore,
+    chat.isLoadingInitial,
+    chat.isLoadingOlder,
+    groupId,
+    messages,
+    open,
+    user?.id,
+    visibleOpen,
+  ])
+
   const renderedMessages = useMemo(() => {
     let lastDay = ''
     return messages.flatMap((message, index) => {
@@ -1432,7 +1469,8 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
         chat.state.lastSeenMessageId &&
         previous?.id === chat.state.lastSeenMessageId,
       )
-      const showAuthor = startsNewDay || hasUnreadDivider || previous?.userId !== message.userId
+      const continuesPreviousAuthor = !startsNewDay && previous?.userId === message.userId
+      const showAuthor = !continuesPreviousAuthor
       const position = positionByUserId.get(message.userId) ?? null
       const nodes: ReactNode[] = []
 
@@ -1469,7 +1507,7 @@ export function GroupChatPanel({ open, onClose, groupId, groupName, chat }: Grou
           message={message}
           isMine={message.userId === user?.id}
           showAuthor={showAuthor}
-          isGroupedWithPrevious={!showAuthor}
+          isGroupedWithPrevious={continuesPreviousAuthor && !hasUnreadDivider}
           position={position}
           isLeader={position === 1}
           currentUserId={user?.id}
