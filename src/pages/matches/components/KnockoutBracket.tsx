@@ -232,7 +232,7 @@ function ProjectedBracket({ groupStage }: { groupStage: MatchesResponse['groupSt
             de funil/ampulheta clássico. O wrapper recebe o transform de zoom/pan.
           */}
           <div ref={contentRef} style={transformStyle} className="absolute left-0 top-0">
-            <div className="relative flex w-max items-stretch gap-2.5 sm:gap-3.5">
+            <div className="relative flex w-max items-stretch gap-2.5 p-4 sm:gap-3.5 sm:p-6">
               {/* Linhas de conexão entre os jogos (atrás dos cards). */}
               <svg
                 className="pointer-events-none absolute inset-0 z-0"
