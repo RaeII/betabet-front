@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { Info, LogOut, Moon, Settings, Sun } from 'lucide-react'
+import { Info, LogOut, Moon, Settings, Sun, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useAuth } from '@/hooks/useAuth'
+import { useJoinRequests } from '@/hooks/useGroups'
 import { useTheme } from '@/hooks/useTheme'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
@@ -13,6 +14,8 @@ export function GroupGearMenu() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
+  const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
+  const pendingRequests = requestsQuery.data?.requests.length ?? 0
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState(false)
@@ -40,9 +43,17 @@ export function GroupGearMenu() {
       <DropdownMenu.Root>
         <DropdownMenu.Trigger
           aria-label="Ações do grupo"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] transition hover:text-[var(--text)] focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]"
+          className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] transition hover:text-[var(--text)] focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]"
         >
           <Settings size={16} />
+          {pendingRequests > 0 ? (
+            <span
+              className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-center text-[10px] font-bold leading-none text-[var(--surface)]"
+              aria-label={`${pendingRequests} solicitações de novos membros`}
+            >
+              {pendingRequests > 99 ? '99+' : pendingRequests}
+            </span>
+          ) : null}
         </DropdownMenu.Trigger>
 
         <DropdownMenu.Portal>
@@ -63,6 +74,25 @@ export function GroupGearMenu() {
                 )}
               </span>
               Perfil
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onSelect={() =>
+                navigate(
+                  `/groups/${groupId}/membros${pendingRequests > 0 ? '?tab=requests' : ''}`,
+                )
+              }
+              className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--text)] outline-none data-[highlighted]:bg-[var(--surface-soft)]"
+            >
+              <Users size={14} />
+              Membros
+              {pendingRequests > 0 ? (
+                <span
+                  className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-center text-[11px] font-bold leading-none text-[var(--surface)]"
+                  aria-label={`${pendingRequests} solicitações pendentes`}
+                >
+                  {pendingRequests > 99 ? '99+' : pendingRequests}
+                </span>
+              ) : null}
             </DropdownMenu.Item>
             <DropdownMenu.Item
               onSelect={() => navigate(`/groups/${groupId}/detalhes`)}

@@ -11,7 +11,6 @@ export const sidebarDestinations: SidebarItem[] = [
     adminOnly: false,
   },
   { id: 'ranking', label: 'Ranking', to: 'ranking', iconName: 'award', adminOnly: false },
-  { id: 'membros', label: 'Membros', to: 'membros', iconName: 'users', adminOnly: false },
   {
     id: 'configuracoes',
     label: 'Configurações',

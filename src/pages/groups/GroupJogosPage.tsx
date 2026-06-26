@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useLocation } from 'react-router-dom'
 import { PhaseSelector } from '@/pages/matches/components/PhaseSelector'
 import { KnockoutBracket } from '@/pages/matches/components/KnockoutBracket'
@@ -10,11 +10,31 @@ type Phase = 'group' | 'knockout'
 export function GroupJogosPage() {
   const { groupId } = useParams<{ groupId: string }>()
   const location = useLocation()
-  // Ao voltar do detalhe da partida, restaura a fase que estava selecionada.
-  const [phase, setPhase] = useState<Phase>(
-    () => (location.state as { phase?: Phase } | null)?.phase ?? 'group',
-  )
+  // Fase vinda da navegação: ao voltar do detalhe da partida (restaura a fase)
+  // ou pelo atalho "Mata-mata" do menu (abre direto a chave eliminatória).
+  const navigatedPhase = (location.state as { phase?: Phase } | null)?.phase
+  const [phase, setPhase] = useState<Phase>(() => navigatedPhase ?? 'group')
+  // A cada navegação para a página, a fase segue o destino: "Mata-mata" e o
+  // "Voltar" do detalhe trazem `state.phase`; "Jogos" (sem state) cai no grupo.
+  // Seleção manual no PhaseSelector não muda `location.key`, então é preservada.
+  useEffect(() => {
+    setPhase(navigatedPhase ?? 'group')
+  }, [location.key, navigatedPhase])
   const { data, isLoading, isError } = useMatchesByPhase()
+
+  // Atalho "Mata-mata": ao chegar pelo menu, centraliza o chaveamento na tela
+  // (em vez de parar no topo da página). Roda uma vez por navegação, depois
+  // que os dados carregaram e a seção existe no DOM.
+  const knockoutRef = useRef<HTMLDivElement>(null)
+  const scrolledKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (navigatedPhase !== 'knockout' || phase !== 'knockout' || !data) return
+    if (scrolledKeyRef.current === location.key) return
+    const el = knockoutRef.current
+    if (!el) return
+    scrolledKeyRef.current = location.key
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [location.key, navigatedPhase, phase, data])
   // Anexado ao link do card; o detalhe usa para o botão "Voltar".
   const backState = { fromJogos: phase }
 
@@ -55,6 +75,7 @@ export function GroupJogosPage() {
           groupStage={data.groupStage}
           groupId={groupId}
           backState={backState}
+          focusRef={knockoutRef}
         />
       )}
     </div>

@@ -77,7 +77,7 @@ export function resolveSlot(
     case 'third':
       return { type: 'label', primary: 'Melhor 3º', secondary: slot.groups.join(' / ') }
     case 'matchWinner':
-      return { type: 'label', primary: 'Vencedor', secondary: `Jogo ${slot.match}` }
+      return { type: 'label', primary: 'Vencedor' }
   }
 }
 

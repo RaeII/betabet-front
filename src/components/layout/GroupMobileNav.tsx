@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { NavLink, useMatch } from 'react-router-dom'
-import { Award, Home, Plus, Trophy, Users } from 'lucide-react'
+import { NavLink, useMatch, useNavigate } from 'react-router-dom'
+import { Award, Home, Plus, Swords, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useGroupHasLiveMatch } from '@/hooks/useGroupLiveMatch'
-import { useJoinRequests, useMyJoinRequests } from '@/hooks/useGroups'
+import { useMyJoinRequests } from '@/hooks/useGroups'
+import { useSeenFlag } from '@/hooks/useSeenFlag'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
 
@@ -38,6 +39,8 @@ function centerHomeItem(items: typeof sidebarDestinations) {
 
 export function GroupMobileNav() {
   const { groupId, isAdmin } = useActiveGroup()
+  const navigate = useNavigate()
+  const [matamataIsNew, dismissMatamata] = useSeenFlag('betabet:matamata-seen')
   const [modalOpen, setModalOpen] = useState(false)
   const groupMatchesListRoute = useMatch({ path: '/groups/:groupId/jogos', end: true })
   const globalMatchesListRoute = useMatch({ path: '/matches', end: true })
@@ -46,7 +49,6 @@ export function GroupMobileNav() {
   const isMatchesListRoute = Boolean(groupMatchesListRoute || globalMatchesListRoute)
   const currentMatchId =
     groupMatchDetailRoute?.params.matchId ?? globalMatchDetailRoute?.params.matchId
-  const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
   const myRequestsQuery = useMyJoinRequests(Boolean(groupId))
   const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '', {
     enabled: !isMatchesListRoute,
@@ -61,9 +63,8 @@ export function GroupMobileNav() {
       item => !hiddenMobileItemIds.has(item.id) && (!item.adminOnly || isAdmin),
     ),
   )
-  const pendingRequests = requestsQuery.data?.requests.length ?? 0
   const pendingApprovals = myRequestsQuery.data?.requests.length ?? 0
-  const totalNavItems = items.length + 1
+  const totalNavItems = items.length + 2
 
   return (
     <>
@@ -77,14 +78,10 @@ export function GroupMobileNav() {
         >
           {items.map(item => {
             const Icon = iconMap[item.iconName] ?? Home
-            const hasPendingMemberRequests = item.id === 'membros' && pendingRequests > 0
-            const to = hasPendingMemberRequests
-              ? `${pathFor(groupId, item)}?tab=requests`
-              : pathFor(groupId, item)
             return (
               <li key={item.id} className="min-w-0">
                 <NavLink
-                  to={to}
+                  to={pathFor(groupId, item)}
                   end={item.to === ''}
                   className={({ isActive }) =>
                     [
@@ -97,14 +94,6 @@ export function GroupMobileNav() {
                 >
                   <span className="relative flex h-5 w-5 items-center justify-center">
                     <Icon size={20} />
-                    {item.id === 'membros' && pendingRequests > 0 ? (
-                      <span
-                        className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-center text-[10px] font-bold leading-none text-[var(--surface)]"
-                        aria-label={`${pendingRequests} solicitações pendentes`}
-                      >
-                        {pendingRequests > 99 ? '99+' : pendingRequests}
-                      </span>
-                    ) : null}
                     {item.id === 'jogos' && showLiveMatch ? (
                       <span
                         className="absolute -right-1.5 -top-1 flex h-2.5 w-2.5"
@@ -121,6 +110,29 @@ export function GroupMobileNav() {
               </li>
             )
           })}
+          <li className="min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                dismissMatamata()
+                navigate(`/groups/${groupId}/jogos`, { state: { phase: 'knockout' } })
+              }}
+              className={`${navItemClass} w-full text-[var(--text-muted)] hover:text-[var(--text)]`}
+            >
+              <span className="relative flex h-5 w-5 items-center justify-center">
+                <Swords size={20} />
+                {matamataIsNew ? (
+                  <span
+                    className="absolute -top-2.5 -right-4 rounded-[var(--radius-pill)] bg-[#ff1f1f] px-1 text-[8px] font-bold uppercase leading-tight tracking-wide text-white"
+                    aria-label="Novidade"
+                  >
+                    new
+                  </span>
+                ) : null}
+              </span>
+              <span className="block max-w-full truncate text-center leading-3">Mata-mata</span>
+            </button>
+          </li>
           <li className="min-w-0">
             <button
               type="button"

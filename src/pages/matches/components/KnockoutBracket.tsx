@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
 import { Hand, Maximize, Trophy, ZoomIn, ZoomOut } from 'lucide-react'
 import { MatchCard } from '@/components/match/MatchCard'
 import { TeamFlagImage } from '@/components/match/TeamFlagImage'
@@ -9,6 +9,7 @@ import type { Match, MatchesResponse } from '@/types/match.types'
 import {
   BRACKET,
   BRACKET_RENDER_ORDER,
+  formatBracketKickoff,
   PHASE_LABELS,
   type BracketMatch,
   type BracketPhase,
@@ -28,18 +29,26 @@ interface KnockoutBracketProps {
   groupStage: MatchesResponse['groupStage']
   groupId?: string
   backState?: Record<string, unknown>
+  /** Aponta para a visualização dos jogos; usado para centralizar o scroll. */
+  focusRef?: Ref<HTMLDivElement>
 }
 
 // Largura fixa de cada coluna (fase). No mobile a soma ultrapassa a tela,
 // habilitando o scroll horizontal — o usuário arrasta para o lado.
 const COLUMN_WIDTH = 'w-[13.5rem] sm:w-[15rem]'
 
-export function KnockoutBracket({ data, groupStage, groupId, backState }: KnockoutBracketProps) {
+export function KnockoutBracket({
+  data,
+  groupStage,
+  groupId,
+  backState,
+  focusRef,
+}: KnockoutBracketProps) {
   // Quando a FIFA define o chaveamento, a API entrega os confrontos reais.
   if (hasApiKnockout(data)) {
-    return <ApiKnockout data={data} groupId={groupId} backState={backState} />
+    return <ApiKnockout data={data} groupId={groupId} backState={backState} focusRef={focusRef} />
   }
-  return <ProjectedBracket groupStage={groupStage} />
+  return <ProjectedBracket groupStage={groupStage} focusRef={focusRef} />
 }
 
 // ─── Confrontos reais (API) ──────────────────────────────────────────
@@ -49,11 +58,12 @@ function ApiKnockout({
   data,
   groupId,
   backState,
-}: Pick<KnockoutBracketProps, 'data' | 'groupId' | 'backState'>) {
+  focusRef,
+}: Pick<KnockoutBracketProps, 'data' | 'groupId' | 'backState' | 'focusRef'>) {
   const phases = API_PHASE_ORDER.filter(p => data[p]?.length > 0)
 
   return (
-    <div className="space-y-8">
+    <div ref={focusRef} className="space-y-8">
       {phases.map(phase => (
         <section key={phase} className="mx-auto w-full max-w-[42rem] space-y-3">
           <PhaseDivider label={PHASE_LABELS[phase]} />
@@ -107,7 +117,13 @@ const BRACKET_VERTICAL_ORDER: Map<number, number> = (() => {
   return order
 })()
 
-function ProjectedBracket({ groupStage }: { groupStage: MatchesResponse['groupStage'] }) {
+function ProjectedBracket({
+  groupStage,
+  focusRef,
+}: {
+  groupStage: MatchesResponse['groupStage']
+  focusRef?: Ref<HTMLDivElement>
+}) {
   const standingsQuery = useWorldCupStandings()
 
   const index = useMemo<StandingsIndex>(
@@ -179,7 +195,7 @@ function ProjectedBracket({ groupStage }: { groupStage: MatchesResponse['groupSt
         Arraste para mover • pinça ou os botões para aproximar
       </p>
 
-      <div className="relative">
+      <div ref={focusRef} className="relative">
         {/* Controles de zoom, sobrepostos ao chaveamento (web e mobile). */}
         <div className="absolute right-2 top-2 z-20 flex flex-col gap-1.5">
           <Button
@@ -300,6 +316,9 @@ function ProjectedMatchCard({
 }) {
   const home = resolveSlot(match.home, index, teamAssets)
   const away = resolveSlot(match.away, index, teamAssets)
+  // Data/hora oficial do jogo (calendário FIFA fixo por número), exibida mesmo
+  // sem os confrontos definidos.
+  const kickoff = formatBracketKickoff(match.no)
 
   return (
     <div
@@ -310,14 +329,16 @@ function ProjectedMatchCard({
           : 'border-[var(--border)]'
       }`}
     >
-      <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
-        <span>Jogo {match.no}</span>
-        {isFinal && (
-          <span className="inline-flex items-center gap-1 text-[var(--support)]">
-            <Trophy size={12} aria-hidden="true" /> Taça
-          </span>
-        )}
-      </div>
+      {(kickoff || isFinal) && (
+        <div className="mb-1.5 flex items-center justify-between text-[10px] font-medium tabular-nums text-[var(--text-muted)]">
+          <span>{kickoff}</span>
+          {isFinal && (
+            <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-[0.14em] text-[var(--support)]">
+              <Trophy size={12} aria-hidden="true" /> Taça
+            </span>
+          )}
+        </div>
+      )}
       <SlotRow view={home} />
       <div className="my-1 h-px bg-[var(--border)]" />
       <SlotRow view={away} />

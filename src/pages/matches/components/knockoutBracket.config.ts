@@ -29,6 +29,62 @@ export const PHASE_LABELS: Record<BracketPhase, string> = {
   final: 'Final',
 }
 
+// Kickoff oficial de cada jogo do mata-mata (UTC, ISO 8601). O calendário FIFA
+// 2026 fixa data/horário/sede por NÚMERO de jogo desde o sorteio — valem mesmo
+// antes de os confrontos serem definidos, então o chaveamento projetado já
+// consegue mostrar quando cada jogo acontece. Renderizado em horário local pelo
+// navegador (público no Brasil → UTC−3). Fonte: calendário oficial FIFA /
+// Wikipédia (knockout stage). O jogo 103 (disputa de 3º lugar) não integra este
+// chaveamento, por isso fica de fora.
+export const MATCH_KICKOFF_UTC: Record<number, string> = {
+  73: '2026-06-28T19:00:00Z',
+  74: '2026-06-29T20:30:00Z',
+  75: '2026-06-30T01:00:00Z',
+  76: '2026-06-29T17:00:00Z',
+  77: '2026-06-30T21:00:00Z',
+  78: '2026-06-30T17:00:00Z',
+  79: '2026-07-01T01:00:00Z',
+  80: '2026-07-01T16:00:00Z',
+  81: '2026-07-02T00:00:00Z',
+  82: '2026-07-01T20:00:00Z',
+  83: '2026-07-02T23:00:00Z',
+  84: '2026-07-02T19:00:00Z',
+  85: '2026-07-03T03:00:00Z',
+  86: '2026-07-03T22:00:00Z',
+  87: '2026-07-04T01:30:00Z',
+  88: '2026-07-03T18:00:00Z',
+  89: '2026-07-04T21:00:00Z',
+  90: '2026-07-04T17:00:00Z',
+  91: '2026-07-05T20:00:00Z',
+  92: '2026-07-06T00:00:00Z',
+  93: '2026-07-06T19:00:00Z',
+  94: '2026-07-07T00:00:00Z',
+  95: '2026-07-07T16:00:00Z',
+  96: '2026-07-07T20:00:00Z',
+  97: '2026-07-09T20:00:00Z',
+  98: '2026-07-10T19:00:00Z',
+  99: '2026-07-11T21:00:00Z',
+  100: '2026-07-12T01:00:00Z',
+  101: '2026-07-14T19:00:00Z',
+  102: '2026-07-15T19:00:00Z',
+  104: '2026-07-19T19:00:00Z',
+}
+
+/** Data+hora compactas do kickoff ("28/06 · 16:00", horário local). `null`
+ *  quando o jogo não tem horário catalogado. */
+export function formatBracketKickoff(matchNo: number): string | null {
+  const iso = MATCH_KICKOFF_UTC[matchNo]
+  if (!iso) return null
+  return new Date(iso)
+    .toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    .replace(', ', ' · ')
+}
+
 // Metade do topo afunila no jogo 101 (semifinal); a de baixo no 102.
 export const BRACKET: BracketMatch[] = [
   // ── Round of 32 — metade do topo ──────────────────────────────

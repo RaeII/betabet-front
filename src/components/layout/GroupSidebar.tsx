@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link, NavLink, useMatch } from 'react-router-dom'
-import { Award, Home, Plus, Trophy, Users} from 'lucide-react'
+import { Link, NavLink, useMatch, useNavigate } from 'react-router-dom'
+import { Award, Home, Plus, Swords, Trophy, Users} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useGroupHasLiveMatch } from '@/hooks/useGroupLiveMatch'
-import { useJoinRequests, useMyJoinRequests } from '@/hooks/useGroups'
+import { useMyJoinRequests } from '@/hooks/useGroups'
+import { useSeenFlag } from '@/hooks/useSeenFlag'
 import { pathFor, sidebarDestinations } from '@/lib/sidebar-destinations'
 import { GroupsModal } from '@/pages/groups/components/GroupsModal'
 
@@ -32,6 +33,8 @@ function LiveDot() {
 
 export function GroupSidebar() {
   const { groupId, isAdmin } = useActiveGroup()
+  const navigate = useNavigate()
+  const [matamataIsNew, dismissMatamata] = useSeenFlag('betabet:matamata-seen')
   const [modalOpen, setModalOpen] = useState(false)
   const groupMatchesListRoute = useMatch({ path: '/groups/:groupId/jogos', end: true })
   const globalMatchesListRoute = useMatch({ path: '/matches', end: true })
@@ -40,7 +43,6 @@ export function GroupSidebar() {
   const isMatchesListRoute = Boolean(groupMatchesListRoute || globalMatchesListRoute)
   const currentMatchId =
     groupMatchDetailRoute?.params.matchId ?? globalMatchDetailRoute?.params.matchId
-  const requestsQuery = useJoinRequests(groupId ?? '', Boolean(groupId && isAdmin))
   const myRequestsQuery = useMyJoinRequests(Boolean(groupId))
   const hasLiveMatch = useGroupHasLiveMatch(groupId ?? '', {
     enabled: !isMatchesListRoute,
@@ -53,7 +55,6 @@ export function GroupSidebar() {
   const items = sidebarDestinations.filter(
     item => !hiddenSidebarItemIds.has(item.id) && (!item.adminOnly || isAdmin),
   )
-  const pendingRequests = requestsQuery.data?.requests.length ?? 0
   const pendingApprovals = myRequestsQuery.data?.requests.length ?? 0
 
   return (
@@ -76,14 +77,10 @@ export function GroupSidebar() {
         <ul className="space-y-1">
           {items.map(item => {
             const Icon = iconMap[item.iconName] ?? Home
-            const hasPendingMemberRequests = item.id === 'membros' && pendingRequests > 0
-            const to = hasPendingMemberRequests
-              ? `${pathFor(groupId, item)}?tab=requests`
-              : pathFor(groupId, item)
             return (
               <li key={item.id}>
                 <NavLink
-                  to={to}
+                  to={pathFor(groupId, item)}
                   end={item.to === ''}
                   className={({ isActive }) =>
                     [
@@ -98,18 +95,35 @@ export function GroupSidebar() {
                   <Icon size={18} />
                   <span className="truncate">{item.label}</span>
                   {item.id === 'jogos' && showLiveMatch ? <LiveDot /> : null}
-                  {item.id === 'membros' && pendingRequests > 0 ? (
-                    <span
-                      className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-center text-[11px] font-bold leading-none text-[var(--surface)]"
-                      aria-label={`${pendingRequests} solicitações pendentes`}
-                    >
-                      {pendingRequests > 99 ? '99+' : pendingRequests}
-                    </span>
-                  ) : null}
                 </NavLink>
               </li>
             )
           })}
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                dismissMatamata()
+                navigate(`/groups/${groupId}/jogos`, { state: { phase: 'knockout' } })
+              }}
+              className={[
+                'flex w-full items-center gap-3 rounded-[var(--radius-pill)] px-3 py-2 text-sm font-medium transition',
+                'text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]',
+                'focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]',
+              ].join(' ')}
+            >
+              <Swords size={18} />
+              <span className="truncate">Mata-mata</span>
+              {matamataIsNew ? (
+                <span
+                  className="ml-auto rounded-[var(--radius-pill)] bg-[#ff1f1f] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm shadow-[#ff1f1f]/40"
+                  aria-label="Novidade"
+                >
+                  new
+                </span>
+              ) : null}
+            </button>
+          </li>
           <li>
             <button
               type="button"
