@@ -1,8 +1,10 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { MoveHorizontal, Trophy } from 'lucide-react'
+import { Hand, Maximize, Trophy, ZoomIn, ZoomOut } from 'lucide-react'
 import { MatchCard } from '@/components/match/MatchCard'
 import { TeamFlagImage } from '@/components/match/TeamFlagImage'
+import { Button } from '@/components/ui/button'
 import { useWorldCupStandings } from '@/hooks/useWorldCupStandings'
+import { useZoomPan } from '@/hooks/useZoomPan'
 import type { Match, MatchesResponse } from '@/types/match.types'
 import {
   BRACKET,
@@ -114,24 +116,32 @@ function ProjectedBracket({ groupStage }: { groupStage: MatchesResponse['groupSt
   )
   const teamAssets = useMemo(() => buildTeamAssetsFromGroupStage(groupStage), [groupStage])
 
-  const innerRef = useRef<HTMLDivElement>(null)
+  const { transformStyle, viewportRef, contentRef, handlers, zoomIn, zoomOut, reset } = useZoomPan()
   const cardRefs = useRef(new Map<number, HTMLElement>())
   const [connectors, setConnectors] = useState<BracketConnectors>({ width: 0, height: 0, paths: [] })
 
-  // Mede as posições reais dos cards (em coordenadas do conteúdo rolável) e
-  // desenha um cotovelo H→V→H ligando cada jogo ao seu confronto seguinte.
-  // Medir contra o próprio container `w-max` torna o cálculo imune ao scroll.
+  // Mede as posições reais dos cards e desenha um cotovelo H→V→H ligando cada
+  // jogo ao seu confronto seguinte. Medir contra o próprio container `w-max`
+  // torna o cálculo imune a scroll e translate. Como o conteúdo pode estar sob
+  // um `transform: scale()`, `getBoundingClientRect()` vem escalado mas
+  // `offsetWidth` não — então dividimos as diferenças pela escala viva
+  // (`base.width / offsetWidth`) para voltar ao espaço de layout do SVG.
   useLayoutEffect(() => {
-    const inner = innerRef.current
+    const inner = contentRef.current
     if (!inner) return
 
     const measure = () => {
       const base = inner.getBoundingClientRect()
+      const s = inner.offsetWidth ? base.width / inner.offsetWidth : 1
       const box = (no: number) => {
         const el = cardRefs.current.get(no)
         if (!el) return null
         const r = el.getBoundingClientRect()
-        return { left: r.left - base.left, right: r.right - base.left, midY: r.top - base.top + r.height / 2 }
+        return {
+          left: (r.left - base.left) / s,
+          right: (r.right - base.left) / s,
+          midY: (r.top - base.top) / s + r.height / s / 2,
+        }
       }
 
       const paths: string[] = []
@@ -153,7 +163,7 @@ function ProjectedBracket({ groupStage }: { groupStage: MatchesResponse['groupSt
     const ro = new ResizeObserver(measure)
     ro.observe(inner)
     return () => ro.disconnect()
-  }, [index, teamAssets])
+  }, [index, teamAssets, contentRef])
 
   return (
     <div className="space-y-4">
@@ -163,63 +173,111 @@ function ProjectedBracket({ groupStage }: { groupStage: MatchesResponse['groupSt
         são confirmados pela FIFA ao fim da fase de grupos.
       </p>
 
-      {/* Dica de navegação: o chaveamento é mais largo que a tela no celular. */}
-      <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-[var(--text-muted)] xl:hidden">
-        <MoveHorizontal size={14} aria-hidden="true" />
-        Arraste para o lado para ver todas as fases
+      {/* Dica de navegação: pan + zoom funcionam na web e no celular. */}
+      <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-[var(--text-muted)]">
+        <Hand size={14} aria-hidden="true" />
+        Arraste para mover • pinça ou os botões para aproximar
       </p>
 
-      {/*
-        Chaveamento horizontal: cada fase é uma coluna lado a lado, do 16-avos
-        (pontas) até a final (centro), espelhando a imagem oficial. As colunas
-        têm a mesma altura e usam justify-around, então cada jogo se alinha no
-        ponto médio entre seus dois alimentadores (8→4→2→1→1→1→2→4→8) — o efeito
-        de funil/ampulheta clássico. No celular o scroll horizontal entra em ação.
-      */}
-      <div className="overflow-x-auto pb-3 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
-        <div ref={innerRef} className="relative mx-auto flex w-max items-stretch gap-2.5 sm:gap-3.5">
-          {/* Linhas de conexão entre os jogos (atrás dos cards). */}
-          <svg
-            className="pointer-events-none absolute inset-0 z-0"
-            width={connectors.width || undefined}
-            height={connectors.height || undefined}
-            aria-hidden="true"
+      <div className="relative">
+        {/* Controles de zoom, sobrepostos ao chaveamento (web e mobile). */}
+        <div className="absolute right-2 top-2 z-20 flex flex-col gap-1.5">
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            aria-label="Aproximar"
+            onClick={zoomIn}
+            className="h-9 w-9 min-h-0 bg-[var(--surface)] shadow-sm"
           >
-            {connectors.paths.map((d, i) => (
-              <path key={i} d={d} fill="none" stroke="var(--border)" strokeWidth={1.5} />
-            ))}
-          </svg>
+            <ZoomIn size={18} aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            aria-label="Afastar"
+            onClick={zoomOut}
+            className="h-9 w-9 min-h-0 bg-[var(--surface)] shadow-sm"
+          >
+            <ZoomOut size={18} aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            aria-label="Ajustar à tela"
+            onClick={reset}
+            className="h-9 w-9 min-h-0 bg-[var(--surface)] shadow-sm"
+          >
+            <Maximize size={18} aria-hidden="true" />
+          </Button>
+        </div>
 
-          {BRACKET_RENDER_ORDER.map(({ phase, half }) => {
-            const matches = BRACKET.filter(m => m.phase === phase && m.half === half).sort(
-              (a, b) => (BRACKET_VERTICAL_ORDER.get(a.no) ?? 0) - (BRACKET_VERTICAL_ORDER.get(b.no) ?? 0),
-            )
-            if (matches.length === 0) return null
-
-            return (
-              <div
-                key={`${phase}-${half}`}
-                className={`relative z-10 flex shrink-0 flex-col gap-2 ${COLUMN_WIDTH}`}
+        {/*
+          Viewport de altura fixa: recorta o conteúdo e captura os gestos
+          (1 dedo = pan, 2 dedos = pinça; mouse arrasta, ctrl+wheel aproxima).
+          O fit inicial mostra o chaveamento inteiro; o usuário aproxima depois.
+        */}
+        <div
+          ref={viewportRef}
+          {...handlers}
+          className="relative h-[60vh] max-h-[40rem] cursor-grab touch-none select-none overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-soft)] active:cursor-grabbing"
+        >
+          {/*
+            Chaveamento horizontal: cada fase é uma coluna lado a lado, do 16-avos
+            (pontas) até a final (centro), espelhando a imagem oficial. As colunas
+            têm a mesma altura e usam justify-around, então cada jogo se alinha no
+            ponto médio entre seus dois alimentadores (8→4→2→1→1→1→2→4→8) — o efeito
+            de funil/ampulheta clássico. O wrapper recebe o transform de zoom/pan.
+          */}
+          <div ref={contentRef} style={transformStyle} className="absolute left-0 top-0">
+            <div className="relative flex w-max items-stretch gap-2.5 sm:gap-3.5">
+              {/* Linhas de conexão entre os jogos (atrás dos cards). */}
+              <svg
+                className="pointer-events-none absolute inset-0 z-0"
+                width={connectors.width || undefined}
+                height={connectors.height || undefined}
+                aria-hidden="true"
               >
-                <PhaseDivider label={PHASE_LABELS[phase]} />
-                <div className="flex flex-1 flex-col justify-around gap-2">
-                  {matches.map(match => (
-                    <ProjectedMatchCard
-                      key={match.no}
-                      match={match}
-                      index={index}
-                      teamAssets={teamAssets}
-                      isFinal={phase === 'final'}
-                      registerRef={el => {
-                        if (el) cardRefs.current.set(match.no, el)
-                        else cardRefs.current.delete(match.no)
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )
-          })}
+                {connectors.paths.map((d, i) => (
+                  <path key={i} d={d} fill="none" stroke="var(--border)" strokeWidth={1.5} />
+                ))}
+              </svg>
+
+              {BRACKET_RENDER_ORDER.map(({ phase, half }) => {
+                const matches = BRACKET.filter(m => m.phase === phase && m.half === half).sort(
+                  (a, b) =>
+                    (BRACKET_VERTICAL_ORDER.get(a.no) ?? 0) - (BRACKET_VERTICAL_ORDER.get(b.no) ?? 0),
+                )
+                if (matches.length === 0) return null
+
+                return (
+                  <div
+                    key={`${phase}-${half}`}
+                    className={`relative z-10 flex shrink-0 flex-col gap-2 ${COLUMN_WIDTH}`}
+                  >
+                    <PhaseDivider label={PHASE_LABELS[phase]} />
+                    <div className="flex flex-1 flex-col justify-around gap-2">
+                      {matches.map(match => (
+                        <ProjectedMatchCard
+                          key={match.no}
+                          match={match}
+                          index={index}
+                          teamAssets={teamAssets}
+                          isFinal={phase === 'final'}
+                          registerRef={el => {
+                            if (el) cardRefs.current.set(match.no, el)
+                            else cardRefs.current.delete(match.no)
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
