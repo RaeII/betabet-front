@@ -13,6 +13,7 @@ interface Props {
 
 const PHASE_LABELS: Record<string, string> = {
   group: 'Fase de grupos',
+  r32: '16-avos de final',
   r16: 'Oitavas de final',
   qf: 'Quartas de final',
   sf: 'Semifinal',
