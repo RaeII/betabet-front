@@ -1,6 +1,15 @@
-import { useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
-import { Hand, Maximize, Trophy, ZoomIn, ZoomOut } from 'lucide-react'
-import { MatchCard } from '@/components/match/MatchCard'
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type Ref,
+} from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, Hand, Maximize, Trophy, ZoomIn, ZoomOut } from 'lucide-react'
 import { TeamFlagImage } from '@/components/match/TeamFlagImage'
 import { Button } from '@/components/ui/button'
 import { useWorldCupStandings } from '@/hooks/useWorldCupStandings'
@@ -10,25 +19,29 @@ import {
   BRACKET,
   BRACKET_RENDER_ORDER,
   formatBracketKickoff,
+  MATCH_KICKOFF_UTC,
   PHASE_LABELS,
   type BracketMatch,
-  type BracketPhase,
 } from './knockoutBracket.config'
 import {
   buildStandingsIndex,
   buildTeamAssetsFromGroupStage,
-  hasApiKnockout,
   resolveSlot,
   type SlotView,
   type StandingsIndex,
 } from './knockoutBracket.utils'
 import type { GroupTeamAsset } from './worldCupGroup.utils'
 
+/** Vista de zoom/pan do chaveamento; persiste ao abrir o detalhe de um jogo. */
+type BracketView = { scale: number; tx: number; ty: number }
+
 interface KnockoutBracketProps {
   data: MatchesResponse['knockout']
   groupStage: MatchesResponse['groupStage']
   groupId?: string
   backState?: Record<string, unknown>
+  /** Vista salva ao sair para o detalhe; restaura a posição exata ao voltar. */
+  restoreView?: BracketView | null
   /** Aponta para a visualização dos jogos; usado para centralizar o scroll. */
   focusRef?: Ref<HTMLDivElement>
 }
@@ -42,43 +55,60 @@ export function KnockoutBracket({
   groupStage,
   groupId,
   backState,
+  restoreView,
   focusRef,
 }: KnockoutBracketProps) {
-  // Quando a FIFA define o chaveamento, a API entrega os confrontos reais.
-  if (hasApiKnockout(data)) {
-    return <ApiKnockout data={data} groupId={groupId} backState={backState} focusRef={focusRef} />
-  }
-  return <ProjectedBracket groupStage={groupStage} focusRef={focusRef} />
-}
-
-// ─── Confrontos reais (API) ──────────────────────────────────────────
-const API_PHASE_ORDER: BracketPhase[] = ['r32', 'r16', 'qf', 'sf', 'final']
-
-function ApiKnockout({
-  data,
-  groupId,
-  backState,
-  focusRef,
-}: Pick<KnockoutBracketProps, 'data' | 'groupId' | 'backState' | 'focusRef'>) {
-  const phases = API_PHASE_ORDER.filter(p => data[p]?.length > 0)
-
+  // Visualização única: o chaveamento em árvore. Cada slot é preenchido pelo
+  // confronto REAL já cadastrado no banco (vindo da API-Football, mapeado pelo
+  // horário oficial do jogo); enquanto a FIFA não define um confronto, o slot
+  // cai na projeção pela classificação atual.
   return (
-    <div ref={focusRef} className="space-y-8">
-      {phases.map(phase => (
-        <section key={phase} className="mx-auto w-full max-w-[42rem] space-y-3">
-          <PhaseDivider label={PHASE_LABELS[phase]} />
-          <div className="space-y-3">
-            {(data[phase] as Match[]).map(match => (
-              <MatchCard key={match.id} match={match} groupId={groupId} backState={backState} />
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
+    <ProjectedBracket
+      data={data}
+      groupStage={groupStage}
+      groupId={groupId}
+      backState={backState}
+      restoreView={restoreView}
+      focusRef={focusRef}
+    />
   )
 }
 
-// ─── Chaveamento projetado pela classificação ────────────────────────
+// ─── Slot real (banco) × slot projetado ──────────────────────────────
+
+/** Converte uma seleção da partida cadastrada no banco no `SlotView` de time,
+ *  reaproveitando a mesma renderização dos slots projetados. */
+function teamSlotFromMatch(team: Match['homeTeam']): SlotView {
+  return {
+    type: 'team',
+    team: { name: team.name, flagUrl: team.flagUrl, teamId: team.apiTeamId ?? team.id },
+    seed: '',
+  }
+}
+
+/**
+ * Indexa os confrontos reais do mata-mata (todas as fases de `knockout`) pelo
+ * NÚMERO oficial do jogo (73–104). O casamento usa o horário de início: o
+ * calendário FIFA fixa data/hora por número de jogo, e a API-Football usa o
+ * mesmo calendário — então `scheduledAt` da partida bate exatamente com
+ * `MATCH_KICKOFF_UTC[no]`. Assim que o admin importa a partida, ela substitui o
+ * slot projetado correspondente. Sem casamento (horário ainda não catalogado),
+ * o slot permanece projetado.
+ */
+function buildRealMatchByNo(knockout: MatchesResponse['knockout']): Map<number, Match> {
+  const noByKickoff = new Map<number, number>()
+  for (const [no, iso] of Object.entries(MATCH_KICKOFF_UTC)) {
+    noByKickoff.set(new Date(iso).getTime(), Number(no))
+  }
+  const byNo = new Map<number, Match>()
+  for (const match of Object.values(knockout).flat()) {
+    const no = noByKickoff.get(new Date(match.scheduledAt).getTime())
+    if (no != null) byNo.set(no, match)
+  }
+  return byNo
+}
+
+// ─── Chaveamento (árvore) ─────────────────────────────────────────────
 
 interface BracketConnectors {
   width: number
@@ -118,21 +148,73 @@ const BRACKET_VERTICAL_ORDER: Map<number, number> = (() => {
 })()
 
 function ProjectedBracket({
+  data,
   groupStage,
+  groupId,
+  backState,
+  restoreView,
   focusRef,
 }: {
+  data: MatchesResponse['knockout']
   groupStage: MatchesResponse['groupStage']
+  groupId?: string
+  backState?: Record<string, unknown>
+  restoreView?: BracketView | null
   focusRef?: Ref<HTMLDivElement>
 }) {
   const standingsQuery = useWorldCupStandings()
+  const navigate = useNavigate()
 
   const index = useMemo<StandingsIndex>(
     () => buildStandingsIndex(standingsQuery.data),
     [standingsQuery.data],
   )
   const teamAssets = useMemo(() => buildTeamAssetsFromGroupStage(groupStage), [groupStage])
+  // Confrontos reais do banco, por número de jogo — têm prioridade sobre a
+  // projeção em cada slot da árvore.
+  const realByNo = useMemo(() => buildRealMatchByNo(data), [data])
 
-  const { transformStyle, viewportRef, contentRef, handlers, zoomIn, zoomOut, reset } = useZoomPan()
+  // getView vem do hook (declarado abaixo); ref quebra a dependência circular
+  // openMatch → getView → useZoomPan → onTap → openMatch.
+  const getViewRef = useRef<() => BracketView>(() => ({ scale: 1, tx: 0, ty: 0 }))
+
+  // Abre o detalhe da partida real, salvando a vista atual do chaveamento para
+  // o botão "Voltar" do detalhe restaurar a mesma posição (scale/tx/ty).
+  const openMatch = useCallback(
+    (match: Match) => {
+      const href = groupId ? `/groups/${groupId}/matches/${match.id}` : `/matches/${match.id}`
+      navigate(href, { state: { ...backState, fromJogos: 'knockout', bracketView: getViewRef.current() } })
+    },
+    [navigate, groupId, backState],
+  )
+
+  // Toque limpo no viewport → descobre o card sob o ponto (o click chega no
+  // viewport por causa do pointer capture do gesto) e abre o confronto real.
+  const onTap = useCallback(
+    (e: ReactMouseEvent<HTMLDivElement>) => {
+      const cardEl = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-match-no]')
+      if (!cardEl) return
+      const real = realByNo.get(Number(cardEl.getAttribute('data-match-no')))
+      if (real) openMatch(real)
+    },
+    [realByNo, openMatch],
+  )
+
+  const {
+    transformStyle,
+    viewportRef,
+    contentRef,
+    handlers,
+    zoomIn,
+    zoomOut,
+    reset,
+    getView,
+    pageLeft,
+    pageRight,
+    canPanLeft,
+    canPanRight,
+  } = useZoomPan({ restoreView, onTap })
+  getViewRef.current = getView
   const cardRefs = useRef(new Map<number, HTMLElement>())
   const [connectors, setConnectors] = useState<BracketConnectors>({ width: 0, height: 0, paths: [] })
 
@@ -192,7 +274,7 @@ function ProjectedBracket({
       {/* Dica de navegação: pan + zoom funcionam na web e no celular. */}
       <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-[var(--text-muted)]">
         <Hand size={14} aria-hidden="true" />
-        Arraste para mover • pinça ou os botões para aproximar
+        Arraste ou use as setas para mover • pinça ou os botões para aproximar
       </p>
 
       <div ref={focusRef} className="relative">
@@ -229,6 +311,37 @@ function ProjectedBracket({
             <Maximize size={18} aria-hidden="true" />
           </Button>
         </div>
+
+        {/*
+          Botões de navegação ←/→: saltam ~80% da largura por clique, para o
+          usuário percorrer as fases sem arrastar. Cada um só aparece quando há
+          conteúdo oculto naquele lado (o da esquerda surge depois que se navega
+          para a direita). Centralizados na vertical, sobre o chaveamento.
+        */}
+        {canPanLeft && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            aria-label="Navegar para a esquerda"
+            onClick={pageLeft}
+            className="absolute left-2 top-1/2 z-20 h-11 w-11 min-h-0 -translate-y-1/2 rounded-full border-0 bg-[var(--brand)] text-[var(--brand-text)] shadow-lg ring-2 ring-[var(--brand-text)]/30 transition hover:bg-[var(--brand)] hover:brightness-110"
+          >
+            <ChevronLeft size={24} strokeWidth={2.5} aria-hidden="true" />
+          </Button>
+        )}
+        {canPanRight && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            aria-label="Navegar para a direita"
+            onClick={pageRight}
+            className="absolute right-2 top-1/2 z-20 h-11 w-11 min-h-0 -translate-y-1/2 rounded-full border-0 bg-[var(--brand)] text-[var(--brand-text)] shadow-lg ring-2 ring-[var(--brand-text)]/30 transition hover:bg-[var(--brand)] hover:brightness-110"
+          >
+            <ChevronRight size={24} strokeWidth={2.5} aria-hidden="true" />
+          </Button>
+        )}
 
         {/*
           Viewport de altura fixa: recorta o conteúdo e captura os gestos
@@ -279,6 +392,8 @@ function ProjectedBracket({
                         <ProjectedMatchCard
                           key={match.no}
                           match={match}
+                          realMatch={realByNo.get(match.no) ?? null}
+                          onOpen={openMatch}
                           index={index}
                           teamAssets={teamAssets}
                           isFinal={phase === 'final'}
@@ -302,31 +417,63 @@ function ProjectedBracket({
 
 function ProjectedMatchCard({
   match,
+  realMatch,
+  onOpen,
   index,
   teamAssets,
   isFinal,
   registerRef,
 }: {
   match: BracketMatch
+  /** Confronto real já cadastrado no banco para este slot, ou `null`. */
+  realMatch: Match | null
+  /** Abre o detalhe do confronto real (só os slots já definidos são clicáveis). */
+  onOpen: (match: Match) => void
   index: StandingsIndex
   teamAssets: Map<string, GroupTeamAsset>
   isFinal: boolean
   /** Registra o nó DOM do card para o cálculo das linhas de conexão. */
   registerRef?: (el: HTMLDivElement | null) => void
 }) {
-  const home = resolveSlot(match.home, index, teamAssets)
-  const away = resolveSlot(match.away, index, teamAssets)
+  // Confronto real do banco tem prioridade; sem ele, mostra o slot projetado.
+  const home = realMatch ? teamSlotFromMatch(realMatch.homeTeam) : resolveSlot(match.home, index, teamAssets)
+  const away = realMatch ? teamSlotFromMatch(realMatch.awayTeam) : resolveSlot(match.away, index, teamAssets)
   // Data/hora oficial do jogo (calendário FIFA fixo por número), exibida mesmo
-  // sem os confrontos definidos.
+  // sem os confrontos definidos. Para o confronto real bate com o scheduledAt.
   const kickoff = formatBracketKickoff(match.no)
+
+  // Só os slots com confronto real cadastrado abrem o detalhe; os projetados
+  // (sem partida no banco) seguem como antes, sem interação. O clique de mouse/
+  // toque é resolvido pelo `onTap` do zoom/pan (o pointer capture do gesto faz
+  // o click chegar no viewport, não no card) — aqui só tratamos o teclado.
+  const open = realMatch ? () => onOpen(realMatch) : undefined
+  const interactiveProps = open
+    ? {
+        role: 'button' as const,
+        tabIndex: 0,
+        'aria-label': `Ver detalhes de ${realMatch!.homeTeam.name} contra ${realMatch!.awayTeam.name}`,
+        onKeyDown: (e: ReactKeyboardEvent<HTMLDivElement>) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            open()
+          }
+        },
+      }
+    : {}
 
   return (
     <div
       ref={registerRef}
+      data-match-no={match.no}
+      {...interactiveProps}
       className={`rounded-[var(--radius-lg)] border bg-[var(--surface)] p-3 ${
         isFinal
           ? 'border-[var(--support)] shadow-[0_0_0_1px_var(--support)]'
           : 'border-[var(--border)]'
+      }${
+        open
+          ? ' cursor-pointer transition duration-150 hover:border-[var(--brand)] focus:outline focus:outline-2 focus:outline-offset-[3px] focus:outline-[var(--brand)]'
+          : ''
       }`}
     >
       {(kickoff || isFinal) && (

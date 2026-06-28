@@ -12,7 +12,13 @@ export function GroupJogosPage() {
   const location = useLocation()
   // Fase vinda da navegação: ao voltar do detalhe da partida (restaura a fase)
   // ou pelo atalho "Mata-mata" do menu (abre direto a chave eliminatória).
-  const navigatedPhase = (location.state as { phase?: Phase } | null)?.phase
+  // `bracketView` volta junto quando o jogo veio do mata-mata — restaura a
+  // posição (scale/tx/ty) exata da árvore.
+  const navState = location.state as {
+    phase?: Phase
+    bracketView?: { scale: number; tx: number; ty: number }
+  } | null
+  const navigatedPhase = navState?.phase
   const [phase, setPhase] = useState<Phase>(() => navigatedPhase ?? 'group')
   // A cada navegação para a página, a fase segue o destino: "Mata-mata" e o
   // "Voltar" do detalhe trazem `state.phase`; "Jogos" (sem state) cai no grupo.
@@ -75,6 +81,7 @@ export function GroupJogosPage() {
           groupStage={data.groupStage}
           groupId={groupId}
           backState={backState}
+          restoreView={navState?.bracketView ?? null}
           focusRef={knockoutRef}
         />
       )}

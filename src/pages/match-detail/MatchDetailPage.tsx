@@ -54,7 +54,13 @@ export function MatchDetailPage() {
   const location = useLocation()
   // Vindo do card de um jogo: `fromDay` (home, restaura o dia) ou `fromJogos`
   // (página Jogos, restaura a fase). Só então exibimos o botão de voltar.
-  const navState = location.state as { fromDay?: string; fromJogos?: 'group' | 'knockout' } | null
+  const navState = location.state as {
+    fromDay?: string
+    fromJogos?: 'group' | 'knockout'
+    // Vista do chaveamento quando o jogo veio do mata-mata; devolvida ao
+    // "Voltar" para restaurar a posição exata (scale/tx/ty) da árvore.
+    bracketView?: { scale: number; tx: number; ty: number }
+  } | null
   const fromDay = navState?.fromDay
   const fromJogos = navState?.fromJogos
   const canGoBack = !!fromDay || !!fromJogos
@@ -235,7 +241,9 @@ export function MatchDetailPage() {
 
   const handleBack = () => {
     if (groupId && fromJogos) {
-      navigate(`/groups/${groupId}/jogos`, { state: { phase: fromJogos } })
+      navigate(`/groups/${groupId}/jogos`, {
+        state: { phase: fromJogos, bracketView: navState?.bracketView },
+      })
       return
     }
     if (groupId) {

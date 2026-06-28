@@ -2,7 +2,7 @@ import type { Bet } from './bet.types'
 
 export type MatchStatus = 'upcoming' | 'live' | 'finished' | 'cancelled'
 
-export type TournamentPhase = 'group' | 'r16' | 'qf' | 'sf' | 'final'
+export type TournamentPhase = 'group' | 'r32' | 'r16' | 'qf' | 'sf' | 'final'
 
 export interface Team {
   id: string
