@@ -1,7 +1,8 @@
 import type { Team } from './match.types'
 
 export interface ChampionBet {
-  firstTeamId: string
+  /** `null` quando o membro apostou só na opção 2 (após o fim da 1ª rodada). */
+  firstTeamId: string | null
   secondTeamId: string
   /** Pontos atribuídos após o admin definir o campeão; `null` antes de liquidar. */
   points: number | null
@@ -31,7 +32,8 @@ export interface ChampionBetState {
 }
 
 export interface ChampionBetInput {
-  firstTeamId: number
+  /** `null` para apostar só na opção 2 (1ª rodada encerrada). */
+  firstTeamId: number | null
   secondTeamId: number
 }
 

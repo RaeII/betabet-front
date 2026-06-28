@@ -12,8 +12,32 @@ interface ChampionBetCardProps {
   groupId: string
 }
 
-function PickChip({ rank, team, points, hit }: { rank: 1 | 2; team: Team | null; points: number; hit: boolean | null }) {
+function PickChip({
+  rank,
+  team,
+  points,
+  hit,
+  missing = false,
+}: {
+  rank: 1 | 2
+  team: Team | null
+  points: number
+  hit: boolean | null
+  /** Slot sem palpite (ex.: apostou só na opção 2 após a 1ª rodada). */
+  missing?: boolean
+}) {
   const label = rank === 1 ? 'Opção 1' : 'Opção 2'
+
+  if (missing) {
+    return (
+      <div className="min-w-0 space-y-1">
+        <span className="block px-1 text-[11px] font-bold leading-none text-[var(--text-muted)]">{label}</span>
+        <div className="flex min-w-0 items-center rounded-[var(--radius-lg)] border border-dashed border-[var(--border)] px-2.5 py-2">
+          <span className="truncate text-sm text-[var(--text-muted)]">Sem palpite</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-w-0 space-y-1">
@@ -89,9 +113,10 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
 
   const { bettingOpen, firstOpen, firstDeadline, secondDeadline, firstPoints, secondPoints, championTeamId, myBet } =
     state
-  // Apostar de novo exige o 1º palpite em aberto; trocar uma aposta existente
-  // basta o 2º (bettingOpen). Sem 1º palpite, um novato não consegue apostar.
-  const canCreate = !hasBet && firstOpen
+  // Pode apostar enquanto o 2º palpite estiver aberto (bettingOpen = fim da fase
+  // de grupos). Se a 1ª rodada já fechou (firstOpen=false), um novato aposta só
+  // na opção 2 — a opção 1 fica travada/vazia.
+  const canCreate = !hasBet && bettingOpen
   const firstHit = settled && myBet ? championTeamId === myBet.firstTeamId : null
   const secondHit = settled && myBet ? championTeamId === myBet.secondTeamId : null
   const earnedPoints = myBet?.points ?? 0
@@ -116,7 +141,7 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
       {hasBet ? (
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <PickChip rank={1} team={firstTeam} points={firstPoints} hit={firstHit} />
+            <PickChip rank={1} team={firstTeam} points={firstPoints} hit={firstHit} missing={!myBet?.firstTeamId} />
             <PickChip rank={2} team={secondTeam} points={secondPoints} hit={secondHit} />
           </div>
 
@@ -144,10 +169,21 @@ export function ChampionBetCard({ groupId }: ChampionBetCardProps) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1 rounded-[var(--radius-lg)] bg-[var(--surface-soft)] px-3 py-2.5">
             <p className="text-sm leading-5 text-[var(--text-muted)]">
-              <span className="block font-semibold text-[var(--text)]">Escolha 2 opções de campeão:</span>
-              <span className="mt-1 block">
-                opção 1 vale {firstPoints} pts, opção 2 vale {secondPoints} pts.
-              </span>
+              {firstOpen ? (
+                <>
+                  <span className="block font-semibold text-[var(--text)]">Escolha 2 opções de campeão:</span>
+                  <span className="mt-1 block">
+                    opção 1 vale {firstPoints} pts, opção 2 vale {secondPoints} pts.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="block font-semibold text-[var(--text)]">A 1ª rodada terminou: a opção 1 travou.</span>
+                  <span className="mt-1 block">
+                    Você ainda pode apostar na opção 2 (vale {secondPoints} pts) até o fim da fase de grupos.
+                  </span>
+                </>
+              )}
               <span className="mt-2 block border-t border-[var(--border)] pt-2 text-xs font-medium">
                 <DeadlineNote
                   firstOpen={firstOpen}

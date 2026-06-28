@@ -62,7 +62,9 @@ function SlotChip({
           )}
         </div>
       ) : (
-        <p className="text-sm text-[var(--text-muted)]">Toque em uma seleção</p>
+        <p className="text-sm text-[var(--text-muted)]">
+          {locked ? 'Indisponível (1ª rodada encerrada)' : 'Toque em uma seleção'}
+        </p>
       )}
     </div>
   )
@@ -119,9 +121,11 @@ export function ChampionBetModal({
   }
 
   function handleSave() {
-    if (!firstId || !secondId || firstId === secondId) return
+    // Com a 1ª rodada encerrada (firstOpen=false) a opção 1 fica travada/vazia:
+    // basta a opção 2. Com ela aberta, exige as duas opções distintas.
+    if (!secondId || (firstOpen && !firstId) || firstId === secondId) return
     upsert.mutate(
-      { firstTeamId: Number(firstId), secondTeamId: Number(secondId) },
+      { firstTeamId: firstId ? Number(firstId) : null, secondTeamId: Number(secondId) },
       {
         onSuccess: () => {
           toast({ title: 'Palpite de campeão salvo!', variant: 'success' })
@@ -135,7 +139,7 @@ export function ChampionBetModal({
     )
   }
 
-  const canSave = !!firstId && !!secondId && firstId !== secondId
+  const canSave = !!secondId && (firstOpen ? !!firstId : true) && firstId !== secondId
 
   return (
     <Modal
@@ -152,7 +156,7 @@ export function ChampionBetModal({
 
         {!firstOpen && (
           <p className="rounded-[var(--radius-md)] bg-[var(--surface-soft)] px-3 py-2 text-xs text-[var(--text-muted)]">
-            A 1ª rodada já terminou: a opção 1 está travada. Você ainda pode trocar a opção 2 até o
+            A 1ª rodada já terminou: a opção 1 está travada. Você ainda pode escolher a opção 2 até o
             fim da fase de grupos.
           </p>
         )}
